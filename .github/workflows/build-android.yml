@@ -1,0 +1,49 @@
+name: Build APK Android (avec blocage des captures d'ecran)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer les dependances
+        run: npm install
+
+      - name: Ajouter la plateforme Android
+        run: npx cap add android
+
+      - name: Synchroniser le contenu web (www/) vers l'app Android
+        run: npx cap sync android
+
+      - name: Activer FLAG_SECURE (blocage reel des captures d'ecran)
+        run: |
+          DEST="android/app/src/main/java/com/sabi/app/MainActivity.java"
+          mkdir -p "$(dirname "$DEST")"
+          cp android-template/MainActivity.java "$DEST"
+
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Compiler l'APK
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: Publier l'APK compile
+        uses: actions/upload-artifact@v4
+        with:
+          name: sabi-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
