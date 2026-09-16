@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
   <title>Sabi — Ensemble pour la réussite de chaque étudiant de l'IUT FV</title>
 
+  <!-- ===== Attrape-erreurs de secours ===== 
+       Sans bundler ni outils de dev sur téléphone, un écran blanc ne dit rien sur la
+       cause. Ce script (le tout premier à s'exécuter) affiche à l'écran, en rouge,
+       la moindre erreur JS qui empêcherait l'app de démarrer — au lieu de rien voir du
+       tout. À retirer une fois l'app stable si on veut, mais inoffensif si on le garde. -->
+  <script>
+    window.addEventListener("error", function (e) {
+      var pre = document.createElement("pre");
+      pre.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#1a0000;color:#ff6b6b;padding:16px;font-size:12px;white-space:pre-wrap;overflow:auto;margin:0;";
+      pre.textContent = "Erreur JS au chargement :\n\n" + e.message + "\n\nFichier : " + e.filename + "\nLigne : " + e.lineno + ", colonne : " + e.colno + (e.error && e.error.stack ? "\n\nDétail :\n" + e.error.stack : "");
+      document.body.appendChild(pre);
+    });
+  </script>
+
   <!-- PWA : rend l'appli "installable" sur l'écran d'accueil, sans passer par un store -->
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#131313" />
