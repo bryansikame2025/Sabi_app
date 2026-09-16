@@ -1,0 +1,6 @@
+{
+  "appId": "com.sabi.app",
+  "appName": "Sabi",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
