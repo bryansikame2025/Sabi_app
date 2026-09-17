@@ -566,7 +566,7 @@
       return { base64, mimeType: blob.type || "image/jpeg" };
     }
 
-    const GEMINI_FICHIER_URL = "/api/gemini-fichier"; // Edge Function — pas de limite de 6 Mo (contrairement aux Functions classiques)
+    const GEMINI_FICHIER_URL = NETLIFY_BASE_URL + "/api/gemini-fichier"; // Edge Function — pas de limite de 6 Mo (contrairement aux Functions classiques)
 
     // Envoie un fichier (PDF ou photo, SANS redimensionnement/cap — c'est tout l'intérêt) à l'API
     // File de Gemini via l'Edge Function dédiée, qui relaie les octets en flux continu sans jamais
