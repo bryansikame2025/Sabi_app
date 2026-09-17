@@ -2439,6 +2439,7 @@
       play: "M6 3l15 9-15 9V3z",
       "alert-triangle": "M12 2.5L2 21h20L12 2.5zM12 9v5M12 17h.01",
       image: "M3 3h18a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM9 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM21 15l-4.5-4.5a1.5 1.5 0 0 0-2.1 0L3 21",
+      "wifi-off": "M1 1l22 22 M16.72 11.06A10.94 10.94 0 0 1 19 12.55 M5 12.55a10.94 10.94 0 0 1 5.17-2.39 M10.71 5.05A16 16 0 0 1 22.58 9 M1.42 9a15.91 15.91 0 0 1 4.7-2.88 M8.53 16.11a6 6 0 0 1 6.95 0 M12 20h.01",
     };
     function Icon({ name, size = 16, color = "currentColor", strokeWidth = 2, className, style }) {
       const d = ICON_PATHS[name];
@@ -8335,7 +8336,7 @@
           y: t.clientY,
           horizontal: null, // décidé au premier mouvement net (évite de bloquer un scroll vertical)
           peutGlisserTab: tab !== "carte" && SWIPE_TABS.includes(tab),
-          peutRetourBord: afficherRetour && t.clientX <= LARGEUR_BORD_RETOUR,
+          peutRetourBord: (afficherRetour || estProfil) && t.clientX <= LARGEUR_BORD_RETOUR,
         };
         appliquerTransform(0, false);
       };
@@ -8376,7 +8377,7 @@
         // Balayage retour (bord gauche → droite) sur un écran secondaire.
         if (start.peutRetourBord && dx > SEUIL) {
           appliquerTransform(largeur, true);
-          setTimeout(() => { setSwipeAnim("right"); setTab(retourVers); appliquerTransform(0, false); }, 180);
+          setTimeout(() => { setSwipeAnim("right"); setTab(estProfil ? tabAvantProfil : retourVers); appliquerTransform(0, false); }, 180);
           return;
         }
         // Glissement entre les 4 onglets principaux.
@@ -8484,11 +8485,12 @@
               "aria-label": "Fermer", className: "flex-shrink-0"
             }, React.createElement(Icon, { name: "x", size: 16 }))
           ),
-          estProfil
-            // Écran Profil : pas de header ni de nav du bas, juste un bouton retour qui
-            // ramène exactement à l'onglet quitté avant d'ouvrir le profil.
+          (estProfil || afficherRetour)
+            // Écrans secondaires (profil + boussole/classement/boutique/etc.) : pas de header
+            // complet (menu ☰, profil) qui n'a pas de sens ici — juste un vrai bouton retour,
+            // clair et bien visible, qui ramène à l'écran quitté.
             ? React.createElement("button", {
-                onClick: () => setTab(tabAvantProfil),
+                onClick: () => setTab(estProfil ? tabAvantProfil : retourVers),
                 className: "flex items-center gap-1.5 text-xs font-mono px-5 pt-5 pb-2 flex-shrink-0",
                 style: { color: COLORS.textMuted }
               }, React.createElement(Icon, { name: "arrow-left", size: 14 }), " Retour")
@@ -8517,11 +8519,6 @@
                 ),
                 React.createElement("div", { className: "kente-rule kente-rule-shimmer" })
               ),
-          afficherRetour && React.createElement("button", {
-            onClick: () => setTab(retourVers),
-            className: "flex items-center gap-1.5 text-xs font-mono px-5 pt-4",
-            style: { color: COLORS.textMuted }
-          }, "← Retour"),
           React.createElement("div", {
             key: tab,
             ref: swipeContentRef,
@@ -8536,12 +8533,17 @@
                     ? "overflow-hidden flex flex-col pb-3"
                     : "overflow-y-auto " + (tab === "accueil" || tab === "actualites" ? "pb-28" : "pb-8")))
           },
+            !connexionOk && React.createElement("div", {
+              className: "flex items-center gap-2 text-xs font-mono px-3 py-2 rounded-lg mb-3",
+              style: { backgroundColor: COLORS.border, color: COLORS.textMuted }
+            },
+              React.createElement(Icon, { name: "wifi-off", size: 13 }),
+              "Hors connexion — tu vois les dernières infos enregistrées sur cet appareil."
+            ),
             loading
               ? React.createElement("div", { className: "flex flex-col gap-3 pt-2" },
                   [0, 1, 2].map(i => React.createElement("div", { key: i, className: "sabi-skeleton h-20 w-full", style: { backgroundColor: COLORS.border } }))
                 )
-              : !connexionOk
-              ? React.createElement("p", { className: "text-center text-sm py-10", style: { color: COLORS.terraText } }, "Impossible de se connecter au fil partagé. Vérifie ta connexion internet.")
               : (TAB_RENDERERS[tab] || TAB_RENDERERS.simulateur)()
           ),
           // Toast de retour rapide (points gagnés, confirmations) — ancré en haut, sous le header.
