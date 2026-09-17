@@ -7,15 +7,35 @@
 
   <!-- ===== Attrape-erreurs de secours ===== 
        Sans bundler ni outils de dev sur téléphone, un écran blanc ne dit rien sur la
-       cause. Ce script (le tout premier à s'exécuter) affiche à l'écran, en rouge,
-       la moindre erreur JS qui empêcherait l'app de démarrer — au lieu de rien voir du
-       tout. À retirer une fois l'app stable si on veut, mais inoffensif si on le garde. -->
+       cause. Ce script (le tout premier à s'exécuter) affiche quelque chose à l'écran
+       plutôt que rien du tout quand une erreur JS empêche l'app de démarrer.
+       Cas particulier traité proprement : l'app charge React/Firebase/Tailwind/etc depuis
+       Internet à chaque démarrage (rien n'est intégré dans l'app) — si le téléphone n'a
+       aucune connexion pile à ce moment, ces bibliothèques ne se chargent pas du tout et
+       une variable comme "React" ou "firebase" est alors "not defined". Dans ce cas précis
+       (repérable via ce message d'erreur), on affiche un écran clair "pas de connexion" avec
+       un bouton réessayer, plutôt que le détail technique en rouge — réservé aux vraies
+       erreurs de code, plus utiles à moi (Claude) qu'à l'utilisateur. -->
   <script>
     window.addEventListener("error", function (e) {
-      var pre = document.createElement("pre");
-      pre.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#1a0000;color:#ff6b6b;padding:16px;font-size:12px;white-space:pre-wrap;overflow:auto;margin:0;";
-      pre.textContent = "Erreur JS au chargement :\n\n" + e.message + "\n\nFichier : " + e.filename + "\nLigne : " + e.lineno + ", colonne : " + e.colno + (e.error && e.error.stack ? "\n\nDétail :\n" + e.error.stack : "");
+      var estBibliothequeManquante = /^[A-Za-z_$][\w$]* is not defined$/.test(e.message || "")
+        && ["React", "ReactDOM", "firebase", "L", "katex", "marked", "emailjs", "Tone"].some(
+          nom => (e.message || "").indexOf(nom + " is not defined") === 0
+        );
+      var pre = document.createElement("div");
+      if (estBibliothequeManquante) {
+        pre.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#131313;color:#f6f3ec;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:sans-serif;gap:14px;";
+        pre.innerHTML =
+          '<div style="font-size:15px;font-weight:600;">Pas de connexion internet</div>' +
+          '<div style="font-size:13px;color:#a8a29a;max-width:280px;line-height:1.5;">Sabi a besoin d\'internet au moins une fois pour se charger. Connecte-toi puis réessaie.</div>' +
+          '<button id="sabi-reessayer" style="margin-top:8px;padding:10px 24px;border-radius:999px;background:#f2ca50;color:#131313;font-weight:600;border:none;font-size:14px;">Réessayer</button>';
+      } else {
+        pre.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#1a0000;color:#ff6b6b;padding:16px;font-size:12px;white-space:pre-wrap;overflow:auto;margin:0;font-family:monospace;";
+        pre.textContent = "Erreur JS au chargement :\n\n" + e.message + "\n\nFichier : " + e.filename + "\nLigne : " + e.lineno + ", colonne : " + e.colno + (e.error && e.error.stack ? "\n\nDétail :\n" + e.error.stack : "");
+      }
       document.body.appendChild(pre);
+      var btn = document.getElementById("sabi-reessayer");
+      if (btn) btn.addEventListener("click", function () { window.location.reload(); });
     });
   </script>
 
@@ -8115,7 +8135,10 @@
               email: (authUser && authUser.email) || "",
               reference: paiementId,
               description: "Sabi " + (tier === "proplus" ? "Pro+" : "Pro") + " — " + (duree || "semestre"),
-              callback: window.location.origin + window.location.pathname + "?paiement=retour&ref=" + paiementId
+              // NETLIFY_BASE_URL (pas window.location.origin) : dans l'app native, l'origine
+              // vaut "https://localhost" qui n'existe pas sur Internet — NotchPay ne pourrait
+              // jamais y rediriger l'utilisateur après paiement.
+              callback: NETLIFY_BASE_URL + window.location.pathname + "?paiement=retour&ref=" + paiementId
             })
           })
         ).then(res => res.json().then(data => {
