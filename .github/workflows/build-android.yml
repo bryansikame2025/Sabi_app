@@ -2,6 +2,11 @@ name: Build APK Android (avec blocage des captures d'ecran)
 
 on:
   workflow_dispatch:
+    inputs:
+      pour_captures_ecran:
+        description: "Compiler SANS le blocage de capture (uniquement pour prendre les screenshots Play Store — ne jamais publier cette version)"
+        type: boolean
+        default: false
   push:
     branches: [ main ]
 
@@ -32,11 +37,19 @@ jobs:
       - name: Synchroniser le contenu web (www/) vers l'app Android
         run: npx cap sync android
 
-      - name: Activer FLAG_SECURE (blocage reel des captures d'ecran)
+      - name: Generer l'ecran de demarrage (logo Sabi centre sur fond sombre)
+        run: python3 scripts/generate_splash.py
+
+      - name: Choisir la version de MainActivity (protegee, ou sans protection pour captures Play Store)
         run: |
           DEST="android/app/src/main/java/com/sabi/app/MainActivity.java"
           mkdir -p "$(dirname "$DEST")"
-          cp android-template/MainActivity.java "$DEST"
+          if [ "${{ github.event.inputs.pour_captures_ecran }}" = "true" ]; then
+            echo "::warning::Build SANS FLAG_SECURE — pour captures Play Store uniquement, a ne pas publier."
+            cp android-template/MainActivity-captures-ecran.java "$DEST"
+          else
+            cp android-template/MainActivity.java "$DEST"
+          fi
 
       - name: Installer Java
         uses: actions/setup-java@v4
@@ -53,3 +66,4 @@ jobs:
         with:
           name: sabi-android-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
