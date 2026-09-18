@@ -2,5 +2,13 @@
   "appId": "com.sabi.app",
   "appName": "Sabi",
   "webDir": "www",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#131313",
+      "androidScaleType": "CENTER_INSIDE",
+      "showSpinner": false
+    }
+  }
 }
