@@ -1,47 +1,54 @@
-# Genere une icone de lancement Android simple (fond sombre + "S" dore), aux tailles requises,
-# et l'installe directement dans les dossiers mipmap-*dpi du projet Android genere par Capacitor.
-# A remplacer facilement plus tard : il suffit de deposer un vrai logo carre (au moins 512x512)
-# nomme "icon-source.png" a la racine du depot, ce script l'utilisera a la place du "S" genere
-# s'il le trouve.
+# Genere l'icone de lancement Android a partir des vrais logos Sabi :
+# - icon-512.png (fond sombre deja integre) -> icone "historique" (utilisee sur Android < 8,
+#   et comme repli si le systeme ne gere pas les icones adaptatives)
+# - icon-512-maskable.png (marge de securite deja integree) -> calque "foreground" de l'icone
+#   adaptative moderne (Android 8+), qui s'adapte automatiquement en cercle, carre arrondi,
+#   etc. selon le launcher du telephone
+# A remplacer facilement : deposer de nouveaux fichiers du meme nom a la racine du depot.
 import os
 from PIL import Image, ImageDraw, ImageFont
 
 BG = (19, 19, 19)       # #131313 - fond sombre de l'app
 GOLD = (242, 202, 80)   # #f2ca50 - accent dore de l'app
+RES_DIR = "android/app/src/main/res"
 
-TAILLES = {
-    "mipmap-mdpi": 48,
-    "mipmap-hdpi": 72,
-    "mipmap-xhdpi": 96,
-    "mipmap-xxhdpi": 144,
-    "mipmap-xxxhdpi": 192,
+SOURCES_LEGACY = ["icon-source.png", "icon-512.png"]
+SOURCES_ADAPTATIF = ["icon-512-maskable.png", "icon-512.png", "icon-source.png"]
+
+TAILLES_LEGACY = {
+    "mipmap-mdpi": 48, "mipmap-hdpi": 72, "mipmap-xhdpi": 96,
+    "mipmap-xxhdpi": 144, "mipmap-xxxhdpi": 192,
+}
+# L'icone adaptative a un canevas plus grand (108dp logique contre 48dp pour l'icone
+# classique) car le systeme masque une partie des bords selon la forme du launcher.
+TAILLES_ADAPTATIF = {
+    "mipmap-mdpi": 108, "mipmap-hdpi": 162, "mipmap-xhdpi": 216,
+    "mipmap-xxhdpi": 324, "mipmap-xxxhdpi": 432,
 }
 
-RES_DIR = "android/app/src/main/res"
-SOURCE = "icon-source.png"
-
-def base_1024():
-    if os.path.exists(SOURCE):
-        img = Image.open(SOURCE).convert("RGBA").resize((1024, 1024))
-        return img
+def generer_S():
     img = Image.new("RGBA", (1024, 1024), BG)
     d = ImageDraw.Draw(img)
-    taille_police = 620
     police = None
     for chemin in [
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
     ]:
         if os.path.exists(chemin):
-            police = ImageFont.truetype(chemin, taille_police)
+            police = ImageFont.truetype(chemin, 620)
             break
     if police is None:
         police = ImageFont.load_default()
-    texte = "S"
-    bbox = d.textbbox((0, 0), texte, font=police)
+    bbox = d.textbbox((0, 0), "S", font=police)
     w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    d.text(((1024 - w) / 2 - bbox[0], (1024 - h) / 2 - bbox[1]), texte, font=police, fill=GOLD)
+    d.text(((1024 - w) / 2 - bbox[0], (1024 - h) / 2 - bbox[1]), "S", font=police, fill=GOLD)
     return img
+
+def charger(sources, repli):
+    for nom in sources:
+        if os.path.exists(nom):
+            return Image.open(nom).convert("RGBA").resize((1024, 1024))
+    return repli
 
 def round_version(img):
     mask = Image.new("L", img.size, 0)
@@ -54,22 +61,33 @@ def main():
     if not os.path.isdir(RES_DIR):
         print("Dossier Android introuvable (" + RES_DIR + ") — etape ignoree.")
         return
-    grande = base_1024()
-    grande_ronde = round_version(grande)
-    for dossier, taille in TAILLES.items():
-        chemin_dossier = os.path.join(RES_DIR, dossier)
-        os.makedirs(chemin_dossier, exist_ok=True)
-        grande.resize((taille, taille), Image.LANCZOS).save(os.path.join(chemin_dossier, "ic_launcher.png"))
-        grande_ronde.resize((taille, taille), Image.LANCZOS).save(os.path.join(chemin_dossier, "ic_launcher_round.png"))
-    # Supprime la version "adaptive icon" (XML + calques vectoriels) fournie par defaut par
-    # Capacitor : sur Android 8+, ces fichiers XML ont priorite sur les PNG ci-dessus et
-    # afficheraient sinon le logo Capacitor par defaut au lieu du notre.
-    anydpi = os.path.join(RES_DIR, "mipmap-anydpi-v26")
-    if os.path.isdir(anydpi):
-        for f in os.listdir(anydpi):
-            os.remove(os.path.join(anydpi, f))
-        os.rmdir(anydpi)
-    print("Icone installee dans les", len(TAILLES), "dossiers mipmap.")
+
+    repli = generer_S()
+    legacy = charger(SOURCES_LEGACY, repli)
+    legacy_ronde = round_version(legacy)
+    adaptatif_fg = charger(SOURCES_ADAPTATIF, repli)
+
+    for dossier, taille in TAILLES_LEGACY.items():
+        chemin = os.path.join(RES_DIR, dossier)
+        os.makedirs(chemin, exist_ok=True)
+        legacy.resize((taille, taille), Image.LANCZOS).save(os.path.join(chemin, "ic_launcher.png"))
+        legacy_ronde.resize((taille, taille), Image.LANCZOS).save(os.path.join(chemin, "ic_launcher_round.png"))
+
+    for dossier, taille in TAILLES_ADAPTATIF.items():
+        chemin = os.path.join(RES_DIR, dossier)
+        os.makedirs(chemin, exist_ok=True)
+        adaptatif_fg.resize((taille, taille), Image.LANCZOS).save(os.path.join(chemin, "ic_launcher_foreground.png"))
+
+    # Couleur de fond du calque "background" de l'icone adaptative — le XML par defaut de
+    # Capacitor (mipmap-anydpi-v26/ic_launcher.xml) reference deja cette couleur, on la
+    # remplace juste par le fond sombre de l'app.
+    couleurs_dir = os.path.join(RES_DIR, "values")
+    os.makedirs(couleurs_dir, exist_ok=True)
+    with open(os.path.join(couleurs_dir, "ic_launcher_background.xml"), "w") as f:
+        f.write('<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
+                '    <color name="ic_launcher_background">#131313</color>\n</resources>\n')
+
+    print("Icone (classique + adaptative) installee.")
 
 if __name__ == "__main__":
     main()
