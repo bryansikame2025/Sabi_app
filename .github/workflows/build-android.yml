@@ -40,6 +40,9 @@ jobs:
       - name: Generer l'ecran de demarrage (logo Sabi centre sur fond sombre)
         run: python3 scripts/generate_splash.py
 
+      - name: Configurer Firebase Cloud Messaging (notifications push natives)
+        run: python3 scripts/patch_google_services.py
+
       - name: Choisir la version de MainActivity (protegee, ou sans protection pour captures Play Store)
         run: |
           DEST="android/app/src/main/java/com/sabi/app/MainActivity.java"
