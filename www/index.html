@@ -8586,6 +8586,36 @@
       const activeBottom = tabs.some(t => t.id === tab) ? tab : null;
       const afficherRetour = secondaryIds.includes(tab) || tab === "contribuer";
       const retourVers = tab === "contribuer" ? "accueil" : "profil";
+      const estProfil = tab === "profil";
+
+      // Le bouton/geste "retour" du système Android ferme l'app par défaut dès qu'il n'y a pas
+      // d'historique de navigateur — ce qui est toujours le cas ici puisque le changement d'onglet
+      // se fait par état React, jamais par l'URL. Sans ce branchement, appuyer sur retour quitte
+      // Sabi immédiatement, peu importe l'écran affiché. On intercepte donc l'événement natif pour
+      // reproduire une hiérarchie de navigation cohérente : écran secondaire -> écran d'origine ;
+      // onglet principal -> Accueil ; déjà sur Accueil -> quitter seulement après un 2ᵉ appui
+      // rapproché (évite les sorties accidentelles).
+      // Placé ICI, avant tout "return" conditionnel (écran de chargement / connexion) : un Hook
+      // doit toujours s'exécuter dans le même ordre à chaque rendu, sans quoi React plante
+      // ("Rendered more hooks than during the previous render") dès que l'utilisateur se connecte.
+      const dernierAppuiRetour = React.useRef(0);
+      useEffect(() => {
+        if (!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) return;
+        const { App } = window.Capacitor.Plugins || {};
+        if (!App) return;
+        const gerer = () => {
+          if (menuOuvert) { setMenuOuvert(false); return; }
+          if (estProfil) { setTab(tabAvantProfil); return; }
+          if (afficherRetour) { setTab(retourVers); return; }
+          if (tab !== "accueil") { setTab("accueil"); return; }
+          const maintenant = Date.now();
+          if (maintenant - dernierAppuiRetour.current < 2000) { App.exitApp(); return; }
+          dernierAppuiRetour.current = maintenant;
+          showToast("Appuie encore sur retour pour quitter");
+        };
+        App.addListener("backButton", gerer);
+        return () => { App.removeAllListeners(); };
+      }, [tab, estProfil, afficherRetour, retourVers, tabAvantProfil, menuOuvert]);
 
       // Tant qu'on ne sait pas si l'utilisateur est connecté, on attend
       if (!authChecked) {
@@ -8634,34 +8664,6 @@
         simulateur: () => React.createElement(SimulateurTab, { authUid: authUser.uid, profilAnnee: profil.annee, profilFiliere: profil.filiere }),
         mentor: () => React.createElement(MentorTab, { authUid: authUser.uid, profil: profil, pseudo: pseudo, abonnement: abonnement, isOwner: isOwner, isAdmin: isAdminEffectif, setTab: setTab, resumes: resumes }),
       };
-
-      const estProfil = tab === "profil";
-
-      // Le bouton/geste "retour" du système Android ferme l'app par défaut dès qu'il n'y a pas
-      // d'historique de navigateur — ce qui est toujours le cas ici puisque le changement d'onglet
-      // se fait par état React, jamais par l'URL. Sans ce branchement, appuyer sur retour quitte
-      // Sabi immédiatement, peu importe l'écran affiché. On intercepte donc l'événement natif pour
-      // reproduire une hiérarchie de navigation cohérente : écran secondaire -> écran d'origine ;
-      // onglet principal -> Accueil ; déjà sur Accueil -> quitter seulement après un 2ᵉ appui
-      // rapproché (évite les sorties accidentelles).
-      const dernierAppuiRetour = React.useRef(0);
-      useEffect(() => {
-        if (!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) return;
-        const { App } = window.Capacitor.Plugins || {};
-        if (!App) return;
-        const gerer = () => {
-          if (menuOuvert) { setMenuOuvert(false); return; }
-          if (estProfil) { setTab(tabAvantProfil); return; }
-          if (afficherRetour) { setTab(retourVers); return; }
-          if (tab !== "accueil") { setTab("accueil"); return; }
-          const maintenant = Date.now();
-          if (maintenant - dernierAppuiRetour.current < 2000) { App.exitApp(); return; }
-          dernierAppuiRetour.current = maintenant;
-          showToast("Appuie encore sur retour pour quitter");
-        };
-        App.addListener("backButton", gerer);
-        return () => { App.removeAllListeners(); };
-      }, [tab, estProfil, afficherRetour, retourVers, tabAvantProfil, menuOuvert]);
 
       return React.createElement("div", { className: "h-screen w-full flex justify-center overflow-hidden", style: { backgroundColor: COLORS.bg } },
         React.createElement("div", { className: "w-full max-w-md h-screen flex flex-col relative overflow-hidden", style: { backgroundColor: COLORS.bg } },
