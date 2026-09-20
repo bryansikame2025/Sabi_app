@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "489522682522",
+    "firebase_url": "https://sabi-41823-default-rtdb.firebaseio.com",
+    "project_id": "sabi-41823",
+    "storage_bucket": "sabi-41823.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:489522682522:android:39c223bd40326ebce05d23",
+        "android_client_info": {
+          "package_name": "com.sabi.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "489522682522-5sfui9ril4mrg8uv7auvnqsbhtkbppj5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6kSMiImlpOx6mGFPKlgIyGIKbXN3uZQM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "489522682522-5sfui9ril4mrg8uv7auvnqsbhtkbppj5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
