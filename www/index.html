@@ -51,6 +51,16 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Sabi" />
 
+  <!-- Préconnexions : négocie DNS/TLS avec ces domaines en avance, pendant que le reste de la
+       page se charge — réduit le temps d'attente réel avant que chaque script démarre.
+       Aucun changement de comportement, juste plus rapide. -->
+  <link rel="preconnect" href="https://unpkg.com" crossorigin />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -222,7 +232,7 @@
     }
 
     button { transition: transform 120ms ease, opacity 150ms ease, background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease; }
-    button:active { transform: scale(0.97); }
+    button:active { transform: scale(0.94); }
     input, textarea, select { transition: border-color 150ms ease, box-shadow 150ms ease; }
     input:focus, textarea:focus, select:focus { border-color: var(--gold) !important; box-shadow: 0 0 0 3px var(--gold-soft); }
 
@@ -238,20 +248,39 @@
 
     /* Glissement (swipe) entre onglets adjacents — l'onglet entrant arrive du côté vers lequel on a poussé. */
     @keyframes sabi-slide-from-right {
-      0%   { transform: translateX(24px); opacity: 0.4; }
+      0%   { transform: translateX(36px); opacity: 0.3; }
       100% { transform: translateX(0); opacity: 1; }
     }
     @keyframes sabi-slide-from-left {
-      0%   { transform: translateX(-24px); opacity: 0.4; }
+      0%   { transform: translateX(-36px); opacity: 0.3; }
       100% { transform: translateX(0); opacity: 1; }
     }
-    .sabi-swipe-in-left { animation: sabi-slide-from-right 220ms ease; }
-    .sabi-swipe-in-right { animation: sabi-slide-from-left 220ms ease; }
+    .sabi-swipe-in-left { animation: sabi-slide-from-right 260ms cubic-bezier(0.22, 0.61, 0.36, 1); }
+    .sabi-swipe-in-right { animation: sabi-slide-from-left 260ms cubic-bezier(0.22, 0.61, 0.36, 1); }
     @keyframes sabi-fade-up {
-      0%   { opacity: 0; transform: translateY(6px); }
+      0%   { opacity: 0; transform: translateY(14px); }
       100% { opacity: 1; transform: translateY(0); }
     }
-    .sabi-tab-fade { animation: sabi-fade-up 200ms ease; }
+    .sabi-tab-fade { animation: sabi-fade-up 280ms cubic-bezier(0.22, 0.61, 0.36, 1); }
+
+    /* Révélation en cascade : chaque enfant direct apparaît un peu après le précédent, au lieu
+       que toute une liste surgisse d'un bloc — c'est ça qui donne l'impression de vie sur les
+       écrans à listes (fil, épreuves, chat, classement...). Un seul className à poser sur le
+       conteneur, tout le reste est automatique en CSS pur. */
+    .sabi-liste-animee > * {
+      animation: sabi-fade-up 420ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+    }
+    .sabi-liste-animee > *:nth-child(1) { animation-delay: 0ms; }
+    .sabi-liste-animee > *:nth-child(2) { animation-delay: 40ms; }
+    .sabi-liste-animee > *:nth-child(3) { animation-delay: 80ms; }
+    .sabi-liste-animee > *:nth-child(4) { animation-delay: 120ms; }
+    .sabi-liste-animee > *:nth-child(5) { animation-delay: 160ms; }
+    .sabi-liste-animee > *:nth-child(6) { animation-delay: 200ms; }
+    .sabi-liste-animee > *:nth-child(n+7) { animation-delay: 220ms; }
+
+    /* Retour tactile plus vivant sur les cartes/lignes cliquables (pas seulement les boutons). */
+    .sabi-carte-interactive { transition: transform 150ms ease, box-shadow 150ms ease; }
+    .sabi-carte-interactive:active { transform: scale(0.98); }
 
     /* Toast (points gagnés, confirmations...) */
     @keyframes sabi-toast-in {
@@ -298,13 +327,13 @@
     .corrige-rendu .katex-display { overflow-x: auto; overflow-y: hidden; margin: 0.6em 0; }
     .corrige-rendu .katex .frac-line, .corrige-rendu .katex .rule { border-color: #e5e2e1 !important; background: #e5e2e1 !important; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/marked@11/marked.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/marked@11/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/contrib/auto-render.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/contrib/auto-render.min.js"></script>
   <!-- Carte du campus — Leaflet + tuiles OpenStreetMap/Esri, gratuit et sans clé API ni facturation. -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
   <div id="root"></div>
@@ -408,12 +437,37 @@
     let messaging = null;
     try { if (firebase.messaging.isSupported()) messaging = firebase.messaging(); } catch {}
 
-    // Demande la permission navigateur puis récupère le token FCM de cet appareil, à appeler
-    // uniquement sur un geste utilisateur explicite (toggle "Notifications" dans le menu).
-    // Le token est rangé sous users/{uid}/fcmToken : un seul appareil actif par compte pour
-    // l'instant (un futur multi-appareils demanderait une liste plutôt qu'un champ unique).
+    // Demande la permission puis récupère le token de cet appareil, à appeler uniquement sur un
+    // geste utilisateur explicite (toggle "Notifications" dans le menu). Le token est rangé sous
+    // users/{uid}/fcmToken : un seul appareil actif par compte pour l'instant (un futur
+    // multi-appareils demanderait une liste plutôt qu'un champ unique).
+    //
+    // Deux méthodes selon le contexte : dans l'app native (Capacitor), on passe par le vrai FCM
+    // Android (seule méthode qui délivre les notifications même app totalement fermée) ; sur
+    // navigateur, on garde le "web push" existant (via service worker, ne marche que app/onglet
+    // ouvert au moins en arrière-plan récent).
     async function activerNotificationsPush(uid) {
-      if (!messaging || !uid) return { ok: false, raison: "non-supporte" };
+      if (!uid) return { ok: false, raison: "non-supporte" };
+      if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+        try {
+          const { PushNotifications } = window.Capacitor.Plugins;
+          if (!PushNotifications) return { ok: false, raison: "non-supporte" };
+          const etat = await PushNotifications.requestPermissions();
+          if (etat.receive !== "granted") return { ok: false, raison: "refuse" };
+          return await new Promise(resolve => {
+            PushNotifications.addListener("registration", async (token) => {
+              try { await usersRef.child(uid).update({ fcmToken: token.value }); resolve({ ok: true }); }
+              catch { resolve({ ok: false, raison: "erreur" }); }
+            });
+            PushNotifications.addListener("registrationError", () => resolve({ ok: false, raison: "erreur" }));
+            PushNotifications.register();
+          });
+        } catch (err) {
+          console.error("Erreur activation push native :", err);
+          return { ok: false, raison: "erreur" };
+        }
+      }
+      if (!messaging) return { ok: false, raison: "non-supporte" };
       try {
         const permission = await Notification.requestPermission();
         if (permission !== "granted") return { ok: false, raison: "refuse" };
@@ -436,9 +490,18 @@
       try { await usersRef.child(uid).child("fcmToken").remove(); } catch {}
     }
 
-    // Un message peut arriver alors que l'onglet est déjà au premier plan : dans ce cas FCM ne
-    // passe pas par le service worker (qui gère lui les pushs en arrière-plan, voir sw.js) mais
-    // déclenche cet événement — on réutilise le système de bulle existant pour rester cohérent.
+    // Un message peut arriver alors que l'app est déjà au premier plan : dans ce cas le système
+    // ne montre pas sa propre notification — on réutilise le système de bulle existant, en natif
+    // comme sur le web, pour rester cohérent des deux côtés.
+    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+      document.addEventListener("deviceready", () => {
+        const { PushNotifications } = window.Capacitor.Plugins || {};
+        if (!PushNotifications) return;
+        PushNotifications.addListener("pushNotificationReceived", (notif) => {
+          notifierBulle((notif.body || ""), { titre: notif.title || "Sabi", icone: "bell" });
+        });
+      });
+    }
     if (messaging) {
       messaging.onMessage((payload) => {
         const titre = (payload.notification && payload.notification.title) || "Sabi";
@@ -514,6 +577,23 @@
     // comme un navigateur — elle doit appeler l'adresse complète. Cette constante ne change
     // rien pour la version web : elle continue de fonctionner normalement.
     const NETLIFY_BASE_URL = "https://sabi-iut-fv.netlify.app";
+
+    // ========== NOTIFICATIONS PUSH ==========
+    // Appelle la fonction serveur qui envoie une vraie notification (reçue même app fermée),
+    // soit à un seul utilisateur (cibleUid), soit à tout le monde (diffusion: true).
+    // "Best-effort" volontaire : un souci d'envoi ne doit jamais bloquer l'action principale
+    // (envoyer un message, publier une épreuve...) — juste un avertissement en console.
+    async function envoyerNotification({ cibleUid, diffusion, titre, corps }) {
+      try {
+        await fetch(NETLIFY_BASE_URL + "/.netlify/functions/envoyer-notification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cibleUid, diffusion, titre, corps })
+        });
+      } catch (e) {
+        console.warn("Notification non envoyée :", e.message || e);
+      }
+    }
 
     // ========== GEMINI (Corrigé IA) ==========
     // La clé secrète ne vit plus ici : elle est lue côté serveur (Environment variable Netlify
@@ -2882,12 +2962,45 @@
         setChargement(true);
         const matriculeNorm = matricule.trim().toUpperCase();
         const matriculeCle = matriculeNorm.replace(/[.#$/\[\]]/g, "_");
+        let cred = null;
         try {
-          const cred = await auth.createUserWithEmailAndPassword(email.trim(), password);
+          cred = await auth.createUserWithEmailAndPassword(email.trim(), password);
+          // Force le jeton d'authentification à se rafraîchir tout de suite : sans ça, la base
+          // de données peut encore voir "non connecté" pendant une fraction de seconde juste
+          // après la création du compte, et rejeter TOUTE l'écriture du profil qui suit (un seul
+          // champ refusé = rien n'est enregistré, c'est le fonctionnement normal de Firebase).
+          await cred.user.getIdToken(true);
           // Le matricule est optionnel à l'inscription : on écrit "null" plutôt qu'une chaîne
           // vide s'il n'a pas été renseigné, pour que la règle Firebase "!data.exists()" reste
           // vraie et permette à l'étudiant de le compléter plus tard depuis son profil.
-          await usersRef.child(cred.user.uid).set({ pseudo: pseudo.trim(), matricule: matriculeNorm || null, annee, filiere, points: 0, whatsapp: whatsapp.trim() || null });
+          //
+          // Ce compte Firebase Auth vient d'être créé juste au-dessus : si l'écriture du profil
+          // (pseudo, filière, etc.) échoue maintenant — coupure réseau, ou la base ne voit pas
+          // encore l'utilisateur comme authentifié pile à cet instant (décalage courant juste
+          // après une inscription) — on se retrouve avec un compte "fantôme" qui peut se
+          // connecter mais n'a aucune info dessus (pseudo vide, filière absente). C'est ce qui
+          // provoquait les entrées "(sans pseudo)" vues côté administration. On réessaie donc
+          // plusieurs fois avant d'abandonner.
+          let derniereErreur = null;
+          let ecrit = false;
+          for (let tentative = 0; tentative < 3 && !ecrit; tentative++) {
+            if (tentative > 0) await new Promise(r => setTimeout(r, 900 * tentative));
+            try {
+              await usersRef.child(cred.user.uid).set({ pseudo: pseudo.trim(), matricule: matriculeNorm || null, annee, filiere, points: 0, whatsapp: whatsapp.trim() || null });
+              ecrit = true;
+            } catch (err) {
+              derniereErreur = err;
+            }
+          }
+          if (!ecrit) {
+            // Toujours en échec après plusieurs essais : on annule la création du compte plutôt
+            // que de laisser un compte fantôme derrière nous — l'étudiant peut alors simplement
+            // réessayer l'inscription depuis le début une fois sa connexion rétablie.
+            try { await cred.user.delete(); } catch {}
+            setErreur("Ton profil n'a pas pu être enregistré (connexion instable). Le compte n'a pas été créé — réessaie.");
+            setChargement(false);
+            return;
+          }
           if (matriculeNorm.length > 0) await matriculesRef.child(matriculeCle).set(cred.user.uid);
           try { sessionStorage.removeItem("sabiInscriptionBrouillon"); } catch {}
         } catch (e) {
@@ -3095,7 +3208,11 @@
                 : React.createElement("button", { onClick: envoyerEtPasserAOtp, className: "text-xs", style: { color: COLORS.gold } }, "Renvoyer le code")
             ),
             erreur && React.createElement("p", { className: "text-xs text-center", style: { color: COLORS.terraText } }, erreur),
-            React.createElement(BoutonSuivant, { onClick: verifierOtp, chargement: chargement, disabled: otpCode.length !== 6 }, "Vérifier")
+            React.createElement(BoutonSuivant, { onClick: verifierOtp, chargement: chargement, disabled: otpCode.length !== 6 }, "Vérifier"),
+            // Si l'email n'arrive pas (spam, service de mail capricieux...), pas de raison de
+            // bloquer l'inscription — cette vérification reste secondaire par rapport au compte
+            // lui-même (déjà sécurisé par mot de passe à l'étape suivante).
+            React.createElement("button", { onClick: () => { setOtpAttendu(null); setStep("mdp"); }, className: "text-xs self-center", style: { color: COLORS.textFaint } }, "Passer cette étape")
           ), React.createElement(EnteteEtape, { onBack: () => setStep("verif-choix") })
         );
       }
@@ -3270,7 +3387,7 @@
             style: { color: COLORS.terraText, borderColor: "rgba(255,180,171,0.4)" }
           }, React.createElement(Icon, { name: "trash", size: 12 }), "Tout supprimer")
         ),
-        React.createElement("div", { className: "flex flex-col gap-3" },
+        React.createElement("div", { className: "flex flex-col gap-3 sabi-liste-animee" },
           sorted.length === 0 ? React.createElement(EmptyState, { icon: "radio", text: "Aucune actualité pour l'instant." }) : sorted.map(c => React.createElement(SabiCard, { key: c.id, card: c, onVote: onVote, myVote: myVotes[c.id], onPin: onPin, points: points, isMine: c.auteur === pseudo, isOwner: isOwner, onDelete: onDelete }))
         )
       );
@@ -3720,7 +3837,7 @@
 
       return React.createElement("div", { className: "flex flex-col h-full min-h-0" },
         React.createElement("p", { className: "text-[11px] mb-3 flex-shrink-0", style: { color: COLORS.textFaint } }, "Chat public IUT FV Bandjoun — visible par tous, contrairement aux votes."),
-        React.createElement("div", { className: "flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1" },
+        React.createElement("div", { className: "flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1 sabi-liste-animee" },
           messages.length === 0
             ? React.createElement(EmptyState, { icon: "message-circle", text: "Aucun message pour l'instant. Lance la discussion." })
             : messages.map(m => React.createElement("div", { key: m.id, className: "rounded-lg px-3 py-2 max-w-[85%]", style: { backgroundColor: m.pseudo === pseudo ? "rgba(242,202,80,0.15)" : COLORS.surface, alignSelf: m.pseudo === pseudo ? "flex-end" : "flex-start" } },
@@ -4419,7 +4536,7 @@
           matiereRapide && React.createElement("button", { onClick: () => allerVersMatiere(""), className: "self-start text-[10px] font-mono uppercase", style: { color: COLORS.gold } }, "Réinitialiser")
         ),
 
-        React.createElement("div", { className: "flex flex-col gap-3" },
+        React.createElement("div", { className: "flex flex-col gap-3 sabi-liste-animee" },
           filteredParMatiere.length === 0
             ? React.createElement(EmptyState, { icon: "book", text: matiereRapide ? "Aucune épreuve pour cette matière." : "Aucune épreuve pour l'instant. Si tu es un ancien, sois le premier à en publier une." })
             : filteredParMatiere.map((ep, idx) => {
@@ -5470,6 +5587,17 @@
       // Tri par filière de la liste complète des utilisateurs, en bas du panneau admin
       const [filiereFiltreAdmin, setFiliereFiltreAdmin] = useState("toutes");
       const [anneeFiltreAdmin, setAnneeFiltreAdmin] = useState("toutes");
+      const [annonceTitre, setAnnonceTitre] = useState("");
+      const [annonceTexte, setAnnonceTexte] = useState("");
+      const [annonceEnvoi, setAnnonceEnvoi] = useState(false);
+      const envoyerAnnonce = async () => {
+        if (!annonceTexte.trim()) return;
+        setAnnonceEnvoi(true);
+        await envoyerNotification({ diffusion: true, titre: annonceTitre.trim() || "Annonce Sabi", corps: annonceTexte.trim() });
+        setAnnonceEnvoi(false);
+        setAnnonceTitre("");
+        setAnnonceTexte("");
+      };
 
       useEffect(() => {
         if (!isOwner) return;
@@ -5649,6 +5777,22 @@
             React.createElement("button", { onClick: () => validerVip(d), className: "text-[11px] font-mono px-3 py-1.5 rounded-full flex items-center gap-1", style: { backgroundColor: COLORS.forest, color: COLORS.text } }, React.createElement(Icon,{name:"check",size:11}), " Valider"),
             React.createElement("button", { onClick: () => rejeterVip(d), className: "text-[11px] font-mono px-2.5 py-1.5 rounded-full flex items-center", style: { color: COLORS.terraText, border: "1px solid rgba(255,180,171,0.4)" } }, React.createElement(Icon,{name:"x",size:11}))
           ))
+        ),
+        React.createElement("div", { className: "flex flex-col gap-2 rounded-xl border p-3", style: { borderColor: COLORS.gold, backgroundColor: "rgba(242,202,80,0.06)" } },
+          React.createElement("p", { className: "text-sm font-semibold flex items-center gap-1.5", style: { color: COLORS.gold } }, React.createElement(Icon, { name: "bell", size: 14 }), " Annonce push à tous les utilisateurs"),
+          React.createElement("input", {
+            value: annonceTitre, onChange: e => setAnnonceTitre(e.target.value), placeholder: "Titre (optionnel, ex: Sabi)",
+            className: "rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
+          }),
+          React.createElement("textarea", {
+            value: annonceTexte, onChange: e => setAnnonceTexte(e.target.value), placeholder: "Message de la notification…", rows: 2,
+            className: "rounded-lg px-3 py-2 text-sm outline-none border resize-none", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
+          }),
+          React.createElement("button", {
+            onClick: envoyerAnnonce, disabled: annonceEnvoi || !annonceTexte.trim(),
+            className: "self-end text-xs font-mono px-4 py-2 rounded-full flex items-center gap-1.5",
+            style: { backgroundColor: COLORS.gold, color: COLORS.bg, opacity: (annonceEnvoi || !annonceTexte.trim()) ? 0.5 : 1 }
+          }, React.createElement(Icon, { name: "bell", size: 12 }), annonceEnvoi ? "Envoi…" : "Envoyer à tous")
         ),
         filieresPresentesAdmin.length > 0 && React.createElement("div", { className: "flex flex-col gap-2" },
           React.createElement("p", { className: "text-sm font-semibold flex items-center gap-1.5", style: { color: COLORS.gold } }, React.createElement(Icon, { name: "users", size: 14 }), " Utilisateurs — trier par filière et année"),
@@ -7983,6 +8127,7 @@
       const handleSendMessage = useCallback((texte) => {
         const msgId = "m-" + Date.now();
         chatRef.child(msgId).set({ pseudo, texte, badge: badgeActif, timestamp: Date.now() });
+        envoyerNotification({ diffusion: true, titre: pseudo + " (Chat Sabi)", corps: texte.slice(0, 120) });
       }, [pseudo, badgeActif]);
 
       // Assistance — l'étudiant envoie un message au propriétaire ; "lu: false" fait apparaître
@@ -8014,6 +8159,7 @@
         if (imageUrl) data.imageUrl = imageUrl;
         return epreuvesRef.child(annee).child(filiere).child(epId).set(data).then(() => {
           addPoints(15);
+          envoyerNotification({ diffusion: true, titre: "Nouvelle épreuve — " + matiere, corps: pseudo + " a ajouté une épreuve pour " + filiere + " " + annee });
         });
       }, [pseudo, addPoints]);
 
@@ -8024,7 +8170,9 @@
         const data = { matiere, annee, filiere, contenu, auteur: pseudo, date: new Date().toISOString().slice(0, 10) };
         if (semestre) data.semestre = semestre;
         if (pdfUrl) data.pdfUrl = pdfUrl;
-        return resumesRef.child(id).set(data);
+        return resumesRef.child(id).set(data).then(() => {
+          envoyerNotification({ diffusion: true, titre: "Nouveau résumé — " + matiere, corps: "Disponible pour " + filiere + " " + annee });
+        });
       }, [pseudo, isAdminEffectif]);
 
       // Réservé au propriétaire : supprime définitivement un résumé
@@ -8206,13 +8354,20 @@
 
       const handleRespondBounty = useCallback((bountyId, texte) => {
         bountyRef.child(bountyId).child("reponses").push({ texte, auteur: pseudo, uid: authUser.uid, date: new Date().toISOString().slice(0, 10) });
-      }, [pseudo, authUser]);
+        const bounty = bounties.find(b => b.id === bountyId);
+        if (bounty && bounty.uid && bounty.uid !== authUser.uid) {
+          envoyerNotification({ cibleUid: bounty.uid, titre: "Nouvelle réponse à ton Bounty", corps: pseudo + " a répondu à \"" + bounty.titre + "\"" });
+        }
+      }, [pseudo, authUser, bounties]);
 
       const handleChooseWinner = useCallback((bounty, reponse) => {
         // Le créateur désigne juste le gagnant — c'est le gagnant lui-même qui réclamera
         // ses points (voir plus bas), pour que personne n'ait jamais à écrire dans le
         // compte d'un autre utilisateur.
         bountyRef.child(bounty.id).update({ statut: "resolu", gagnantUid: reponse.uid, gagnantPseudo: reponse.auteur, reclame: false });
+        if (reponse.uid) {
+          envoyerNotification({ cibleUid: reponse.uid, titre: "Tu as gagné un Bounty 🎉", corps: "\"" + bounty.titre + "\" — " + bounty.mise + " points t'attendent" });
+        }
       }, []);
 
       // Réclame automatiquement les primes gagnées — chacun ne crédite que son propre compte
@@ -8482,6 +8637,32 @@
 
       const estProfil = tab === "profil";
 
+      // Le bouton/geste "retour" du système Android ferme l'app par défaut dès qu'il n'y a pas
+      // d'historique de navigateur — ce qui est toujours le cas ici puisque le changement d'onglet
+      // se fait par état React, jamais par l'URL. Sans ce branchement, appuyer sur retour quitte
+      // Sabi immédiatement, peu importe l'écran affiché. On intercepte donc l'événement natif pour
+      // reproduire une hiérarchie de navigation cohérente : écran secondaire -> écran d'origine ;
+      // onglet principal -> Accueil ; déjà sur Accueil -> quitter seulement après un 2ᵉ appui
+      // rapproché (évite les sorties accidentelles).
+      const dernierAppuiRetour = React.useRef(0);
+      useEffect(() => {
+        if (!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) return;
+        const { App } = window.Capacitor.Plugins || {};
+        if (!App) return;
+        const gerer = () => {
+          if (menuOuvert) { setMenuOuvert(false); return; }
+          if (estProfil) { setTab(tabAvantProfil); return; }
+          if (afficherRetour) { setTab(retourVers); return; }
+          if (tab !== "accueil") { setTab("accueil"); return; }
+          const maintenant = Date.now();
+          if (maintenant - dernierAppuiRetour.current < 2000) { App.exitApp(); return; }
+          dernierAppuiRetour.current = maintenant;
+          showToast("Appuie encore sur retour pour quitter");
+        };
+        App.addListener("backButton", gerer);
+        return () => { App.removeAllListeners(); };
+      }, [tab, estProfil, afficherRetour, retourVers, tabAvantProfil, menuOuvert]);
+
       return React.createElement("div", { className: "h-screen w-full flex justify-center overflow-hidden", style: { backgroundColor: COLORS.bg } },
         React.createElement("div", { className: "w-full max-w-md h-screen flex flex-col relative overflow-hidden", style: { backgroundColor: COLORS.bg } },
           // Bannière "Installer Sabi" — visible seulement si Chrome a confirmé que l'app est
@@ -8548,6 +8729,7 @@
             onTouchStart: onSwipeTouchStart,
             onTouchEnd: onSwipeTouchEnd,
             onAnimationEnd: () => setSwipeAnim(null),
+            style: { touchAction: "pan-y" },
             className: "flex-1 min-h-0 " +
               (SWIPE_TABS.includes(tab) && swipeAnim ? (swipeAnim === "left" ? "sabi-swipe-in-left" : "sabi-swipe-in-right") : "sabi-tab-fade") + " " +
               (tab === "carte"
