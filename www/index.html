@@ -2561,6 +2561,18 @@
     // ===== Notifications en bulle façon WhatsApp =====
     // Bus d'événements minimal : n'importe quel code de l'app peut déclencher une bulle sans avoir
     // à faire passer une fonction en props sur toute la profondeur des composants.
+    // Ouvre un lien externe (PDF, WhatsApp...) de façon fiable des deux côtés : sur le web, le
+    // comportement normal du navigateur (nouvel onglet) suffit ; dans l'app native, un simple
+    // target="_blank" ne fait rien car il n'y a pas de navigateur système accessible de cette
+    // façon — il faut passer explicitement par le plugin natif @capacitor/browser.
+    function ouvrirExterne(e, url) {
+      if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+        e.preventDefault();
+        const { Browser } = window.Capacitor.Plugins || {};
+        if (Browser) Browser.open({ url });
+      }
+    }
+
     function notifierBulle(texte, options = {}) {
       if (!notificationsActives) return;
       window.dispatchEvent(new CustomEvent("sabi-notif", { detail: { texte, ...options } }));
@@ -4092,6 +4104,7 @@
           React.createElement("div", { className: "flex items-center gap-2" },
             React.createElement("a", {
               href: rawUrl, target: "_blank", rel: "noopener noreferrer",
+              onClick: (e) => ouvrirExterne(e, rawUrl),
               className: "text-xs font-mono px-3 py-1.5 rounded-full",
               style: { backgroundColor: "rgba(242,202,80,0.15)", color: COLORS.gold }
             }, "↗ Ouvrir directement"),
@@ -4801,20 +4814,37 @@
       const [previewUrl, setPreviewUrl] = useState(null);
       const [iaLoading, setIaLoading] = useState(null); // id du résumé en cours de génération
       const [iaErreur, setIaErreur] = useState(null);
+      // Filtres — même principe que l'onglet Épreuves : trier par année/filière, puis accès
+      // rapide à une matière précise parmi celles réellement publiées (pas le programme complet,
+      // seulement ce qui existe déjà comme résumé).
+      const [filtreAnneeRes, setFiltreAnneeRes] = useState("Toutes");
+      const [filtreFiliereRes, setFiltreFiliereRes] = useState("Toutes");
+      const [filtreSemestreRes, setFiltreSemestreRes] = useState("Toutes");
+      const [matiereRapideRes, setMatiereRapideRes] = useState("");
 
       if (!acces) return React.createElement(PaywallSabiPro, { setTab: setTab, palierRequis: "proplus" });
+
+      const resumesFiltres = resumes.filter(r =>
+        (filtreAnneeRes === "Toutes" || r.annee === filtreAnneeRes) &&
+        (filtreFiliereRes === "Toutes" || r.filiere === filtreFiliereRes) &&
+        (filtreSemestreRes === "Toutes" || r.semestre === filtreSemestreRes) &&
+        (!matiereRapideRes || r.matiere === matiereRapideRes)
+      );
+      const matieresDisponibles = [...new Set(
+        resumes.filter(r => (filtreAnneeRes === "Toutes" || r.annee === filtreAnneeRes) && (filtreFiliereRes === "Toutes" || r.filiere === filtreFiliereRes) && (filtreSemestreRes === "Toutes" || r.semestre === filtreSemestreRes)).map(r => r.matiere)
+      )].sort((a, b) => a.localeCompare(b));
 
       const CONTENU_MIN_POUR_IA_RESUME = 50;
       const handleGenererResumeIA = (r) => {
         setIaErreur(null);
         const texteSuffisant = (r.contenu || "").trim().length >= CONTENU_MIN_POUR_IA_RESUME;
         if (!texteSuffisant && !r.pdfUrl) {
-          setIaErreur({ id: r.id, message: "Pas assez de matière pour générer un résumé fiable (contenu trop court et aucun PDF joint)." });
+          setIaErreur({ id: r.id, message: "Désolé, ce fichier ne dispose pas de résumé — pas assez de contenu et aucun PDF joint." });
           return;
         }
         setIaLoading(r.id);
         onGenerateResumeIA(r)
-          .catch(err => setIaErreur({ id: r.id, message: err.message }))
+          .catch(err => setIaErreur({ id: r.id, message: "Désolé, ce fichier ne dispose pas de résumé pour l'instant : " + err.message }))
           .finally(() => setIaLoading(null));
       };
 
@@ -4846,9 +4876,69 @@
       return React.createElement("div", { className: "flex flex-col gap-4" },
         React.createElement("h2", { className: "text-lg font-bold", style: { color: COLORS.text, fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: "-0.02em" } }, "Résumés de cours"),
         React.createElement("p", { className: "text-xs flex items-center gap-1.5", style: { color: COLORS.textFaint } }, React.createElement(Icon,{name:"gem",size:13}), " Exclusivité Sabi Pro+"),
-        resumes.length === 0
-          ? React.createElement(EmptyState, { icon: "file-text", text: "Aucun résumé publié pour l'instant." })
-          : resumes.map(r => {
+
+        // Formulaire de publication — remonté en haut, avant la liste (plus visible, plus rapide
+        // d'accès pour l'admin plutôt que de devoir descendre tout le fil).
+        isAdmin && (
+          !showForm
+            ? React.createElement("button", { onClick: () => setShowForm(true), className: "flex items-center justify-center gap-2 text-sm font-mono py-2.5 rounded-lg border border-dashed", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, "+ Publier un résumé")
+            : React.createElement("div", { className: "rounded-xl border p-4 flex flex-col gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+                React.createElement("input", { value: matiere, onChange: e => setMatiere(e.target.value), placeholder: "Matière", className: "w-full rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
+                React.createElement("div", { className: "grid grid-cols-3 gap-2" },
+                  React.createElement("select", { value: annee, onChange: e => setAnnee(e.target.value), className: "rounded-lg px-2 py-2 text-xs outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }, ANNEES.map(a => React.createElement("option", { key: a }, a))),
+                  React.createElement("select", { value: semestre, onChange: e => setSemestre(e.target.value), className: "rounded-lg px-2 py-2 text-xs outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }, SEMESTRES.map(s => React.createElement("option", { key: s }, s))),
+                  React.createElement("select", { value: filiere, onChange: e => setFiliere(e.target.value), className: "rounded-lg px-2 py-2 text-xs outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }, FILIERES.map(f => React.createElement("option", { key: f }, f)))
+                ),
+                React.createElement("textarea", { value: contenu, onChange: e => setContenu(e.target.value), placeholder: "Contenu du résumé...", rows: 5, className: "w-full rounded-lg px-3 py-2 text-sm outline-none border resize-none", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
+                React.createElement("input", { type: "file", accept: "application/pdf", onChange: e => setPdfFile(e.target.files[0] || null), disabled: uploadPct !== null, className: "text-xs", style: { color: COLORS.textMuted } }),
+                uploadPct !== null && React.createElement("p", { className: "text-[11px]", style: { color: COLORS.textMuted } }, "Envoi... " + uploadPct + "%"),
+                uploadErreur && React.createElement("p", { className: "text-[11px]", style: { color: COLORS.textMuted } }, uploadErreur),
+                React.createElement("div", { className: "flex gap-2" },
+                  React.createElement("button", { onClick: handleAdd, disabled: uploadPct !== null, className: "flex-1 rounded-lg py-2 text-sm font-semibold disabled:opacity-40", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Publier"),
+                  React.createElement("button", { onClick: () => setShowForm(false), className: "px-4 rounded-lg py-2 text-sm", style: { color: COLORS.textMuted, border: `1px solid ${COLORS.border}` } }, "Annuler")
+                )
+              )
+        ),
+
+        // Filtres — année / filière / semestre, comme sur l'onglet Épreuves.
+        React.createElement("div", { className: "rounded-xl border p-3 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+          React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Trier — année, filière et semestre"),
+          React.createElement("div", { className: "grid grid-cols-2 gap-2" },
+            React.createElement("select", {
+              value: filtreAnneeRes,
+              onChange: e => { setFiltreAnneeRes(e.target.value); setMatiereRapideRes(""); },
+              className: "rounded-lg px-2 py-1.5 text-sm outline-none border",
+              style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
+            }, ["Toutes", ...ANNEES].map(a => React.createElement("option", { key: a }, a))),
+            React.createElement("select", {
+              value: filtreFiliereRes,
+              onChange: e => { setFiltreFiliereRes(e.target.value); setMatiereRapideRes(""); },
+              className: "rounded-lg px-2 py-1.5 text-sm outline-none border",
+              style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
+            }, ["Toutes", ...FILIERES].map(f => React.createElement("option", { key: f }, f)))
+          ),
+          React.createElement("select", {
+            value: filtreSemestreRes,
+            onChange: e => { setFiltreSemestreRes(e.target.value); setMatiereRapideRes(""); },
+            className: "w-full rounded-lg px-2 py-1.5 text-sm outline-none border",
+            style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
+          }, ["Toutes", ...SEMESTRES].map(s => React.createElement("option", { key: s }, s)))
+        ),
+
+        // Accès rapide à une matière précise, parmi celles qui ont déjà un résumé publié.
+        matieresDisponibles.length > 0 && React.createElement("div", { className: "rounded-xl border p-3 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+          React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Matière"),
+          React.createElement("select", {
+            value: matiereRapideRes,
+            onChange: e => setMatiereRapideRes(e.target.value),
+            className: "w-full rounded-lg px-2 py-1.5 text-sm outline-none border",
+            style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
+          }, ["Toutes les matières", ...matieresDisponibles].map(m => React.createElement("option", { key: m, value: m === "Toutes les matières" ? "" : m }, m)))
+        ),
+
+        resumesFiltres.length === 0
+          ? React.createElement(EmptyState, { icon: "file-text", text: resumes.length === 0 ? "Aucun résumé publié pour l'instant." : "Désolé, aucun résumé ne correspond à ce filtre." })
+          : resumesFiltres.map(r => {
               const isOpen = expanded === r.id;
               return React.createElement("div", { key: r.id, className: "rounded-xl border overflow-hidden", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
                 React.createElement("button", { onClick: () => setExpanded(isOpen ? null : r.id), className: "w-full text-left p-4" },
@@ -4880,7 +4970,7 @@
                         style: { backgroundColor: COLORS.gold, color: COLORS.bg }
                       }, iaLoading === r.id ? "Génération…" : React.createElement(React.Fragment, null, React.createElement(Icon, { name: "sparkles", size: 13 }), " Générer un résumé IA")),
                   iaLoading === r.id && React.createElement("p", { className: "text-[11px] mt-2 flex items-center gap-1.5", style: { color: COLORS.textFaint } }, React.createElement(Icon, { name: "clock", size: 11 }), "Ça peut prendre 1 à 2 minutes pour un cours complet — reste sur la page."),
-                  iaErreur && iaErreur.id === r.id && React.createElement("p", { className: "text-[11px] mt-2", style: { color: COLORS.terraText } }, iaErreur.message),
+                  iaErreur && iaErreur.id === r.id && React.createElement("p", { className: "text-[11px] mt-2", style: { color: COLORS.textMuted } }, iaErreur.message),
                   React.createElement("div", { className: "flex items-center justify-between mt-3" },
                     React.createElement("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Publié par " + r.auteur),
                     isOwner && React.createElement("button", { onClick: () => { if (confirm("Supprimer ce résumé ?")) onDeleteResume(r.id); }, className: "text-[10px] font-mono px-2.5 py-1 rounded-full", style: { color: COLORS.terraText, border: "1px solid rgba(255,180,171,0.4)" } }, React.createElement(Icon,{name:"trash",size:11}), " Supprimer")
@@ -4888,26 +4978,6 @@
                 )
               );
             }),
-        isAdmin && (
-          !showForm
-            ? React.createElement("button", { onClick: () => setShowForm(true), className: "flex items-center justify-center gap-2 text-sm font-mono py-2.5 rounded-lg border border-dashed", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, "+ Publier un résumé")
-            : React.createElement("div", { className: "rounded-xl border p-4 flex flex-col gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-                React.createElement("input", { value: matiere, onChange: e => setMatiere(e.target.value), placeholder: "Matière", className: "w-full rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
-                React.createElement("div", { className: "grid grid-cols-3 gap-2" },
-                  React.createElement("select", { value: annee, onChange: e => setAnnee(e.target.value), className: "rounded-lg px-2 py-2 text-xs outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }, ANNEES.map(a => React.createElement("option", { key: a }, a))),
-                  React.createElement("select", { value: semestre, onChange: e => setSemestre(e.target.value), className: "rounded-lg px-2 py-2 text-xs outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }, SEMESTRES.map(s => React.createElement("option", { key: s }, s))),
-                  React.createElement("select", { value: filiere, onChange: e => setFiliere(e.target.value), className: "rounded-lg px-2 py-2 text-xs outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }, FILIERES.map(f => React.createElement("option", { key: f }, f)))
-                ),
-                React.createElement("textarea", { value: contenu, onChange: e => setContenu(e.target.value), placeholder: "Contenu du résumé...", rows: 5, className: "w-full rounded-lg px-3 py-2 text-sm outline-none border resize-none", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
-                React.createElement("input", { type: "file", accept: "application/pdf", onChange: e => setPdfFile(e.target.files[0] || null), disabled: uploadPct !== null, className: "text-xs", style: { color: COLORS.textMuted } }),
-                uploadPct !== null && React.createElement("p", { className: "text-[11px]", style: { color: COLORS.textMuted } }, "Envoi... " + uploadPct + "%"),
-                uploadErreur && React.createElement("p", { className: "text-[11px]", style: { color: COLORS.terraText } }, uploadErreur),
-                React.createElement("div", { className: "flex gap-2" },
-                  React.createElement("button", { onClick: handleAdd, disabled: uploadPct !== null, className: "flex-1 rounded-lg py-2 text-sm font-semibold disabled:opacity-40", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Publier"),
-                  React.createElement("button", { onClick: () => setShowForm(false), className: "px-4 rounded-lg py-2 text-sm", style: { color: COLORS.textMuted, border: `1px solid ${COLORS.border}` } }, "Annuler")
-                )
-              )
-        ),
         previewUrl && React.createElement(PdfPreviewModal, { rawUrl: previewUrl, onClose: () => setPreviewUrl(null) })
       );
     }
@@ -4976,6 +5046,7 @@
           ),
           abonnement === "proplus" && React.createElement("a", {
             href: WHATSAPP_PROPLUS_LIEN, target: "_blank", rel: "noopener noreferrer",
+            onClick: (e) => ouvrirExterne(e, WHATSAPP_PROPLUS_LIEN),
             className: "rounded-xl border p-3 flex items-center gap-2", style: { borderColor: COLORS.forest, backgroundColor: "rgba(119,221,106,0.1)" }
           },
             React.createElement(Icon, { name: "message-circle", size: 18, color: COLORS.forestText }),
@@ -5027,6 +5098,7 @@
                               React.createElement("p", { className: "text-[11px] mt-1", style: { color: COLORS.textMuted } }, "2. Tape ci-dessous une fois le transfert envoyé — ton abonnement s'active après vérification (quelques heures)."),
                               React.createElement("a", {
                                 href: PAIEMENT_MANUEL_WHATSAPP, target: "_blank", rel: "noopener noreferrer",
+                                onClick: (e) => ouvrirExterne(e, PAIEMENT_MANUEL_WHATSAPP),
                                 className: "text-[11px] mt-1.5 flex items-center gap-1 w-fit", style: { color: COLORS.forestText }
                               }, React.createElement(Icon, { name: "message-circle", size: 12 }), "Envoyer la capture du paiement sur WhatsApp (optionnel, accélère la validation)")
                             ),
@@ -5911,10 +5983,10 @@
       const topContributeurs = Object.entries(parPseudo).sort((a, b) => b[1] - a[1]).slice(0, 3);
       const medailles = [COLORS.gold, "#C0C0C0", "#B08D57"];
 
-      // "Explorer" — Résumés de cours retiré : déjà mis en avant dans "En vedette" plus haut.
       const liens = [
         { id: "mentor", label: "Coach Réussite", icon: "target", desc: "Exclusivité Sabi Pro+" },
         { id: "epreuves", label: "Épreuves", icon: "book", desc: "Anciens sujets et corrigés" },
+        { id: "resumes", label: "Résumés de cours", icon: "file-text", desc: "Exclusivité Sabi Pro+" },
         { id: "carte", label: "Carte du campus", icon: "map", desc: "Salles, bâtiments, photocopies" },
         { id: "chat", label: "Fil & Chat", icon: "message-circle", desc: "Astuces, plans, entraide" },
         { id: "boussole", label: "Boussole", icon: "compass", desc: "Parcours du nouvel arrivant" },
@@ -5978,6 +6050,37 @@
             React.createElement("span", { style: { color: COLORS.gold } }, "ensemble"), React.createElement("span", { style: { color: COLORS.text } }, ".")
           )
         ),
+
+        // Notification matinale motivationnelle — un message différent chaque jour (rotation sur
+        // le jour du mois), teinte indigo/violet dédiée à l'IA/au coaching pour se distinguer du
+        // reste de l'écran, avec une pastille active pour signaler qu'il y a "du nouveau" ce matin.
+        (() => {
+          const messagesMatin = [
+            { icone: "sunrise", titre: "Bonjour " + pseudo + " 👋", texte: "8h, le meilleur moment pour caler ta première session de révision de la journée." },
+            { icone: "zap", titre: "Petit rappel", texte: "Une heure de révision ce matin vaut deux heures ce soir — ton cerveau est plus frais maintenant." },
+            { icone: "target", titre: "Objectif du jour", texte: "Choisis UNE matière prioritaire aujourd'hui et donne-lui 25 minutes pleinement concentrées." },
+            { icone: "flame", titre: "Allez " + pseudo + " !", texte: "Chaque petite session compte. Le Coach Réussite t'attend si tu veux un plan clair pour aujourd'hui." },
+            { icone: "book-open", titre: "Astuce du matin", texte: "Relire ses notes de la veille au réveil double la mémorisation à long terme. Deux minutes suffisent." },
+          ];
+          const msg = messagesMatin[new Date().getDate() % messagesMatin.length];
+          return React.createElement("div", {
+            className: "relative rounded-2xl p-4 flex items-start gap-3 overflow-hidden",
+            style: {
+              background: "linear-gradient(135deg, rgba(99,102,241,0.16), rgba(168,85,247,0.10))",
+              border: "1px solid rgba(139,92,246,0.35)",
+              backdropFilter: "blur(6px)",
+            }
+          },
+            React.createElement("span", { className: "absolute top-3 right-3 w-2 h-2 rounded-full", style: { backgroundColor: "#a78bfa", boxShadow: "0 0 0 3px rgba(167,139,250,0.25)" } }),
+            React.createElement("div", { className: "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0", style: { backgroundColor: "rgba(167,139,250,0.2)" } },
+              React.createElement(Icon, { name: msg.icone, size: 17, color: "#c4b5fd" })
+            ),
+            React.createElement("div", { className: "flex-1 min-w-0" },
+              React.createElement("p", { className: "text-sm font-semibold", style: { color: "#e9e5ff" } }, msg.titre),
+              React.createElement("p", { className: "text-xs mt-0.5 leading-relaxed", style: { color: "#c9c3e8" } }, msg.texte)
+            )
+          );
+        })(),
 
         // Hero profil : anneau de niveau, pseudo, matricule, palier suivant + filière/année
         React.createElement("div", { className: "flex flex-col items-center gap-1" },
@@ -6091,49 +6194,75 @@
           React.createElement("button", { onClick: () => onNavigate("boutique"), className: "text-xs font-mono px-3 py-1.5 rounded-full flex-shrink-0", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Découvrir")
         ),
 
-        React.createElement("div", null,
-          React.createElement("div", { className: "flex items-center justify-between mb-2" },
-            React.createElement("div", { className: "flex items-center gap-1 rounded-full p-0.5", style: { backgroundColor: COLORS.surface } },
-              React.createElement("button", {
-                onClick: () => setVueCartes("recentes"),
-                className: "text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full flex items-center gap-1",
-                style: vueCartes === "recentes" ? { backgroundColor: COLORS.gold, color: COLORS.bg } : { color: COLORS.textMuted }
-              }, React.createElement(Icon,{name:"bell",size:11}), " Actualités"),
-              React.createElement("button", {
-                onClick: () => setVueCartes("tendances"),
-                className: "text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full flex items-center gap-1",
-                style: vueCartes === "tendances" ? { backgroundColor: COLORS.gold, color: COLORS.bg } : { color: COLORS.textMuted }
-              }, React.createElement(Icon,{name:"flame",size:11}), " Tendances")
+        (() => {
+          const carrouselRef = React.useRef(null);
+          const [slideActif, setSlideActif] = useState(0);
+          const LARGEUR_CARTE = 172; // 160px de carte + 12px d'écart (gap-3)
+          useEffect(() => {
+            if (cartesAffichees.length <= 1) return;
+            const minuteur = setInterval(() => {
+              setSlideActif(i => {
+                const suivant = (i + 1) % cartesAffichees.length;
+                if (carrouselRef.current) carrouselRef.current.scrollTo({ left: suivant * LARGEUR_CARTE, behavior: "smooth" });
+                return suivant;
+              });
+            }, 4000);
+            return () => clearInterval(minuteur);
+          }, [cartesAffichees.length]);
+
+          return React.createElement("div", null,
+            React.createElement("div", { className: "flex items-center justify-between mb-2" },
+              React.createElement("div", { className: "flex items-center gap-1 rounded-full p-0.5", style: { backgroundColor: COLORS.surface } },
+                React.createElement("button", {
+                  onClick: () => setVueCartes("recentes"),
+                  className: "text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full flex items-center gap-1",
+                  style: vueCartes === "recentes" ? { backgroundColor: COLORS.gold, color: COLORS.bg } : { color: COLORS.textMuted }
+                }, React.createElement(Icon,{name:"bell",size:11}), " Actualités"),
+                React.createElement("button", {
+                  onClick: () => setVueCartes("tendances"),
+                  className: "text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full flex items-center gap-1",
+                  style: vueCartes === "tendances" ? { backgroundColor: COLORS.gold, color: COLORS.bg } : { color: COLORS.textMuted }
+                }, React.createElement(Icon,{name:"flame",size:11}), " Tendances")
+              ),
+              React.createElement("button", { onClick: () => onNavigate("actualites"), className: "text-[11px] font-mono", style: { color: COLORS.gold } }, "Voir tout →")
             ),
-            React.createElement("button", { onClick: () => onNavigate("actualites"), className: "text-[11px] font-mono", style: { color: COLORS.gold } }, "Voir tout →")
-          ),
-          cartesAffichees.length === 0
-            ? React.createElement("p", { className: "text-xs", style: { color: COLORS.textFaint } }, "Rien pour l'instant.")
-            : React.createElement("div", { className: "flex gap-3 overflow-x-auto pb-1 -mx-1 px-1", style: { scrollSnapType: "x mandatory" } },
-                cartesAffichees.map(c => {
-                  const epingleActif = c.epingleJusqua && c.epingleJusqua > now;
-                  return React.createElement("button", {
-                    key: c.id, onClick: () => onNavigate("actualites"),
-                    className: "text-left rounded-xl overflow-hidden flex-shrink-0 flex flex-col",
-                    style: { width: 160, backgroundColor: COLORS.surface, scrollSnapAlign: "start", border: epingleActif ? `1px solid ${COLORS.gold}` : "1px solid transparent" }
-                  },
-                    React.createElement("div", { className: "w-full h-16 flex items-center justify-center overflow-hidden", style: c.imageUrl ? {} : { backgroundImage: `linear-gradient(135deg, rgba(242,202,80,0.25), rgba(119,221,106,0.25))` } },
-                      c.imageUrl
-                        ? React.createElement("img", { src: c.imageUrl, alt: "", className: "w-full h-full object-cover" })
-                        : React.createElement(Icon, { name: epingleActif ? "pin" : "message-circle", size: 22, color: COLORS.gold })
-                    ),
-                    React.createElement("div", { className: "p-2.5 flex flex-col gap-1" },
-                      React.createElement("div", { className: "flex items-center justify-between gap-1" },
-                        React.createElement("span", { className: "text-[9px] font-mono uppercase tracking-wide truncate", style: { color: COLORS.gold } }, c.filiere),
-                        epingleActif && React.createElement("span", { className: "text-[9px] font-mono uppercase flex-shrink-0", style: { color: COLORS.gold } }, "Épinglée")
-                      ),
-                      React.createElement("p", { className: "text-xs leading-snug", style: { color: COLORS.text } }, c.contenu.slice(0, 60) + (c.contenu.length > 60 ? "..." : "")),
-                      React.createElement("span", { className: "text-[10px] font-mono", style: { color: COLORS.textFaint } }, vueCartes === "recentes" ? (c.date || "") : "▲ " + (c.up - c.down))
-                    )
-                  );
-                })
-              )
-        ),
+            cartesAffichees.length === 0
+              ? React.createElement("p", { className: "text-xs", style: { color: COLORS.textFaint } }, "Rien pour l'instant.")
+              : React.createElement(React.Fragment, null,
+                  React.createElement("div", { ref: carrouselRef, className: "flex gap-3 overflow-x-auto pb-1 -mx-1 px-1", style: { scrollSnapType: "x mandatory" } },
+                    cartesAffichees.map(c => {
+                      const epingleActif = c.epingleJusqua && c.epingleJusqua > now;
+                      return React.createElement("button", {
+                        key: c.id, onClick: () => onNavigate("actualites"),
+                        className: "text-left rounded-xl overflow-hidden flex-shrink-0 flex flex-col",
+                        style: { width: 160, backgroundColor: COLORS.surface, scrollSnapAlign: "start", border: epingleActif ? `1px solid ${COLORS.gold}` : "1px solid transparent" }
+                      },
+                        React.createElement("div", { className: "w-full h-16 flex items-center justify-center overflow-hidden", style: c.imageUrl ? {} : { backgroundImage: `linear-gradient(135deg, rgba(242,202,80,0.25), rgba(119,221,106,0.25))` } },
+                          c.imageUrl
+                            ? React.createElement("img", { src: c.imageUrl, alt: "", className: "w-full h-full object-cover" })
+                            : React.createElement(Icon, { name: epingleActif ? "pin" : "message-circle", size: 22, color: COLORS.gold })
+                        ),
+                        React.createElement("div", { className: "p-2.5 flex flex-col gap-1" },
+                          React.createElement("div", { className: "flex items-center justify-between gap-1" },
+                            React.createElement("span", { className: "text-[9px] font-mono uppercase tracking-wide truncate", style: { color: COLORS.gold } }, c.filiere),
+                            epingleActif && React.createElement("span", { className: "text-[9px] font-mono uppercase flex-shrink-0", style: { color: COLORS.gold } }, "Épinglée")
+                          ),
+                          React.createElement("p", { className: "text-xs leading-snug", style: { color: COLORS.text } }, c.contenu.slice(0, 60) + (c.contenu.length > 60 ? "..." : "")),
+                          React.createElement("span", { className: "text-[10px] font-mono", style: { color: COLORS.textFaint } }, vueCartes === "recentes" ? (c.date || "") : "▲ " + (c.up - c.down))
+                        )
+                      );
+                    })
+                  ),
+                  cartesAffichees.length > 1 && React.createElement("div", { className: "flex items-center justify-center gap-1.5 mt-2" },
+                    cartesAffichees.map((c, i) => React.createElement("span", {
+                      key: c.id,
+                      className: "rounded-full transition-all",
+                      style: { width: i === slideActif ? 14 : 5, height: 5, backgroundColor: i === slideActif ? COLORS.gold : COLORS.border }
+                    }))
+                  )
+                )
+          );
+        })(),
 
         topContributeurs.length > 0 && React.createElement("div", null,
           React.createElement("div", { className: "flex items-center justify-between mb-2" },
@@ -6460,7 +6589,7 @@
       );
     }
 
-    function ProfilTab({ pseudo, profil, points, pointsTotal, badgeActif, badges, vip, isOwner, isAdmin, abonnement, whatsapp, matricule, onSetBadgeActif, onNavigate, onLogout, email, onUpdatePseudo, onUpdateWhatsapp, onUpdatePassword, onSetMatricule, onDemandeDeblocageMatricule }) {
+    function ProfilTab({ pseudo, profil, points, pointsTotal, badgeActif, badges, vip, isOwner, isAdmin, abonnement, whatsapp, matricule, demandesEnAttente, onSetBadgeActif, onNavigate, onLogout, email, onUpdatePseudo, onUpdateWhatsapp, onUpdatePassword, onSetMatricule, onDemandeDeblocageMatricule }) {
       const badgesPossedes = BADGES.filter(b => badges[b.id]);
       // Les 8-9 fonctionnalités secondaires sont regroupées en familles logiques
       // (plutôt qu'une liste plate) pour rester lisibles au premier coup d'œil.
@@ -6578,6 +6707,10 @@
             groupe.liens.map(l => React.createElement("button", { key: l.id, onClick: () => onNavigate(l.id), className: "rounded-xl border p-3.5 flex items-center gap-3 text-left", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
               React.createElement(Icon, { name: l.icon, size: 18, color: COLORS.gold }),
               React.createElement("span", { className: "text-sm flex-1", style: { color: COLORS.text } }, l.label),
+              l.id === "admin" && demandesEnAttente > 0 && React.createElement("span", {
+                className: "text-[10px] font-mono min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center",
+                style: { backgroundColor: COLORS.terra, color: COLORS.bg }
+              }, demandesEnAttente > 9 ? "9+" : demandesEnAttente),
               React.createElement("span", { style: { color: COLORS.textFaint } }, "›")
             ))
           ))
@@ -7293,324 +7426,337 @@
 
       const mmss = s => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
 
+      const BLOCS_COACH = [
+        { id: "coach", label: "Coach & Diagnostic", icone: "compass" },
+        { id: "pratique", label: "Pratique & Révision", icone: "bot" },
+        { id: "focus", label: "Focus Hub", icone: "clock" },
+      ];
+      const [blocActif, setBlocActif] = useState("coach");
+      // Couleurs dédiées à cet écran : indigo/violet pour tout ce qui touche à l'IA (Coach,
+      // Diagnostic, Plan, Quiz), au lieu du seul jaune répété partout — le jaune redevient un
+      // accent ponctuel plutôt que la couleur de la moindre action.
+      const IA = { txt: "#c4b5fd", soft: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.35)", solide: "#7c5cf0" };
+      const URGENCE = { txt: "#ffb199", soft: "rgba(249,115,22,0.14)", border: "#f97316", solide: "linear-gradient(135deg, #ef4444, #f97316)" };
+      const BoutonGhost = (props, ...enfants) => React.createElement("button", {
+        ...props,
+        className: "text-xs font-mono px-3 py-1.5 rounded-full flex items-center gap-1.5 disabled:opacity-40 " + (props.className || ""),
+        style: { color: IA.txt, border: `1px solid ${IA.border}`, backgroundColor: IA.soft, ...(props.style || {}) }
+      }, ...enfants);
+
       return React.createElement("div", { className: "flex flex-col gap-5" },
-        // Carte "Coach Réussite Total"
-        React.createElement("div", { className: "rounded-xl p-5 flex flex-col gap-3", style: { backgroundImage: "linear-gradient(135deg, rgba(242,202,80,0.15), rgba(119,221,106,0.12))", border: `1px solid ${COLORS.gold}` } },
-          React.createElement("div", { className: "flex items-start justify-between gap-2" },
-            React.createElement("div", null,
-              React.createElement("h2", { className: "text-lg font-bold", style: { color: COLORS.text, fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: "-0.02em" } }, "Coach Réussite Total"),
-              React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.gold } }, "Diagnostic & Plan")
-            ),
-            streak > 1 && React.createElement("div", { className: "flex items-center gap-1 rounded-full px-2.5 py-1 flex-shrink-0", style: { backgroundColor: "rgba(255,180,171,0.15)", border: `1px solid ${COLORS.terra}` } },
-              React.createElement(Icon, { name: "flame", size: 12, color: COLORS.terraText }),
-              React.createElement("span", { className: "text-[11px] font-mono font-semibold", style: { color: COLORS.terraText } }, streak + " jours")
-            )
+        React.createElement("div", { className: "flex items-center justify-between" },
+          React.createElement("div", null,
+            React.createElement("h2", { className: "text-lg font-bold", style: { color: COLORS.text, fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: "-0.02em" } }, "Coach Réussite"),
+            React.createElement("p", { className: "text-xs", style: { color: "#a1a1aa" } }, "Ton copilote de révision, propulsé par l'IA")
           ),
-          React.createElement("p", { className: "text-xs leading-relaxed", style: { color: COLORS.textMuted } },
-            "Ton coach analyse tes notes MyScore et te propose un plan d'action concret, adapté à ta filière et à ton année."),
-          React.createElement("button", {
-            onClick: demarrerAnalyse, disabled: chargement !== null,
-            className: "self-start rounded-full px-4 py-2 text-sm font-semibold flex items-center gap-2 disabled:opacity-50",
-            style: { backgroundColor: COLORS.gold, color: COLORS.bg }
-          }, chargement === "analyse" ? "Analyse en cours..." : "Démarrer l'Analyse →")
+          streak > 1 && React.createElement("div", { className: "flex items-center gap-1 rounded-full px-2.5 py-1 flex-shrink-0", style: { backgroundColor: "rgba(249,115,22,0.15)", border: "1px solid #f97316" } },
+            React.createElement(Icon, { name: "flame", size: 12, color: "#fb923c" }),
+            React.createElement("span", { className: "text-[11px] font-mono font-semibold", style: { color: "#fdba74" } }, streak + " jours")
+          )
         ),
 
+        // Sélecteur des 3 blocs thématiques
+        React.createElement("div", { className: "grid grid-cols-3 gap-1.5 p-1 rounded-xl", style: { backgroundColor: COLORS.surface } },
+          BLOCS_COACH.map(b => React.createElement("button", {
+            key: b.id, onClick: () => setBlocActif(b.id),
+            className: "flex flex-col items-center gap-1 py-2 rounded-lg text-center",
+            style: blocActif === b.id ? { backgroundColor: IA.solide, color: "#fff" } : { color: "#a1a1aa" }
+          }, React.createElement(Icon, { name: b.icone, size: 15, color: blocActif === b.id ? "#fff" : "#a1a1aa" }),
+             React.createElement("span", { className: "text-[9px] font-medium leading-tight" }, b.label)))
+        ),
 
-        // Actions Rapides
-        React.createElement("div", null,
-          React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider mb-2", style: { color: COLORS.textMuted } }, "Actions Rapides"),
+        // ========== BLOC 1 : COACH & DIAGNOSTIC ==========
+        blocActif === "coach" && React.createElement(React.Fragment, null,
+          React.createElement("div", {
+            className: "rounded-2xl p-5 flex flex-col gap-3 relative overflow-hidden",
+            style: { background: "linear-gradient(135deg, rgba(124,92,240,0.18), rgba(99,102,241,0.08))", border: `1px solid ${IA.border}`, backdropFilter: "blur(6px)" }
+          },
+            React.createElement("p", { className: "text-xs leading-relaxed", style: { color: "#e0e0e0" } },
+              "Ton coach analyse tes notes MyScore et te propose un plan d'action concret, adapté à ta filière et à ton année."),
+            React.createElement("button", {
+              onClick: demarrerAnalyse, disabled: chargement !== null,
+              className: "self-start rounded-full px-4 py-2.5 text-sm font-semibold flex items-center gap-2 disabled:opacity-50",
+              style: { background: IA.solide, color: "#fff" }
+            }, chargement === "analyse" ? "Analyse en cours..." : "Démarrer l'Analyse →")
+          ),
+
           React.createElement("div", { className: "grid grid-cols-2 gap-3" },
             React.createElement("button", { onClick: analyseNiveau, disabled: chargement !== null, className: "rounded-xl border p-3.5 flex flex-col items-start gap-1.5 text-left disabled:opacity-50", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-              React.createElement(Icon, { name: "target", size: 18, color: COLORS.gold }),
+              React.createElement(Icon, { name: "target", size: 18, color: IA.txt }),
               React.createElement("p", { className: "text-xs font-semibold", style: { color: COLORS.text } }, "Analyse Niveau"),
-              React.createElement("p", { className: "text-[10px]", style: { color: COLORS.textFaint } }, "Bilan des acquis")
+              React.createElement("p", { className: "text-[10px]", style: { color: "#a1a1aa" } }, "Bilan des acquis")
             ),
             React.createElement("button", { onClick: methodologie, disabled: chargement !== null, className: "rounded-xl border p-3.5 flex flex-col items-start gap-1.5 text-left disabled:opacity-50", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-              React.createElement(Icon, { name: "compass", size: 18, color: COLORS.gold }),
+              React.createElement(Icon, { name: "compass", size: 18, color: IA.txt }),
               React.createElement("p", { className: "text-xs font-semibold", style: { color: COLORS.text } }, "Méthodologie"),
-              React.createElement("p", { className: "text-[10px]", style: { color: COLORS.textFaint } }, "Optimisation")
+              React.createElement("p", { className: "text-[10px]", style: { color: "#a1a1aa" } }, "Optimisation")
             )
-          )
-        ),
-
-        // Objectif du Jour
-        React.createElement("div", null,
-          React.createElement("div", { className: "flex items-center justify-between mb-2" },
-            React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Objectif du Jour"),
-            React.createElement("button", {
-              onClick: genererObjectifJour, disabled: chargement !== null,
-              className: "text-[10px] font-mono px-2.5 py-1 rounded-full disabled:opacity-50",
-              style: { color: COLORS.gold, border: `1px solid ${COLORS.gold}` }
-            }, chargement === "objectif" ? "Génération..." : (objectifJour ? "Régénérer" : "Générer"))
           ),
-          !objectifJour
-            ? React.createElement("div", { className: "rounded-xl border p-4 text-center", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-                React.createElement("p", { className: "text-xs", style: { color: COLORS.textFaint } }, "Pas encore de priorités pour aujourd'hui — clique sur \"Générer\".")
-              )
-            : React.createElement("div", { className: "rounded-xl border p-4 flex flex-col gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-                (() => {
-                  const total = objectifJour.taches.length;
-                  const faites = objectifJour.taches.filter(t => t.fait).length;
-                  return React.createElement(React.Fragment, null,
-                    faites === total && total > 0 && React.createElement("p", { className: "text-xs font-semibold text-center", style: { color: COLORS.forestText } }, "🎉 Journée terminée — toutes les tâches sont faites !"),
-                    React.createElement("div", { className: "flex items-center justify-between" },
-                      React.createElement("span", { className: "text-xs", style: { color: COLORS.text } }, faites + " sur " + total + " tâches terminées"),
-                      React.createElement("span", { className: "text-xs font-mono", style: { color: COLORS.gold } }, Math.round((faites / total) * 100) + "%")
-                    ),
-                    React.createElement("div", { className: "w-full h-2 rounded-full overflow-hidden", style: { backgroundColor: COLORS.border } },
-                      React.createElement("div", { className: "h-full rounded-full", style: { width: (faites / total * 100) + "%", backgroundColor: COLORS.gold, transition: "width 0.4s ease" } })
-                    )
-                  );
-                })(),
-                React.createElement("div", { className: "flex flex-col gap-2" },
-                  objectifJour.taches.map(t => React.createElement("div", { key: t.id, className: "flex items-center justify-between gap-2 rounded-lg px-3 py-2", style: { backgroundColor: COLORS.bg } },
-                    React.createElement("p", { className: "text-xs flex-1 min-w-0", style: t.fait ? { color: COLORS.textFaint, textDecoration: "line-through" } : { color: COLORS.text } }, t.texte),
-                    React.createElement("button", {
-                      onClick: () => toggleTacheJour(t.id),
-                      className: "flex-shrink-0 text-[10px] font-mono uppercase px-2.5 py-1 rounded-full",
-                      style: t.fait ? { color: COLORS.forestText, border: `1px solid ${COLORS.forest}` } : { backgroundColor: COLORS.gold, color: COLORS.bg }
-                    }, t.fait ? "✓ Fait" : "Démarrer")
-                  ))
-                )
-              )
-        ),
 
-        // Diagnostic de Niveau IA
-        React.createElement("div", null,
-          React.createElement("div", { className: "flex items-center justify-between mb-2" },
-            React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Diagnostic de Niveau"),
-            React.createElement("button", {
-              onClick: lancerDiagnostic, disabled: chargement !== null,
-              className: "text-[10px] font-mono px-2.5 py-1 rounded-full disabled:opacity-50",
-              style: { color: COLORS.gold, border: `1px solid ${COLORS.gold}` }
-            }, chargement === "diagnostic" ? "Analyse..." : (diagnostic ? "Relancer" : "Lancer le Diagnostic"))
-          ),
-          diagnostic && React.createElement("div", { className: "rounded-xl border p-4 flex flex-col gap-4", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-            React.createElement("div", { className: "flex items-center gap-4" },
-              React.createElement(JaugeCirculaire, { valeur: diagnostic.scoreGlobal / 5, max: 20, taille: 84, epaisseur: 8, couleur: COLORS.gold }),
-              React.createElement("div", { className: "flex-1 flex flex-col gap-1" },
-                React.createElement("p", { className: "text-lg font-bold font-mono", style: { color: COLORS.text } }, diagnostic.scoreGlobal + "%"),
-                React.createElement("span", { className: "text-[10px] font-mono uppercase px-2 py-1 rounded-full inline-block w-fit", style: { color: COLORS.gold, backgroundColor: "rgba(242,202,80,0.12)" } }, diagnostic.badge || "—")
-              )
+          React.createElement("div", null,
+            React.createElement("div", { className: "flex items-center justify-between mb-2" },
+              React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: "#a1a1aa" } }, "Objectif du Jour"),
+              BoutonGhost({ onClick: genererObjectifJour, disabled: chargement !== null }, chargement === "objectif" ? "Génération..." : (objectifJour ? "Régénérer" : "Générer"))
             ),
-            React.createElement("div", { className: "flex flex-col gap-2" },
-              Object.entries(diagnostic.competences || {}).map(([nom, val]) => React.createElement("div", { key: nom },
-                React.createElement("div", { className: "flex items-center justify-between mb-1" },
-                  React.createElement("span", { className: "text-xs capitalize", style: { color: COLORS.text } }, nom),
-                  React.createElement("span", { className: "text-xs font-mono", style: { color: COLORS.textMuted } }, val + "%")
-                ),
-                React.createElement("div", { className: "w-full h-1.5 rounded-full overflow-hidden", style: { backgroundColor: COLORS.border } },
-                  React.createElement("div", { className: "h-full rounded-full", style: { width: val + "%", backgroundColor: COLORS.gold } })
+            !objectifJour
+              ? React.createElement("div", { className: "rounded-xl border p-4 text-center", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+                  React.createElement("p", { className: "text-xs", style: { color: "#a1a1aa" } }, "Pas encore de priorités pour aujourd'hui — clique sur \"Générer\".")
                 )
-              ))
+              : React.createElement("div", { className: "rounded-xl border p-4 flex flex-col gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+                  (() => {
+                    const total = objectifJour.taches.length;
+                    const faites = objectifJour.taches.filter(t => t.fait).length;
+                    return React.createElement(React.Fragment, null,
+                      faites === total && total > 0 && React.createElement("p", { className: "text-xs font-semibold text-center", style: { color: "#4ade80" } }, "🎉 Journée terminée — toutes les tâches sont faites !"),
+                      React.createElement("div", { className: "flex items-center justify-between" },
+                        React.createElement("span", { className: "text-xs", style: { color: COLORS.text } }, faites + " sur " + total + " tâches terminées"),
+                        React.createElement("span", { className: "text-xs font-mono", style: { color: IA.txt } }, Math.round((faites / total) * 100) + "%")
+                      ),
+                      React.createElement("div", { className: "w-full h-2 rounded-full overflow-hidden", style: { backgroundColor: COLORS.border } },
+                        React.createElement("div", { className: "h-full rounded-full", style: { width: (faites / total * 100) + "%", background: IA.solide, transition: "width 0.4s ease" } })
+                      )
+                    );
+                  })(),
+                  React.createElement("div", { className: "flex flex-col gap-2" },
+                    objectifJour.taches.map(t => React.createElement("div", { key: t.id, className: "flex items-center justify-between gap-2 rounded-lg px-3 py-2", style: { backgroundColor: COLORS.bg } },
+                      React.createElement("p", { className: "text-xs flex-1 min-w-0", style: t.fait ? { color: "#71717a", textDecoration: "line-through" } : { color: COLORS.text } }, t.texte),
+                      React.createElement("button", {
+                        onClick: () => toggleTacheJour(t.id),
+                        className: "flex-shrink-0 text-[10px] font-mono uppercase px-2.5 py-1 rounded-full",
+                        style: t.fait ? { color: "#4ade80", border: "1px solid #4ade80" } : { background: IA.solide, color: "#fff" }
+                      }, t.fait ? "✓ Fait" : "Démarrer")
+                    ))
+                  )
+                )
+          ),
+
+          // Diagnostic de Niveau + Plan d'Action — fusionnés dans le même flux (fini le doublon
+          // avec la carte du haut) : un seul déclencheur ghost chacun, résultats juste en dessous.
+          React.createElement("div", null,
+            React.createElement("div", { className: "flex items-center justify-between mb-2" },
+              React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: "#a1a1aa" } }, "Diagnostic de Niveau"),
+              BoutonGhost({ onClick: lancerDiagnostic, disabled: chargement !== null }, chargement === "diagnostic" ? "Analyse..." : (diagnostic ? "Relancer" : "Lancer le Diagnostic"))
             ),
-            React.createElement("div", { className: "grid grid-cols-2 gap-3" },
-              React.createElement("div", null,
-                React.createElement("p", { className: "text-[10px] font-mono uppercase mb-1.5", style: { color: COLORS.forestText } }, "Forces"),
-                React.createElement("ul", { className: "flex flex-col gap-1" },
-                  (diagnostic.forces || []).map((f, i) => React.createElement("li", { key: i, className: "text-xs flex items-start gap-1.5", style: { color: COLORS.textMuted } },
-                    React.createElement(Icon, { name: "check", size: 11, style: { marginTop: 2, flexShrink: 0 }, color: COLORS.forestText }), f
-                  ))
+            diagnostic && React.createElement("div", { className: "rounded-xl border p-4 flex flex-col gap-4", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+              React.createElement("div", { className: "flex items-center gap-4" },
+                React.createElement(JaugeCirculaire, { valeur: diagnostic.scoreGlobal / 5, max: 20, taille: 84, epaisseur: 8, couleur: IA.solide }),
+                React.createElement("div", { className: "flex-1 flex flex-col gap-1" },
+                  React.createElement("p", { className: "text-lg font-bold font-mono", style: { color: COLORS.text } }, diagnostic.scoreGlobal + "%"),
+                  React.createElement("span", { className: "text-[10px] font-mono uppercase px-2 py-1 rounded-full inline-block w-fit", style: { color: IA.txt, backgroundColor: IA.soft } }, diagnostic.badge || "—")
                 )
               ),
-              React.createElement("div", null,
-                React.createElement("p", { className: "text-[10px] font-mono uppercase mb-1.5", style: { color: COLORS.terraText } }, "Lacunes"),
-                React.createElement("ul", { className: "flex flex-col gap-1" },
-                  (diagnostic.lacunes || []).map((l, i) => React.createElement("li", { key: i, className: "text-xs flex items-start gap-1.5", style: { color: COLORS.textMuted } },
-                    React.createElement(Icon, { name: "alert-triangle", size: 11, style: { marginTop: 2, flexShrink: 0 }, color: COLORS.terraText }), l
-                  ))
+              React.createElement("div", { className: "flex flex-col gap-2" },
+                Object.entries(diagnostic.competences || {}).map(([nom, val]) => React.createElement("div", { key: nom },
+                  React.createElement("div", { className: "flex items-center justify-between mb-1" },
+                    React.createElement("span", { className: "text-xs capitalize", style: { color: COLORS.text } }, nom),
+                    React.createElement("span", { className: "text-xs font-mono", style: { color: "#a1a1aa" } }, val + "%")
+                  ),
+                  React.createElement("div", { className: "w-full h-1.5 rounded-full overflow-hidden", style: { backgroundColor: COLORS.border } },
+                    React.createElement("div", { className: "h-full rounded-full", style: { width: val + "%", background: IA.solide } })
+                  )
+                ))
+              ),
+              React.createElement("div", { className: "grid grid-cols-2 gap-3" },
+                React.createElement("div", null,
+                  React.createElement("p", { className: "text-[10px] font-mono uppercase mb-1.5", style: { color: "#4ade80" } }, "Forces"),
+                  React.createElement("ul", { className: "flex flex-col gap-1" },
+                    (diagnostic.forces || []).map((f, i) => React.createElement("li", { key: i, className: "text-xs flex items-start gap-1.5", style: { color: "#a1a1aa" } },
+                      React.createElement(Icon, { name: "check", size: 11, style: { marginTop: 2, flexShrink: 0 }, color: "#4ade80" }), f
+                    ))
+                  )
+                ),
+                React.createElement("div", null,
+                  React.createElement("p", { className: "text-[10px] font-mono uppercase mb-1.5", style: { color: "#fb923c" } }, "Lacunes"),
+                  React.createElement("ul", { className: "flex flex-col gap-1" },
+                    (diagnostic.lacunes || []).map((l, i) => React.createElement("li", { key: i, className: "text-xs flex items-start gap-1.5", style: { color: "#a1a1aa" } },
+                      React.createElement(Icon, { name: "alert-triangle", size: 11, style: { marginTop: 2, flexShrink: 0 }, color: "#fb923c" }), l
+                    ))
+                  )
                 )
               )
+            )
+          ),
+
+          React.createElement("div", null,
+            React.createElement("div", { className: "flex items-center justify-between mb-2" },
+              React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: "#a1a1aa" } }, "Plan d'Action"),
+              BoutonGhost({ onClick: genererPlan, disabled: chargement !== null }, chargement === "plan" ? "Génération..." : (plan ? "Régénérer" : "Générer le Plan"))
+            ),
+            plan && React.createElement("div", { className: "flex flex-col gap-2.5" },
+              plan.map((item, i) => {
+                const haute = item.priorite === "haute";
+                return React.createElement("div", { key: i, className: "rounded-xl border p-3.5 flex flex-col gap-1.5", style: { borderColor: haute ? "#f97316" : COLORS.border, backgroundColor: haute ? "rgba(249,115,22,0.08)" : COLORS.surface } },
+                  React.createElement("div", { className: "flex items-center justify-between gap-2" },
+                    React.createElement("p", { className: "text-sm font-semibold flex-1 min-w-0", style: { color: COLORS.text } }, item.titre),
+                    React.createElement("span", {
+                      className: "text-[9px] font-mono uppercase px-2 py-0.5 rounded-full flex-shrink-0",
+                      style: haute ? { color: "#fff", backgroundColor: "#f97316" } : { color: IA.txt, backgroundColor: IA.soft }
+                    }, haute ? "Priorité Haute" : "Recommandé")
+                  ),
+                  React.createElement("p", { className: "text-xs", style: { color: "#a1a1aa" } }, item.description)
+                );
+              })
+            )
+          ),
+
+          chargement !== null && React.createElement("div", { className: "rounded-xl border p-4 flex items-center gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+            React.createElement(Icon, { name: "refresh-cw", size: 14, color: IA.txt }),
+            React.createElement("p", { className: "text-xs", style: { color: "#a1a1aa" } }, "Le coach réfléchit...")
+          ),
+          erreur && React.createElement("div", { className: "rounded-xl border p-3.5", style: { borderColor: "#f97316", backgroundColor: "rgba(249,115,22,0.1)" } },
+            React.createElement("p", { className: "text-xs", style: { color: "#fdba74" } }, erreur)
+          ),
+          reponse && React.createElement("div", { className: "rounded-xl border p-4", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+            React.createElement(CorrigeRendu, { texte: reponse })
+          ),
+
+          // Discussion avec le Coach — libellé explicite, zone clairement identifiée.
+          React.createElement("div", { className: "rounded-xl border p-3.5 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+            React.createElement("p", { className: "text-xs font-semibold flex items-center gap-1.5", style: { color: COLORS.text } }, "💬 Discussion avec le Coach : une question rapide ?"),
+            React.createElement("div", { className: "flex items-center gap-2" },
+              React.createElement("textarea", {
+                value: question, onChange: e => setQuestion(e.target.value), rows: 2,
+                placeholder: "Ex : comment je m'organise pour l'examen de Compta ?",
+                className: "flex-1 rounded-xl px-3 py-2.5 text-sm outline-none border resize-none",
+                style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
+              }),
+              React.createElement("button", {
+                onClick: envoyerQuestion, disabled: chargement !== null || question.trim().length === 0,
+                className: "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-30",
+                style: { background: IA.solide, color: "#fff" }
+              }, React.createElement(Icon, { name: "send", size: 16 }))
             )
           )
         ),
 
-        // Plan d'Action IA
-        React.createElement("div", null,
-          React.createElement("div", { className: "flex items-center justify-between mb-2" },
-            React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Plan d'Action"),
-            React.createElement("button", {
-              onClick: genererPlan, disabled: chargement !== null,
-              className: "text-[10px] font-mono px-2.5 py-1 rounded-full disabled:opacity-50",
-              style: { color: COLORS.gold, border: `1px solid ${COLORS.gold}` }
-            }, chargement === "plan" ? "Génération..." : (plan ? "Régénérer" : "Générer le Plan"))
-          ),
-          plan && React.createElement("div", { className: "flex flex-col gap-2.5" },
-            plan.map((item, i) => {
-              const haute = item.priorite === "haute";
-              return React.createElement("div", { key: i, className: "rounded-xl border p-3.5 flex flex-col gap-1.5", style: { borderColor: haute ? COLORS.terra : COLORS.border, backgroundColor: haute ? "rgba(255,180,171,0.08)" : COLORS.surface } },
-                React.createElement("div", { className: "flex items-center justify-between gap-2" },
-                  React.createElement("p", { className: "text-sm font-semibold flex-1 min-w-0", style: { color: COLORS.text } }, item.titre),
-                  React.createElement("span", {
-                    className: "text-[9px] font-mono uppercase px-2 py-0.5 rounded-full flex-shrink-0",
-                    style: haute ? { color: "#fff", backgroundColor: COLORS.terra } : { color: COLORS.gold, backgroundColor: "rgba(242,202,80,0.12)" }
-                  }, haute ? "Priorité Haute" : "Recommandé")
-                ),
-                React.createElement("p", { className: "text-xs", style: { color: COLORS.textMuted } }, item.description)
-              );
-            })
-          )
-        ),
-        chargement !== null && React.createElement("div", { className: "rounded-xl border p-4 flex items-center gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-          React.createElement(Icon, { name: "refresh-cw", size: 14, color: COLORS.gold }),
-          React.createElement("p", { className: "text-xs", style: { color: COLORS.textMuted } }, "Le coach réfléchit...")
-        ),
-        erreur && React.createElement("div", { className: "rounded-xl border p-3.5", style: { borderColor: COLORS.terra, backgroundColor: "rgba(255,180,171,0.1)" } },
-          React.createElement("p", { className: "text-xs", style: { color: COLORS.terraText } }, erreur)
-        ),
-        reponse && React.createElement("div", { className: "rounded-xl border p-4", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-          React.createElement(CorrigeRendu, { texte: reponse })
-        ),
-
-        // Champ "Diagnostic IA"
-        React.createElement("div", { className: "flex items-center gap-2" },
-          React.createElement("textarea", {
-            value: question, onChange: e => setQuestion(e.target.value), rows: 2,
-            placeholder: "Pose une question à ton coach (ex : comment je m'organise pour l'examen de Compta ?)",
-            className: "flex-1 rounded-xl px-3 py-2.5 text-sm outline-none border resize-none",
-            style: { backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text }
-          }),
-          React.createElement("button", {
-            onClick: envoyerQuestion, disabled: chargement !== null || question.trim().length === 0,
-            className: "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-30",
-            style: { backgroundColor: COLORS.gold, color: COLORS.bg }
-          }, React.createElement(Icon, { name: "send", size: 16 }))
-        ),
-
-        // Carte rouge "Mode Sauvetage"
-        React.createElement("div", { className: "rounded-xl p-4 flex flex-col gap-2.5", style: { backgroundColor: "rgba(255,180,171,0.12)", border: `1px solid ${COLORS.terra}` } },
-          React.createElement("div", { className: "flex items-center gap-2" },
-            React.createElement(Icon, { name: "flame", size: 18, color: COLORS.terraText }),
-            React.createElement("p", { className: "text-sm font-semibold", style: { color: COLORS.terraText } }, "Mode Sauvetage")
-          ),
-          React.createElement("p", { className: "text-xs", style: { color: COLORS.textMuted } }, "Urgence académique ? Plan de crise en 48h."),
-          React.createElement("button", {
-            onClick: modeSauvetage, disabled: chargement !== null,
-            className: "self-start rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-50",
-            style: { backgroundColor: COLORS.terra, color: "#fff" }
-          }, chargement === "sauvetage" ? "Génération..." : "Lancer le plan de crise")
-        ),
-
-        // Quiz IA — généré à partir des résumés de cours (ou d'un sujet libre)
-        React.createElement("div", null,
-          React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider mb-2", style: { color: COLORS.textMuted } }, "Quiz IA"),
-          !quiz && React.createElement("div", { className: "rounded-xl border p-4 flex flex-col gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-            React.createElement("p", { className: "text-xs", style: { color: COLORS.textMuted } }, "Teste-toi sur un résumé de cours déjà publié, ou sur un sujet libre."),
-            React.createElement("select", {
-              value: quizSourceId, onChange: e => setQuizSourceId(e.target.value),
-              className: "w-full rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
-            },
-              React.createElement("option", { value: "libre" }, "Sujet libre..."),
-              resumesUtilisables.map(r => React.createElement("option", { key: r.id, value: r.id }, r.matiere + " (" + r.annee + ")"))
+        // ========== BLOC 2 : PRATIQUE & RÉVISION ==========
+        blocActif === "pratique" && React.createElement(React.Fragment, null,
+          // Mode Sauvetage — palette d'urgence rouge/orange vive (contraste WCAG AA), plus le
+          // ton saumon fade d'avant qui ne se distinguait pas assez du reste de l'écran.
+          React.createElement("div", { className: "rounded-2xl p-4 flex flex-col gap-2.5", style: { background: "linear-gradient(135deg, rgba(239,68,68,0.16), rgba(249,115,22,0.10))", border: "1px solid #f97316" } },
+            React.createElement("div", { className: "flex items-center gap-2" },
+              React.createElement(Icon, { name: "flame", size: 18, color: "#fca5a5" }),
+              React.createElement("p", { className: "text-sm font-bold", style: { color: "#fecaca" } }, "Mode Sauvetage")
             ),
-            quizSourceId === "libre" && React.createElement("input", {
-              value: quizSujetLibre, onChange: e => setQuizSujetLibre(e.target.value),
-              placeholder: "Ex : les lois de Kirchhoff, la comptabilité générale...",
-              className: "w-full rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
-            }),
-            resumesUtilisables.length === 0 && quizSourceId === "libre" && React.createElement("p", { className: "text-[10px]", style: { color: COLORS.textFaint } }, "Aucun résumé de cours publié pour l'instant dans ta filière — précise un sujet toi-même."),
+            React.createElement("p", { className: "text-xs", style: { color: "#e0e0e0" } }, "Urgence académique ? Plan de crise en 48h."),
             React.createElement("button", {
-              onClick: genererQuiz, disabled: chargement !== null,
-              className: "rounded-lg py-2.5 text-sm font-semibold disabled:opacity-50",
-              style: { backgroundColor: COLORS.gold, color: COLORS.bg }
-            }, chargement === "quiz" ? "Génération du quiz..." : "Générer un quiz (5 questions)")
+              onClick: modeSauvetage, disabled: chargement !== null,
+              className: "self-start rounded-full px-4 py-2 text-xs font-bold disabled:opacity-50",
+              style: { background: "linear-gradient(135deg, #ef4444, #f97316)", color: "#fff" }
+            }, chargement === "sauvetage" ? "Génération..." : "Lancer le plan de crise")
           ),
-          quiz && React.createElement("div", { className: "flex flex-col gap-3" },
-            quiz.map((q, i) => {
-              const choix = quizReponses[i];
-              return React.createElement("div", { key: i, className: "rounded-xl border p-4 flex flex-col gap-2.5", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-                React.createElement("p", { className: "text-sm font-medium", style: { color: COLORS.text } }, (i + 1) + ". " + q.question),
-                React.createElement("div", { className: "flex flex-col gap-1.5" },
-                  q.options.map((opt, j) => {
-                    let style = { borderColor: COLORS.border, color: COLORS.text };
-                    if (quizValide) {
-                      if (j === q.correctIndex) style = { borderColor: COLORS.forest, backgroundColor: "rgba(119,221,106,0.15)", color: COLORS.forestText };
-                      else if (j === choix) style = { borderColor: COLORS.terra, backgroundColor: "rgba(255,180,171,0.1)", color: COLORS.terraText };
-                    } else if (choix === j) {
-                      style = { borderColor: COLORS.gold, backgroundColor: "rgba(242,202,80,0.1)", color: COLORS.gold };
-                    }
-                    return React.createElement("button", {
-                      key: j, onClick: () => choisirReponseQuiz(i, j), disabled: quizValide,
-                      className: "text-left text-xs rounded-lg px-3 py-2 border", style: style
-                    }, opt);
-                  })
-                ),
-                quizValide && React.createElement("p", { className: "text-[11px] flex items-start gap-1.5", style: { color: COLORS.textFaint } },
-                  React.createElement(Icon, { name: choix === q.correctIndex ? "check" : "x", size: 12, color: choix === q.correctIndex ? COLORS.forestText : COLORS.terra, style: { marginTop: 1, flexShrink: 0 } }),
-                  q.explication)
-              );
-            }),
-            !quizValide
-              ? React.createElement("button", {
-                  onClick: validerQuiz, disabled: Object.keys(quizReponses).length < quiz.length,
-                  className: "rounded-lg py-2.5 text-sm font-semibold disabled:opacity-40",
-                  style: { backgroundColor: COLORS.gold, color: COLORS.bg }
-                }, "Valider le quiz (" + Object.keys(quizReponses).length + "/" + quiz.length + ")")
-              : React.createElement("div", { className: "rounded-xl border p-4 flex flex-col items-center gap-2 text-center", style: { borderColor: scoreQuiz === quiz.length ? COLORS.forest : COLORS.border, backgroundColor: COLORS.surface } },
-                  React.createElement("p", { className: "text-2xl font-bold font-mono", style: { color: scoreQuiz === quiz.length ? COLORS.forestText : COLORS.gold } }, (scoreQuiz === quiz.length ? "🎉 " : "") + scoreQuiz + "/" + quiz.length),
-                  React.createElement("p", { className: "text-xs", style: { color: COLORS.textMuted } },
-                    scoreQuiz === quiz.length ? "Score parfait — quiz réussi du 1er coup, comptabilisé dans ta progression !" : "Continue à réviser, tu peux relancer un quiz quand tu veux."),
-                  React.createElement("button", { onClick: recommencerQuiz, className: "text-xs font-mono px-3 py-1.5 rounded-full mt-1", style: { border: `1px solid ${COLORS.gold}`, color: COLORS.gold } }, "Nouveau quiz")
-                )
+
+          // Quiz IA
+          React.createElement("div", null,
+            React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider mb-2", style: { color: "#a1a1aa" } }, "Quiz IA"),
+            !quiz && React.createElement("div", { className: "rounded-xl border p-4 flex flex-col gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+              React.createElement("p", { className: "text-xs", style: { color: "#a1a1aa" } }, "Teste-toi sur un résumé de cours déjà publié, ou sur un sujet libre."),
+              React.createElement("select", {
+                value: quizSourceId, onChange: e => setQuizSourceId(e.target.value),
+                className: "w-full rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
+              },
+                React.createElement("option", { value: "libre" }, "Sujet libre..."),
+                resumesUtilisables.map(r => React.createElement("option", { key: r.id, value: r.id }, r.matiere + " (" + r.annee + ")"))
+              ),
+              quizSourceId === "libre" && React.createElement("input", {
+                value: quizSujetLibre, onChange: e => setQuizSujetLibre(e.target.value),
+                placeholder: "Ex : les lois de Kirchhoff, la comptabilité générale...",
+                className: "w-full rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
+              }),
+              resumesUtilisables.length === 0 && quizSourceId === "libre" && React.createElement("p", { className: "text-[10px]", style: { color: "#71717a" } }, "Aucun résumé de cours publié pour l'instant dans ta filière — précise un sujet toi-même."),
+              React.createElement("button", {
+                onClick: genererQuiz, disabled: chargement !== null,
+                className: "rounded-lg py-2.5 text-sm font-semibold disabled:opacity-50",
+                style: { background: IA.solide, color: "#fff" }
+              }, chargement === "quiz" ? "Génération du quiz..." : "Générer un quiz (5 questions)")
+            ),
+            quiz && React.createElement("div", { className: "flex flex-col gap-3" },
+              quiz.map((q, i) => {
+                const choix = quizReponses[i];
+                return React.createElement("div", { key: i, className: "rounded-xl border p-4 flex flex-col gap-2.5", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+                  React.createElement("p", { className: "text-sm font-medium", style: { color: COLORS.text } }, (i + 1) + ". " + q.question),
+                  React.createElement("div", { className: "flex flex-col gap-1.5" },
+                    q.options.map((opt, j) => {
+                      let style = { borderColor: COLORS.border, color: COLORS.text };
+                      if (quizValide) {
+                        if (j === q.correctIndex) style = { borderColor: "#4ade80", backgroundColor: "rgba(74,222,128,0.12)", color: "#4ade80" };
+                        else if (j === choix) style = { borderColor: "#f87171", backgroundColor: "rgba(248,113,113,0.1)", color: "#f87171" };
+                      } else if (choix === j) {
+                        style = { borderColor: IA.solide, backgroundColor: IA.soft, color: IA.txt };
+                      }
+                      return React.createElement("button", {
+                        key: j, onClick: () => choisirReponseQuiz(i, j), disabled: quizValide,
+                        className: "text-left text-xs rounded-lg px-3 py-2 border", style: style
+                      }, opt);
+                    })
+                  ),
+                  quizValide && React.createElement("p", { className: "text-[11px] flex items-start gap-1.5", style: { color: "#a1a1aa" } },
+                    React.createElement(Icon, { name: choix === q.correctIndex ? "check" : "x", size: 12, color: choix === q.correctIndex ? "#4ade80" : "#f87171", style: { marginTop: 1, flexShrink: 0 } }),
+                    q.explication)
+                );
+              }),
+              !quizValide
+                ? React.createElement("button", {
+                    onClick: validerQuiz, disabled: Object.keys(quizReponses).length < quiz.length,
+                    className: "rounded-lg py-2.5 text-sm font-semibold disabled:opacity-40",
+                    style: { background: IA.solide, color: "#fff" }
+                  }, "Valider le quiz (" + Object.keys(quizReponses).length + "/" + quiz.length + ")")
+                : React.createElement("div", { className: "rounded-xl border p-4 flex flex-col items-center gap-2 text-center", style: { borderColor: scoreQuiz === quiz.length ? "#4ade80" : COLORS.border, backgroundColor: COLORS.surface } },
+                    React.createElement("p", { className: "text-2xl font-bold font-mono", style: { color: scoreQuiz === quiz.length ? "#4ade80" : IA.txt } }, (scoreQuiz === quiz.length ? "🎉 " : "") + scoreQuiz + "/" + quiz.length),
+                    React.createElement("p", { className: "text-xs", style: { color: "#a1a1aa" } },
+                      scoreQuiz === quiz.length ? "Score parfait — quiz réussi du 1er coup, comptabilisé dans ta progression !" : "Continue à réviser, tu peux relancer un quiz quand tu veux."),
+                    BoutonGhost({ onClick: recommencerQuiz, className: "mt-1" }, "Nouveau quiz")
+                  )
+            )
           )
         ),
 
-        // Progression Hebdomadaire
-        React.createElement("div", null,
-          React.createElement("div", { className: "flex items-center justify-between mb-2" },
-            React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Progression Hebdomadaire"),
-            (() => {
-              const pct = Math.min(100, ((progression.focusMinutes / progression.focusObjectif) + (progression.quizReussis / progression.quizObjectif)) / 2 * 100);
-              const label = pct >= 75 ? "Warrior de la révision 🔥" : pct >= 40 ? "Sur la bonne voie 💪" : "Débutant motivé 🌱";
-              return React.createElement("span", { className: "text-[10px] font-mono px-2 py-0.5 rounded-full", style: { color: COLORS.gold, backgroundColor: "rgba(242,202,80,0.12)" } }, label);
-            })()
-          ),
-          React.createElement("div", { className: "rounded-xl border p-4 flex flex-col gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        // ========== BLOC 3 : FOCUS HUB ==========
+        // Fusion de l'ancien "Timer de Concentration" et de "Progression Hebdomadaire" en un
+        // seul composant : le timer au centre (pièce maîtresse), les jauges d'objectifs juste
+        // en dessous — un seul endroit pour tout ce qui concerne la concentration du jour.
+        blocActif === "focus" && React.createElement("div", { className: "rounded-2xl border p-6 flex flex-col items-center gap-5", style: { borderColor: focusActif ? IA.border : COLORS.border, backgroundColor: COLORS.surface, backdropFilter: "blur(6px)" } },
+          (() => {
+            const pct = Math.min(100, ((progression.focusMinutes / progression.focusObjectif) + (progression.quizReussis / progression.quizObjectif)) / 2 * 100);
+            const label = pct >= 75 ? "Warrior de la révision 🔥" : pct >= 40 ? "Sur la bonne voie 💪" : "Débutant motivé 🌱";
+            return React.createElement("span", { className: "text-[10px] font-mono px-2.5 py-1 rounded-full self-center", style: { color: IA.txt, backgroundColor: IA.soft } }, label);
+          })(),
+          React.createElement("p", {
+            className: "font-mono font-bold tabular-nums",
+            style: { fontSize: 64, letterSpacing: "0.02em", color: focusActif ? IA.txt : COLORS.text, lineHeight: 1 }
+          }, mmss(focusRestant)),
+          React.createElement("button", {
+            onClick: () => setFocusActif(a => !a),
+            className: "rounded-full px-6 py-2.5 text-sm font-semibold flex items-center gap-2",
+            style: focusActif ? { border: "1px solid #f87171", color: "#f87171" } : { background: IA.solide, color: "#fff" }
+          }, React.createElement(Icon, { name: focusActif ? "pause" : "play", size: 14 }), focusActif ? "Mettre en pause" : "Démarrer la session"),
+
+          React.createElement("div", { className: "w-full flex flex-col gap-3 pt-1" },
             React.createElement("div", null,
               React.createElement("div", { className: "flex items-center justify-between mb-1" },
                 React.createElement("span", { className: "text-xs", style: { color: COLORS.text } }, "Minutes de focus"),
-                React.createElement("span", { className: "text-xs font-mono", style: { color: COLORS.gold } }, progression.focusMinutes + "/" + progression.focusObjectif)
+                React.createElement("span", { className: "text-xs font-mono", style: { color: IA.txt } }, progression.focusMinutes + "/" + progression.focusObjectif)
               ),
               React.createElement("div", { className: "w-full h-2 rounded-full overflow-hidden", style: { backgroundColor: COLORS.border } },
-                React.createElement("div", { className: "h-full rounded-full", style: { width: Math.min(100, progression.focusMinutes / progression.focusObjectif * 100) + "%", backgroundColor: COLORS.gold } })
+                React.createElement("div", { className: "h-full rounded-full", style: { width: Math.min(100, progression.focusMinutes / progression.focusObjectif * 100) + "%", background: IA.solide } })
               )
             ),
             React.createElement("div", null,
               React.createElement("div", { className: "flex items-center justify-between mb-1" },
                 React.createElement("span", { className: "text-xs", style: { color: COLORS.text } }, "Quiz réussis du 1er coup"),
-                React.createElement("span", { className: "text-xs font-mono", style: { color: COLORS.forestText } }, progression.quizReussis + "/" + progression.quizObjectif)
+                React.createElement("span", { className: "text-xs font-mono", style: { color: "#4ade80" } }, progression.quizReussis + "/" + progression.quizObjectif)
               ),
               React.createElement("div", { className: "w-full h-2 rounded-full overflow-hidden", style: { backgroundColor: COLORS.border } },
-                React.createElement("div", { className: "h-full rounded-full", style: { width: Math.min(100, progression.quizReussis / progression.quizObjectif * 100) + "%", backgroundColor: COLORS.forest } })
+                React.createElement("div", { className: "h-full rounded-full", style: { width: Math.min(100, progression.quizReussis / progression.quizObjectif * 100) + "%", backgroundColor: "#4ade80" } })
               )
-            ),
-            React.createElement("button", {
-              onClick: () => setFocusActif(a => !a),
-              className: "rounded-lg py-2 text-xs font-mono flex items-center justify-center gap-2",
-              style: { backgroundColor: focusActif ? "rgba(242,202,80,0.15)" : COLORS.bg, color: COLORS.gold, border: `1px solid ${COLORS.gold}` }
-            }, React.createElement(Icon, { name: focusActif ? "x" : "target", size: 13 }), focusActif ? "Session en cours — " + mmss(focusRestant) : "Démarrer une session de focus (25 min)")
-          )
-        ),
+            )
+          ),
 
-        // Timer de Concentration (Pomodoro) — grand affichage digital
-        React.createElement("div", null,
-          React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider mb-2", style: { color: COLORS.textMuted } }, "Timer de Concentration"),
-          React.createElement("div", { className: "rounded-xl border p-6 flex flex-col items-center gap-4", style: { borderColor: focusActif ? COLORS.gold : COLORS.border, backgroundColor: COLORS.surface } },
-            React.createElement("p", {
-              className: "font-mono font-bold tabular-nums",
-              style: { fontSize: 56, letterSpacing: "0.02em", color: focusActif ? COLORS.gold : COLORS.text, lineHeight: 1 }
-            }, mmss(focusRestant)),
-            React.createElement("button", {
-              onClick: () => setFocusActif(a => !a),
-              className: "rounded-full px-6 py-2.5 text-sm font-semibold flex items-center gap-2",
-              style: focusActif ? { border: `1px solid ${COLORS.terra}`, color: COLORS.terraText } : { backgroundColor: COLORS.gold, color: COLORS.bg }
-            }, React.createElement(Icon, { name: focusActif ? "pause" : "play", size: 14 }), focusActif ? "Mettre en pause" : "Démarrer la session"),
-            React.createElement("div", { className: "w-full rounded-lg p-3 flex items-start gap-2", style: { backgroundColor: "rgba(242,202,80,0.08)" } },
-              React.createElement(Icon, { name: "lightbulb", size: 14, color: COLORS.gold, style: { marginTop: 1, flexShrink: 0 } }),
-              React.createElement("div", null,
-                React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider mb-0.5", style: { color: COLORS.gold } }, "Conseil Sabi"),
-                React.createElement("p", { className: "text-xs leading-relaxed", style: { color: COLORS.textMuted } }, conseilDuJour)
-              )
+          React.createElement("div", { className: "w-full rounded-xl p-3 flex items-start gap-2", style: { backgroundColor: IA.soft } },
+            React.createElement(Icon, { name: "lightbulb", size: 14, color: IA.txt, style: { marginTop: 1, flexShrink: 0 } }),
+            React.createElement("div", null,
+              React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider mb-0.5", style: { color: IA.txt } }, "Conseil Sabi"),
+              React.createElement("p", { className: "text-xs leading-relaxed", style: { color: "#e0e0e0" } }, conseilDuJour)
             )
           )
         )
@@ -8585,6 +8731,16 @@
       const secondaryIds = ["boussole", "classement", "boutique", "simulateur", "mentor", "membres", "admin", "myscoreAdmin", "promoAdmin", "resumes", "myscore", "assistance", "supportAdmin", "infosperso"];
       const activeBottom = tabs.some(t => t.id === tab) ? tab : null;
       const afficherRetour = secondaryIds.includes(tab) || tab === "contribuer";
+      // Total des demandes en attente (changement d'année/filière/matricule, VIP, abonnement) —
+      // sert uniquement à afficher une pastille sur "Administration" dans le menu Profil, pour
+      // que le propriétaire sache d'un coup d'œil qu'il y a des choses à traiter. N'est chargé
+      // que pour le propriétaire (actif: isOwner) : aucun coût pour les autres utilisateurs.
+      const demandesAnneeCount = useFirebaseList(demandesAnneeRef, { actif: isOwner }).length;
+      const demandesFiliereCount = useFirebaseList(demandesFiliereRef, { actif: isOwner }).length;
+      const demandesMatriculeCount = useFirebaseList(demandesMatriculeRef, { actif: isOwner }).length;
+      const vipDemandesCount = useFirebaseList(vipDemandesRef, { actif: isOwner }).length;
+      const abonnementDemandesCount = useFirebaseList(abonnementDemandesRef, { actif: isOwner }).length;
+      const demandesEnAttente = demandesAnneeCount + demandesFiliereCount + demandesMatriculeCount + vipDemandesCount + abonnementDemandesCount;
       const retourVers = tab === "contribuer" ? "accueil" : "profil";
       const estProfil = tab === "profil";
 
@@ -8643,7 +8799,7 @@
       // que celle réellement affichée, avec les mêmes props qu'avant.
       const TAB_RENDERERS = {
         accueil: () => React.createElement(AccueilTab, { cards: cards, epreuves: epreuves, pseudo: pseudo, matricule: matricule, points: points, pointsTotal: pointsTotal, profil: profil, vip: vip, pointsLogs: pointsLogs, badges: badges, onNavigate: setTab }),
-        profil: () => React.createElement(ProfilTab, { pseudo: pseudo, profil: profil, points: points, pointsTotal: pointsTotal, badgeActif: badgeActif, badges: badges, vip: vip, isOwner: isOwner, isAdmin: isAdminEffectif, abonnement: abonnement, whatsapp: whatsapp, matricule: matricule, onSetBadgeActif: handleSetBadgeActif, onNavigate: setTab, onLogout: handleLogout, email: authUser.email, onUpdatePseudo: handleUpdatePseudo, onUpdateWhatsapp: handleUpdateWhatsapp, onUpdatePassword: handleUpdatePassword, onSetMatricule: handleSetMatricule, onDemandeDeblocageMatricule: handleDemandeDeblocageMatricule }),
+        profil: () => React.createElement(ProfilTab, { pseudo: pseudo, profil: profil, points: points, pointsTotal: pointsTotal, badgeActif: badgeActif, badges: badges, vip: vip, isOwner: isOwner, isAdmin: isAdminEffectif, abonnement: abonnement, whatsapp: whatsapp, matricule: matricule, demandesEnAttente: demandesEnAttente, onSetBadgeActif: handleSetBadgeActif, onNavigate: setTab, onLogout: handleLogout, email: authUser.email, onUpdatePseudo: handleUpdatePseudo, onUpdateWhatsapp: handleUpdateWhatsapp, onUpdatePassword: handleUpdatePassword, onSetMatricule: handleSetMatricule, onDemandeDeblocageMatricule: handleDemandeDeblocageMatricule }),
         myscore: () => React.createElement(MyScoreTab, { authUid: authUser.uid }),
         boussole: () => React.createElement(BoussoleTab, { steps: boussoleSteps, progress: boussoleProgress, onToggle: handleToggleBoussole, onAddStep: handleAddBoussoleStep }),
         epreuves: () => React.createElement(EpreuvesTab, { epreuves: epreuves, profil: profil, setProfil: setProfil, onAddEpreuve: handleAddEpreuve, onGenerateCorrigeIA: handleGenererCorrigeIA, onClearCorrigeIA: handleClearCorrigeIA, isAdmin: isAdminEffectif, isOwner: isOwner, onDeleteEpreuve: handleDeleteEpreuve, onReplacePdf: handleReplacePdf, onReplaceImage: handleReplaceImage, abonnement: abonnement, setTab: setTab }),
@@ -8717,10 +8873,16 @@
                     ),
                     React.createElement("button", {
                       onClick: () => { setTabAvantProfil(tab); setTab("profil"); },
-                      className: "w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full",
+                      className: "w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full relative",
                       style: { backgroundColor: "transparent", border: `1px solid ${COLORS.border}` },
                       "aria-label": "Profil"
-                    }, React.createElement(Icon, { name: "user", size: 16, color: COLORS.textMuted }))
+                    },
+                      React.createElement(Icon, { name: "user", size: 16, color: COLORS.textMuted }),
+                      demandesEnAttente > 0 && React.createElement("span", {
+                        className: "absolute top-0 right-0 w-2.5 h-2.5 rounded-full",
+                        style: { backgroundColor: COLORS.terra, border: `1.5px solid ${COLORS.bg}` }
+                      })
+                    )
                   )
                 ),
                 React.createElement("div", { className: "kente-rule kente-rule-shimmer" })
