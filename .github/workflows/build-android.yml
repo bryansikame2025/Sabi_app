@@ -13,6 +13,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Recuperer le code
         uses: actions/checkout@v4
@@ -60,7 +62,15 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Compiler l'APK
+      - name: Configurer la signature (Play Store) si la cle est fournie
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: python3 scripts/patch_signing.py
+
+      - name: Compiler l'APK (de test)
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleDebug
 
@@ -69,4 +79,29 @@ jobs:
         with:
           name: sabi-android-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Renommer l'APK pour un lien de telechargement plus lisible
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/sabi.apk
+
+      - name: Publier un lien de telechargement public (accessible a tous, sans compte GitHub)
+        if: ${{ github.event.inputs.pour_captures_ecran != 'true' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: sabi-derniere-version
+          name: "Sabi — dernière version"
+          body: "Télécharge sabi.apk ci-dessous et installe-le (autorise \"sources inconnues\" si demandé)."
+          files: android/app/build/outputs/apk/debug/sabi.apk
+          prerelease: false
+
+      - name: Compiler l'AAB signe (pour le Play Store, uniquement si la cle est fournie)
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        working-directory: android
+        run: ./gradlew bundleRelease
+
+      - name: Publier l'AAB signe
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sabi-playstore-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
 
