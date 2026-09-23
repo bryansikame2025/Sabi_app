@@ -1,0 +1,35 @@
+name: Etape 2 - Generer la cle de signature (a faire UNE SEULE FOIS)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Installer Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Generer la cle (keystore)
+        run: |
+          keytool -genkeypair -v \
+            -keystore sabi-release.keystore \
+            -alias sabi \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "SabiIutFV2026!" \
+            -keypass "SabiIutFV2026!" \
+            -dname "CN=Sabi, OU=IUT FV Bandjoun, O=Sabi, L=Bandjoun, ST=Ouest, C=CM"
+
+      - name: Encoder la cle en base64 (pour la stocker comme "secret" GitHub)
+        run: base64 -w 0 sabi-release.keystore > sabi-release.keystore.base64.txt
+
+      - name: Publier la cle generee
+        uses: actions/upload-artifact@v4
+        with:
+          name: cle-de-signature-sabi
+          path: |
+            sabi-release.keystore
+            sabi-release.keystore.base64.txt
