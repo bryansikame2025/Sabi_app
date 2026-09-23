@@ -2190,6 +2190,7 @@
     // facilement leur preuve de paiement (capture d'écran) après un virement manuel.
     const PAIEMENT_MANUEL_WHATSAPP = "https://wa.me/237658682593";
     const demandesAnneeRef = db.ref("demandesAnnee");
+    const notificationsRef = db.ref("notifications");
     // Même principe que demandesAnneeRef, mais pour les demandes de changement de filière.
     const demandesFiliereRef = db.ref("demandesFiliere");
     // Demandes de déverrouillage du matricule (une fois enregistré, il est immuable —
@@ -8741,6 +8742,18 @@
       const vipDemandesCount = useFirebaseList(vipDemandesRef, { actif: isOwner }).length;
       const abonnementDemandesCount = useFirebaseList(abonnementDemandesRef, { actif: isOwner }).length;
       const demandesEnAttente = demandesAnneeCount + demandesFiliereCount + demandesMatriculeCount + vipDemandesCount + abonnementDemandesCount;
+      // Notifications personnelles non lues — pour tout le monde cette fois (pas seulement le
+      // propriétaire) : c'est ce qui allume la pastille sur l'icône profil du header. Le compte
+      // "demandesEnAttente" ci-dessus reste, lui, réservé au badge du menu Administration.
+      const mesNotifications = useFirebaseList(authUser ? notificationsRef.child(authUser.uid) : null, { actif: !!authUser });
+      const notifsNonLues = mesNotifications.filter(n => !n.lu).length;
+      const totalPastilleHeader = demandesEnAttente + notifsNonLues;
+      // Marque tout comme lu dès que l'étudiant ouvre son Profil — geste naturel de consultation,
+      // pas besoin d'un écran dédié "liste des notifications" pour l'instant.
+      useEffect(() => {
+        if (tab !== "profil" || !authUser || notifsNonLues === 0) return;
+        mesNotifications.filter(n => !n.lu).forEach(n => notificationsRef.child(authUser.uid).child(n.id).update({ lu: true }).catch(() => {}));
+      }, [tab, authUser, notifsNonLues]);
       const retourVers = tab === "contribuer" ? "accueil" : "profil";
       const estProfil = tab === "profil";
 
@@ -8878,7 +8891,7 @@
                       "aria-label": "Profil"
                     },
                       React.createElement(Icon, { name: "user", size: 16, color: COLORS.textMuted }),
-                      demandesEnAttente > 0 && React.createElement("span", {
+                      totalPastilleHeader > 0 && React.createElement("span", {
                         className: "absolute top-0 right-0 w-2.5 h-2.5 rounded-full",
                         style: { backgroundColor: COLORS.terra, border: `1.5px solid ${COLORS.bg}` }
                       })
