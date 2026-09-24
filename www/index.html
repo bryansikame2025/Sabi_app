@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
-  <title>Sabi : Ensemble pour la réussite de chaque étudiant de l'IUT FV</title>
+  <title>Sabi — Ensemble pour la réussite de chaque étudiant de l'IUT FV</title>
 
   <!-- ===== Attrape-erreurs de secours ===== 
        Sans bundler ni outils de dev sur téléphone, un écran blanc ne dit rien sur la
@@ -24,13 +24,13 @@
         );
       var pre = document.createElement("div");
       if (estBibliothequeManquante) {
-        pre.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:#131313;color:#f6f3ec;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:sans-serif;gap:14px;";
+        pre.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#131313;color:#f6f3ec;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:sans-serif;gap:14px;";
         pre.innerHTML =
           '<div style="font-size:15px;font-weight:600;">Pas de connexion internet</div>' +
           '<div style="font-size:13px;color:#a8a29a;max-width:280px;line-height:1.5;">Sabi a besoin d\'internet au moins une fois pour se charger. Connecte-toi puis réessaie.</div>' +
           '<button id="sabi-reessayer" style="margin-top:8px;padding:10px 24px;border-radius:999px;background:#f2ca50;color:#131313;font-weight:600;border:none;font-size:14px;">Réessayer</button>';
       } else {
-        pre.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:#1a0000;color:#ff6b6b;padding:16px;font-size:12px;white-space:pre-wrap;overflow:auto;margin:0;font-family:monospace;";
+        pre.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#1a0000;color:#ff6b6b;padding:16px;font-size:12px;white-space:pre-wrap;overflow:auto;margin:0;font-family:monospace;";
         pre.textContent = "Erreur JS au chargement :\n\n" + e.message + "\n\nFichier : " + e.filename + "\nLigne : " + e.lineno + ", colonne : " + e.colno + (e.error && e.error.stack ? "\n\nDétail :\n" + e.error.stack : "");
       }
       document.body.appendChild(pre);
@@ -121,10 +121,6 @@
         radial-gradient(ellipse 700px 500px at 100% 10%, rgba(119,221,106,0.05), transparent 55%),
         var(--bg);
       background-attachment: fixed;
-      /* Zones sûres des écrans à encoche/île dynamique (iPhone) : ignoré sans effet sur les
-         téléphones qui ne connaissent pas env(), donc sans risque de compatibilité. */
-      padding-top: env(safe-area-inset-top, 0px);
-      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
     ::selection { background: rgba(242,202,80,0.35); color: var(--text); }
     *:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
@@ -204,7 +200,7 @@
     /* --- Dynamisme du header --- */
     .sabi-header { background-color: var(--bg); }
     .sabi-header-glow {
-      position: absolute; top: -40%; left: -20%; right: -20%; bottom: -40%;
+      position: absolute; inset: -40% -20%;
       background:
         radial-gradient(circle at 20% 20%, rgba(242,202,80,0.16), transparent 55%),
         radial-gradient(circle at 85% 75%, rgba(119,221,106,0.20), transparent 55%);
@@ -618,7 +614,7 @@
     function verifierTailleAvantEnvoiIA(blob, typeLabel) {
       if (blob.size > LIMITE_FICHIER_IA) {
         const tailleMo = (blob.size / (1024 * 1024)).toFixed(1);
-        throw new Error(typeLabel + " trop volumineux (" + tailleMo + " Mo) pour être envoyé à l'IA, limite technique d'environ 4 Mo. Essaie un fichier plus léger.");
+        throw new Error(typeLabel + " trop volumineux (" + tailleMo + " Mo) pour être envoyé à l'IA — limite technique d'environ 4 Mo. Essaie un fichier plus léger.");
       }
     }
 
@@ -792,8 +788,8 @@
       } else if (imageUrl) {
         mode = "photo";
         prompt = "Tu es un professeur d'IUT au Cameroun. Le sujet d'épreuve de " + matiere +
-          " destiné à des étudiants se trouve sur la photo ci-jointe. Lis-la attentivement en entier, même si " +
-          "l'écriture est manuscrite, la photo légèrement inclinée ou l'éclairage imparfait, puis rédige un " +
+          " destiné à des étudiants se trouve sur la photo ci-jointe. Lis-la attentivement en entier — même si " +
+          "l'écriture est manuscrite, la photo légèrement inclinée ou l'éclairage imparfait — puis rédige un " +
           "corrigé complet, clair, structuré et pédagogique, en traitant TOUS les exercices et TOUTES les " +
           "questions du sujet sans exception, avec les étapes de raisonnement quand c'est pertinent. Pour les " +
           "formules mathématiques, utilise du LaTeX valide entre $ ou $$ (ex: $u_{n+1}$, " +
@@ -851,7 +847,7 @@
         }, 90000);
       } catch (err) {
         if (err.name === "AbortError") throw new Error("L'IA a mis trop de temps à répondre. Réessaie.");
-        throw new Error("Impossible de contacter l'IA. Vérifie ta connexion.");
+        throw new Error("Impossible de contacter l'IA — vérifie ta connexion.");
       }
       if (!response.ok) {
         const errData = await response.json().catch(() => null);
@@ -885,7 +881,7 @@
         if (!coupe) return texteComplet.trim();
         if (relance === MAX_RELANCES) {
           return texteComplet.trim() +
-            "\n\n---\n*⚠️ Le " + nomPourErreurs + " a été coupé même après plusieurs relances automatiques, relance la génération, ou demande la suite manuellement.*";
+            "\n\n---\n*⚠️ Le " + nomPourErreurs + " a été coupé même après plusieurs relances automatiques — relance la génération, ou demande la suite manuellement.*";
         }
 
         // Derniers mots de la réponse partielle, pour ancrer précisément la reprise.
@@ -1153,7 +1149,7 @@
       const indiceMatieres = matieresConnues.length > 0
         ? " Si la matière correspond à l'une de ces matières connues, utilise exactement son orthographe officielle : " + matieresConnues.join(", ") + "."
         : "";
-      const prompt = "Ce document (photo ou PDF, éventuellement sur plusieurs pages) contient une ou plusieurs feuilles de notes d'un IUT au Cameroun, parcours-le en entier, page par page si besoin. " +
+      const prompt = "Ce document (photo ou PDF, éventuellement sur plusieurs pages) contient une ou plusieurs feuilles de notes d'un IUT au Cameroun — parcours-le en entier, page par page si besoin. " +
         "Identifie le nom de la matière concernée (déduis-le du titre ou de l'en-tête si présent, sinon " +
         "mets une chaîne vide) et la date de publication si elle est visible (format JJ/MM/AAAA, sinon chaîne vide)." + indiceMatieres + " " +
         "Puis extrait CHAQUE ligne du tableau : le matricule de l'étudiant (tel qu'écrit, sans le modifier ni " +
@@ -1195,7 +1191,7 @@
         });
       } catch (err) {
         if (err.name === "AbortError") throw new Error("L'IA a mis trop de temps à analyser l'image (60s). Réessaie.");
-        throw new Error("Impossible de contacter l'IA. Vérifie ta connexion.");
+        throw new Error("Impossible de contacter l'IA — vérifie ta connexion.");
       } finally {
         clearTimeout(timeoutId);
       }
@@ -1397,7 +1393,7 @@
             { code: "MKA252", nom: "Mécanique & CAO", credit: 8, cours: [
               { code: "GMP2521", nom: "Mécanique Générale II" },
               { code: "GMP2522", nom: "Notions de Base en CAO/DAO/CFAO" },
-              { code: "GMP2523", nom: "RDM : Résistance des Matériaux" },
+              { code: "GMP2523", nom: "RDM — Résistance des Matériaux" },
             ] },
             { code: "MKA262", nom: "Stage", credit: 2, cours: [
               { code: "GMP2621", nom: "Stage Ouvrier" },
@@ -2314,7 +2310,7 @@
     const TAILLE_MAX_IMAGE_ACTU = 5 * 1024 * 1024; // 5 Mo
     function validerTailleImageActu(file) {
       if (file.size > TAILLE_MAX_IMAGE_ACTU) {
-        return "Cette image fait " + (file.size / 1024 / 1024).toFixed(1) + " Mo, la limite est de 5 Mo.";
+        return "Cette image fait " + (file.size / 1024 / 1024).toFixed(1) + " Mo — la limite est de 5 Mo.";
       }
       return null;
     }
@@ -2399,7 +2395,7 @@
         }, "image/jpeg", 0.85);
       };
 
-      return React.createElement("div", { className: "fixed top-0 right-0 bottom-0 left-0 z-50 flex flex-col items-center justify-center p-4", style: { backgroundColor: "rgba(10,10,10,0.92)" } },
+      return React.createElement("div", { className: "fixed inset-0 z-50 flex flex-col items-center justify-center p-4", style: { backgroundColor: "rgba(10,10,10,0.92)" } },
         React.createElement("div", { className: "relative", style: { lineHeight: 0, touchAction: "none" } },
           url && React.createElement("img", {
             ref: imgRef, src: url, onLoad: onImgLoad, draggable: false,
@@ -2630,7 +2626,7 @@
     function CreditsModal({ ouvert, onFermer, onOuvrirAssistance }) {
       if (!ouvert) return null;
       return React.createElement("div", {
-        className: "fixed top-0 right-0 bottom-0 left-0 z-[200] flex items-end sm:items-center justify-center",
+        className: "fixed inset-0 z-[200] flex items-end sm:items-center justify-center",
         style: { backgroundColor: "rgba(0,0,0,0.6)" },
         onClick: onFermer
       },
@@ -2649,7 +2645,7 @@
           React.createElement("img", { src: LOGO_SABI_WORDMARK, alt: "Sabi", className: "h-12 w-auto self-center my-1" }),
           React.createElement("div", { className: "flex flex-col gap-3 text-sm", style: { color: COLORS.textMuted } },
             React.createElement("p", null, "Sabi est l'application de la vie étudiante de l'IUT Fotso Victor de Bandjoun : archives d'épreuves corrigées, résumés de cours, carte du campus, classement, chat, et accompagnement pour réussir l'année."),
-            React.createElement("p", null, "Le nom \"Sabi\" vient du mot pidgin/nigérian signifiant \"savoir\", l'objectif est de donner à chaque étudiant l'accès aux ressources et aux repères qui lui manquent parfois en arrivant sur le campus.")
+            React.createElement("p", null, "Le nom \"Sabi\" vient du mot pidgin/nigérian signifiant \"savoir\" — l'objectif est de donner à chaque étudiant l'accès aux ressources et aux repères qui lui manquent parfois en arrivant sur le campus.")
           ),
           React.createElement("div", { className: "rounded-xl p-3 flex flex-col gap-1", style: { backgroundColor: COLORS.surface2, border: `1px solid ${COLORS.border}` } },
             React.createElement("p", { className: "text-[10px] font-mono uppercase", style: { color: COLORS.textFaint } }, "Équipe"),
@@ -2669,11 +2665,11 @@
     // visible, assombri, et cliquable pour fermer). Regroupe Paramètres, Assistance et Crédits.
     function MenuLateral({ ouvert, onFermer, themeMode, onToggleTheme, notifsActives, onToggleNotifs, onOuvrirAssistance, onOuvrirCredits }) {
       return React.createElement("div", {
-        className: "fixed top-0 right-0 bottom-0 left-0 z-[150] transition-opacity",
+        className: "fixed inset-0 z-[150] transition-opacity",
         style: { pointerEvents: ouvert ? "auto" : "none", opacity: ouvert ? 1 : 0 }
       },
         React.createElement("div", {
-          className: "absolute top-0 right-0 bottom-0 left-0",
+          className: "absolute inset-0",
           style: { backgroundColor: "rgba(0,0,0,0.55)" },
           onClick: onFermer
         }),
@@ -2830,8 +2826,8 @@
 
     // ===== Carrousel de bienvenue affiché avant la première connexion =====
     const ONBOARDING_SLIDES = [
-      { emoji: "book", titre: "Le savoir circule entre étudiants", description: "Découvre et partage des astuces \"sabi\" utiles pour réussir à l'IUT, vote pour les meilleures et gagne des points." },
-      { emoji: "file-text", titre: "Épreuves et corrigés", description: "Retrouve les sujets d'épreuves passées par filière et année, avec des corrigés, y compris générés par IA." },
+      { emoji: "book", titre: "Le savoir circule entre étudiants", description: "Découvre et partage des astuces \"sabi\" utiles pour réussir à l'IUT — vote pour les meilleures et gagne des points." },
+      { emoji: "file-text", titre: "Épreuves et corrigés", description: "Retrouve les sujets d'épreuves passées par filière et année, avec des corrigés — y compris générés par IA." },
       { emoji: "map", titre: "La carte du campus", description: "Repère facilement les bâtiments, salles et services importants de l'IUT FV Bandjoun." },
       { emoji: "medal", titre: "Progresse et débloque des badges", description: "Gagne des points en contribuant, grimpe au classement et débloque des badges au fil de ton parcours." }
     ];
@@ -2842,7 +2838,7 @@
       const slide = ONBOARDING_SLIDES[index];
 
       return React.createElement("div", {
-        className: "h-screen h-dvh w-full flex justify-center px-5 py-4 overflow-hidden",
+        className: "h-dvh w-full flex justify-center px-5 py-4 overflow-hidden",
         style: {
           backgroundColor: COLORS.bg,
           backgroundImage: "radial-gradient(ellipse at 20% 10%, rgba(242,202,80,0.12), transparent 55%), radial-gradient(ellipse at 85% 90%, rgba(119,221,106,0.16), transparent 55%)"
@@ -3014,7 +3010,7 @@
             // que de laisser un compte fantôme derrière nous — l'étudiant peut alors simplement
             // réessayer l'inscription depuis le début une fois sa connexion rétablie.
             try { await cred.user.delete(); } catch {}
-            setErreur("Ton profil n'a pas pu être enregistré (connexion instable). Le compte n'a pas été créé. Réessaie.");
+            setErreur("Ton profil n'a pas pu être enregistré (connexion instable). Le compte n'a pas été créé — réessaie.");
             setChargement(false);
             return;
           }
@@ -3038,7 +3034,7 @@
       };
 
       const enveloppe = (contenu, avecHeader) => React.createElement("div", {
-        className: "h-screen h-dvh w-full flex justify-center overflow-y-auto px-5 py-4",
+        className: "h-dvh w-full flex justify-center overflow-y-auto px-5 py-4",
         style: {
           backgroundColor: COLORS.bg,
           backgroundImage: "radial-gradient(ellipse at 20% 10%, rgba(242,202,80,0.12), transparent 55%), radial-gradient(ellipse at 85% 90%, rgba(119,221,106,0.16), transparent 55%)"
@@ -3139,7 +3135,7 @@
             React.createElement("h1", { className: "text-2xl font-bold mb-1", style: { color: COLORS.text, fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: "-0.02em" } }, "Qui es-tu ?"),
             React.createElement(ChampFlottant, { label: "Ton pseudo sur le campus", value: pseudo, onChange: e => setPseudo(e.target.value), autoFocus: true }),
             React.createElement(ChampFlottant, { label: "Ton matricule (optionnel)", value: matricule, onChange: e => setMatricule(e.target.value.toUpperCase()) }),
-            React.createElement("p", { className: "text-[11px] -mt-2", style: { color: COLORS.textFaint } }, "Sert à t'attribuer automatiquement tes notes publiées par l'administration. Tu peux le laisser vide et le renseigner plus tard depuis ton profil, une fois enregistré, il ne pourra plus être modifié sans validation du propriétaire."),
+            React.createElement("p", { className: "text-[11px] -mt-2", style: { color: COLORS.textFaint } }, "Sert à t'attribuer automatiquement tes notes publiées par l'administration. Tu peux le laisser vide et le renseigner plus tard depuis ton profil — une fois enregistré, il ne pourra plus être modifié sans validation du propriétaire."),
             React.createElement("div", { className: "grid grid-cols-2 gap-3" },
               React.createElement("select", {
                 value: annee,
@@ -3276,7 +3272,7 @@
               React.createElement("p", { className: "text-sm mt-2", style: { color: COLORS.textMuted } }, "Assure-toi que tout est correct avant de valider.")
             ),
             React.createElement("div", { className: "rounded-xl border divide-y", style: { backgroundColor: COLORS.surface, borderColor: COLORS.border } },
-              [["Pseudo", pseudo], ["Matricule", matricule.trim() ? matricule.trim().toUpperCase() : "À renseigner plus tard"], ["Email", email], ["Année", annee], ["Filière", filiere]].concat(whatsapp.trim() ? [["WhatsApp", whatsapp.trim()]] : []).map(([label, val]) =>
+              [["Pseudo", pseudo], ["Matricule", matricule.trim() ? matricule.trim().toUpperCase() : "— à renseigner plus tard"], ["Email", email], ["Année", annee], ["Filière", filiere]].concat(whatsapp.trim() ? [["WhatsApp", whatsapp.trim()]] : []).map(([label, val]) =>
                 React.createElement("div", { key: label, className: "flex items-center justify-between px-4 py-3", style: { borderColor: COLORS.border } },
                   React.createElement("span", { className: "text-xs", style: { color: COLORS.textMuted } }, label),
                   React.createElement("span", { className: "text-sm font-semibold text-right", style: { color: COLORS.text } }, val)
@@ -3315,7 +3311,7 @@
           React.createElement("circle", { cx: size / 2, cy: size / 2, r: r, fill: "none", stroke: COLORS.border, strokeWidth: "4" }),
           React.createElement("circle", { cx: size / 2, cy: size / 2, r: r, fill: "none", stroke: tier.color, strokeWidth: "4", strokeDasharray: c, strokeDashoffset: c - pct * c, strokeLinecap: "round", style: { transition: "stroke-dashoffset 0.6s ease" } })
         ),
-        React.createElement("div", { className: "absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center" },
+        React.createElement("div", { className: "absolute inset-0 flex items-center justify-center" },
           React.createElement("span", { className: "font-mono text-[9px] font-semibold", style: { color: tier.color } }, points)
         )
       );
@@ -3489,7 +3485,7 @@
         React.createElement("div", null,
           React.createElement("label", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Ton actualité"),
           React.createElement("textarea", { value: contenu, onChange: e => setContenu(e.target.value), placeholder: "Une info que tu tiens d'un grand, un piège d'examen, une astuce de coefficient...", rows: 4, className: "mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border resize-none", style: { backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text } }),
-          React.createElement("p", { className: "text-[11px] mt-1", style: { color: COLORS.textFaint } }, "Texte seul (10 caractères min), image seule, ou les deux. Visible par tous instantanément, seuls tes votes restent privés.")
+          React.createElement("p", { className: "text-[11px] mt-1", style: { color: COLORS.textFaint } }, "Texte seul (10 caractères min), image seule, ou les deux. Visible par tous instantanément — seuls tes votes restent privés.")
         ),
         React.createElement("div", null,
           React.createElement("label", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Image (optionnel)"),
@@ -3523,7 +3519,7 @@
         React.createElement("label", { className: "flex items-center gap-2 text-sm", style: { color: points >= COUT_FLASH ? COLORS.terraText : COLORS.textFaint } },
           React.createElement("input", { type: "checkbox", checked: flash, disabled: points < COUT_FLASH, onChange: e => setFlash(e.target.checked) }),
           React.createElement(Icon, { name: "help-circle", size: 14 }),
-          " Question Flash : " + COUT_FLASH + " pts, en tête du fil pendant 24h"
+          " Question Flash — " + COUT_FLASH + " pts, en tête du fil pendant 24h"
         ),
         React.createElement("button", { onClick: handleSubmit, disabled: !peutPublier || uploadPct !== null, className: "w-full rounded-lg py-2.5 font-semibold text-sm flex items-center justify-center gap-2 transition-opacity disabled:opacity-40", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, React.createElement(Icon, { name: "sparkles", size: 15 }), " " + (uploadPct !== null ? "Envoi en cours..." : envoye ? "Actualité publiée · +5 points" : "Publier mon actualité"))
         )
@@ -3612,11 +3608,11 @@
     // Quelques repères de départ, positionnés à partir des distances/directions connues sur OpenStreetMap
     // autour du bâtiment principal. Approximatifs — à corriger par un simple glisser/redépôt une fois sur place.
     const REPERES_CAMPUS_OSM = [
-      { nom: "Bâtiment A : Bloc administratif", categorie: "Administration", lat: 5.355364, lng: 10.426265, description: "Position approximative (OSM), à ajuster." },
-      { nom: "Salle Travaux Pratiques", categorie: "Salle de cours", lat: 5.354369, lng: 10.425272, description: "Position approximative (OSM), à ajuster." },
-      { nom: "Infirmerie", categorie: "Autre", lat: 5.355200, lng: 10.427094, description: "Position approximative (OSM), à ajuster." },
-      { nom: "Club 100 : Restaurant", categorie: "Restauration", lat: 5.354369, lng: 10.427799, description: "Position approximative (OSM), à ajuster." },
-      { nom: "Terrain de football", categorie: "Autre", lat: 5.355456, lng: 10.427350, description: "Position approximative (OSM), à ajuster." },
+      { nom: "Bâtiment A — Bloc administratif", categorie: "Administration", lat: 5.355364, lng: 10.426265, description: "Position approximative (OSM) — à ajuster." },
+      { nom: "Salle Travaux Pratiques", categorie: "Salle de cours", lat: 5.354369, lng: 10.425272, description: "Position approximative (OSM) — à ajuster." },
+      { nom: "Infirmerie", categorie: "Autre", lat: 5.355200, lng: 10.427094, description: "Position approximative (OSM) — à ajuster." },
+      { nom: "Club 100 — Restaurant", categorie: "Restauration", lat: 5.354369, lng: 10.427799, description: "Position approximative (OSM) — à ajuster." },
+      { nom: "Terrain de football", categorie: "Autre", lat: 5.355456, lng: 10.427350, description: "Position approximative (OSM) — à ajuster." },
     ];
 
     function CarteTab({ points, onAddPoint, onUpdatePoint, onDeletePoint, isOwner }) {
@@ -3750,7 +3746,7 @@
 
       return React.createElement("div", { className: "relative w-full h-full" },
         // La carte occupe tout l'espace disponible, bord à bord
-        React.createElement("div", { ref: mapDivRef, className: "absolute top-0 right-0 bottom-0 left-0 z-0" }),
+        React.createElement("div", { ref: mapDivRef, className: "absolute inset-0 z-0" }),
 
         // Bandeau haut en overlay (dégradé pour rester lisible sur la carte)
         React.createElement("div", {
@@ -3759,7 +3755,7 @@
         },
           React.createElement("div", { className: "flex items-center justify-between gap-2 pointer-events-auto" },
             React.createElement("p", { className: "text-xs flex-1", style: { color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.7)" } },
-              placementMode ? "Tape sur la carte pour placer ton point ↓" : "Campus IUT FV Bandjoun, tape sur un point"),
+              placementMode ? "Tape sur la carte pour placer ton point ↓" : "Campus IUT FV Bandjoun — tape sur un point"),
             React.createElement("button", {
               onClick: () => setVueSatellite(v => !v),
               className: "flex-shrink-0 text-[10px] font-mono px-2.5 py-1.5 rounded-full",
@@ -3821,7 +3817,7 @@
               Object.keys(CATEGORIES_CARTE).map(c => React.createElement("option", { key: c }, c))
             ),
             React.createElement("textarea", { value: description, onChange: e => setDescription(e.target.value), placeholder: "Détail utile (optionnel)", rows: 2, className: "w-full rounded-lg px-3 py-2 text-sm outline-none border resize-none", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
-            React.createElement("p", { className: "text-[10px]", style: { color: COLORS.textFaint } }, "Lat/Lng : " + pendingPos.lat.toFixed(6) + ", " + pendingPos.lng.toFixed(6) + ", tape ailleurs sur la carte pour ajuster."),
+            React.createElement("p", { className: "text-[10px]", style: { color: COLORS.textFaint } }, "Lat/Lng : " + pendingPos.lat.toFixed(6) + ", " + pendingPos.lng.toFixed(6) + " — tape ailleurs sur la carte pour ajuster."),
             React.createElement("div", { className: "flex gap-2" },
               React.createElement("button", { onClick: handleValidate, disabled: nom.trim().length < 2, className: "flex-1 rounded-lg py-2 text-sm font-semibold disabled:opacity-40", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, editingId ? "Enregistrer les modifications" : "Placer ce point"),
               React.createElement("button", { onClick: handleCancelForm, className: "px-4 rounded-lg py-2 text-sm", style: { color: COLORS.textMuted, border: `1px solid ${COLORS.border}` } }, "Annuler")
@@ -3853,7 +3849,7 @@
       };
 
       return React.createElement("div", { className: "flex flex-col h-full min-h-0" },
-        React.createElement("p", { className: "text-[11px] mb-3 flex-shrink-0", style: { color: COLORS.textFaint } }, "Chat public IUT FV Bandjoun, visible par tous, contrairement aux votes."),
+        React.createElement("p", { className: "text-[11px] mb-3 flex-shrink-0", style: { color: COLORS.textFaint } }, "Chat public IUT FV Bandjoun — visible par tous, contrairement aux votes."),
         React.createElement("div", { className: "flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1 sabi-liste-animee" },
           messages.length === 0
             ? React.createElement(EmptyState, { icon: "message-circle", text: "Aucun message pour l'instant. Lance la discussion." })
@@ -3906,7 +3902,7 @@
       };
 
       return React.createElement("div", { className: "flex flex-col h-full min-h-0" },
-        React.createElement("p", { className: "text-[11px] mb-3 flex-shrink-0", style: { color: COLORS.textFaint } }, "Échange privé et confidentiel avec le propriétaire de Sabi, lui seul voit ce fil."),
+        React.createElement("p", { className: "text-[11px] mb-3 flex-shrink-0", style: { color: COLORS.textFaint } }, "Échange privé et confidentiel avec le propriétaire de Sabi — lui seul voit ce fil."),
         React.createElement("div", { className: "flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1" },
           messages.length === 0
             ? React.createElement(EmptyState, { icon: "help-circle", text: "Une question, un bug, une suggestion ? Écris ton message ci-dessous." })
@@ -4101,7 +4097,7 @@
       };
 
       return React.createElement("div", {
-        className: "fixed top-0 right-0 bottom-0 left-0 z-50 flex flex-col",
+        className: "fixed inset-0 z-50 flex flex-col",
         style: { backgroundColor: "rgba(20,17,15,0.96)" }
       },
         React.createElement("div", { className: "flex items-center justify-between px-4 py-3 border-b gap-2", style: { borderColor: COLORS.border } },
@@ -4273,7 +4269,7 @@
       const TAILLE_MAX_PDF = 80 * 1024 * 1024;
       const validerTaillePdf = (file) => {
         if (file.size > TAILLE_MAX_PDF) {
-          return "Ce PDF fait " + (file.size / 1024 / 1024).toFixed(1) + " Mo, la limite est de 80 Mo. Essaie de le compresser (par ex. sur ilovepdf.com).";
+          return "Ce PDF fait " + (file.size / 1024 / 1024).toFixed(1) + " Mo — la limite est de 80 Mo. Essaie de le compresser (par ex. sur ilovepdf.com).";
         }
         return null;
       };
@@ -4285,7 +4281,7 @@
           return;
         }
         if (contenu.trim().length < 10) {
-          setUploadErreur("Décris le sujet en au moins 10 caractères (même bref), nécessaire même si tu joins un PDF.");
+          setUploadErreur("Décris le sujet en au moins 10 caractères (même bref) — nécessaire même si tu joins un PDF.");
           return;
         }
 
@@ -4374,7 +4370,7 @@
         setIaErreur(null);
         const texteSuffisant = (ep.contenu || "").trim().length >= CONTENU_MIN_POUR_IA;
         if (!texteSuffisant && !ep.pdfUrl && !ep.imageUrl) {
-          setIaErreur({ id: ep.id, message: "Le sujet renseigné est trop court (moins de " + CONTENU_MIN_POUR_IA + " caractères) et aucun PDF ni photo n'est joint, impossible de générer un corrigé fiable sans voir le vrai sujet." });
+          setIaErreur({ id: ep.id, message: "Le sujet renseigné est trop court (moins de " + CONTENU_MIN_POUR_IA + " caractères) et aucun PDF ni photo n'est joint — impossible de générer un corrigé fiable sans voir le vrai sujet." });
           return;
         }
         setIaLoading(ep.id);
@@ -4409,9 +4405,9 @@
                     onChange: e => setMatiere(e.target.value === "__autre__" ? "" : e.target.value),
                     className: "w-full rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
                   },
-                    React.createElement("option", { value: "" }, "Choisir une matière (" + profil.filiere + ")"),
-                    referenceMatieres.map(u => React.createElement("optgroup", { key: u.code, label: u.code + " : " + u.nom },
-                      (u.cours || []).map(c => React.createElement("option", { key: c.code, value: c.nom }, c.code + " : " + c.nom))
+                    React.createElement("option", { value: "" }, "— Choisir une matière (" + profil.filiere + ") —"),
+                    referenceMatieres.map(u => React.createElement("optgroup", { key: u.code, label: u.code + " — " + u.nom },
+                      (u.cours || []).map(c => React.createElement("option", { key: c.code, value: c.nom }, c.code + " — " + c.nom))
                     )),
                     React.createElement("option", { value: "__autre__" }, "Autre (saisie libre)")
                   ),
@@ -4421,8 +4417,8 @@
                   })
                 );
               })(),
-              React.createElement("input", { value: code, onChange: e => setCode(e.target.value), placeholder: "Code de l'épreuve (ex: INFO0301), optionnel", className: "w-full rounded-lg px-3 py-2 text-sm outline-none border font-mono", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
-              React.createElement("input", { value: anneeSujet, onChange: e => setAnneeSujet(e.target.value.replace(/[^0-9]/g, "").slice(0, 4)), inputMode: "numeric", placeholder: "Année du sujet (ex: 2024), optionnel", className: "w-full rounded-lg px-3 py-2 text-sm outline-none border font-mono", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
+              React.createElement("input", { value: code, onChange: e => setCode(e.target.value), placeholder: "Code de l'épreuve (ex: INFO0301) — optionnel", className: "w-full rounded-lg px-3 py-2 text-sm outline-none border font-mono", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
+              React.createElement("input", { value: anneeSujet, onChange: e => setAnneeSujet(e.target.value.replace(/[^0-9]/g, "").slice(0, 4)), inputMode: "numeric", placeholder: "Année du sujet (ex: 2024) — optionnel", className: "w-full rounded-lg px-3 py-2 text-sm outline-none border font-mono", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
               React.createElement("div", { className: "grid grid-cols-3 gap-2" },
                 React.createElement("select", { value: annee, onChange: e => setAnnee(e.target.value), className: "rounded-lg px-2 py-2 text-xs outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }, ANNEES.map(a => React.createElement("option", { key: a }, a))),
                 React.createElement("select", { value: semestre, onChange: e => setSemestre(e.target.value), className: "rounded-lg px-2 py-2 text-xs outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }, SEMESTRES.map(s => React.createElement("option", { key: s }, s))),
@@ -4431,7 +4427,7 @@
               React.createElement("div", null,
                 React.createElement("label", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Filière concernée"),
                 React.createElement("select", { value: filiereEpreuve, onChange: e => setFiliereEpreuve(e.target.value), disabled: filiereVerrouillee, className: "mt-1 w-full rounded-lg px-2 py-2 text-sm outline-none border disabled:opacity-50", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }, FILIERES.map(f => React.createElement("option", { key: f }, f))),
-                filiereVerrouillee && React.createElement("p", { className: "text-[10px] mt-1", style: { color: COLORS.textFaint } }, "En tant qu'admin, tu ne peux publier que pour ta propre filière, mais pour n'importe quelle année. Seul le propriétaire peut publier pour toutes les filières.")
+                filiereVerrouillee && React.createElement("p", { className: "text-[10px] mt-1", style: { color: COLORS.textFaint } }, "En tant qu'admin, tu ne peux publier que pour ta propre filière — mais pour n'importe quelle année. Seul le propriétaire peut publier pour toutes les filières.")
               ),
               React.createElement("textarea", { value: contenu, onChange: e => setContenu(e.target.value), placeholder: "Recopie ou décris le sujet ici (questions, énoncé...)", rows: 4, className: "w-full rounded-lg px-3 py-2 text-sm outline-none border resize-none", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
               React.createElement("textarea", { value: corrige, onChange: e => setCorrige(e.target.value), placeholder: "Corrigé ou piste de réponse (optionnel, très apprécié)", rows: 3, className: "w-full rounded-lg px-3 py-2 text-sm outline-none border resize-none", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
@@ -4463,7 +4459,7 @@
                 uploadErreur && React.createElement("p", { className: "text-[11px] mt-1", style: { color: COLORS.terraText } }, uploadErreur)
               ),
               React.createElement("div", null,
-                React.createElement("label", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Photo du sujet (optionnel), si tu n'as pas de PDF, une photo suffit"),
+                React.createElement("label", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Photo du sujet (optionnel) — si tu n'as pas de PDF, une photo suffit"),
                 React.createElement("input", {
                   type: "file",
                   accept: "image/*",
@@ -4488,7 +4484,7 @@
               )
             ),
         isOwner && React.createElement("div", { className: "rounded-xl border p-3 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-          React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Trier : toutes années, toutes filières"),
+          React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Trier — toutes années, toutes filières"),
           React.createElement("div", { className: "grid grid-cols-2 gap-2" },
             React.createElement("select", {
               value: filtreAnneeEp,
@@ -4506,7 +4502,7 @@
         ),
 
         (isAdmin && !isOwner) && React.createElement("div", { className: "rounded-xl border p-3 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-          React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Trier par année, filière : " + (profil.filiere || "N/A")),
+          React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Trier par année — filière : " + (profil.filiere || "—")),
           React.createElement("select", {
             value: filtreAnneeEp,
             onChange: e => setFiltreAnneeEp(e.target.value),
@@ -4517,7 +4513,7 @@
 
         (!isOwner && !isAdmin) && React.createElement("div", { className: "rounded-xl border p-3 flex items-center gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
           React.createElement(Icon, { name: "map-pin", size: 14, color: COLORS.textMuted }),
-          React.createElement("p", { className: "text-xs", style: { color: COLORS.textMuted } }, "Épreuves de ta promo · " + (profil.annee || "N/A") + " · " + (profil.filiere || "N/A") + " · " + semestreActuel(Date.now()))
+          React.createElement("p", { className: "text-xs", style: { color: COLORS.textMuted } }, "Épreuves de ta promo — " + (profil.annee || "—") + " · " + (profil.filiere || "—") + " · " + semestreActuel(Date.now()))
         ),
 
         React.createElement("div", { className: "rounded-xl border p-3 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
@@ -4533,7 +4529,7 @@
         (matieresFilantes(filiereActive, anneeActive, "Semestre 1").length > 0 ||
          matieresFilantes(filiereActive, anneeActive, "Semestre 2").length > 0) &&
         React.createElement("div", { className: "rounded-xl border p-3 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-          React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Accès rapide : " + filiereActive),
+          React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Accès rapide — " + filiereActive),
           React.createElement("select", {
             value: filtreSemestreEp,
             onChange: e => changerSemestreEp(e.target.value),
@@ -4546,7 +4542,7 @@
             className: "w-full rounded-lg px-2 py-2 text-sm outline-none border",
             style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
           },
-            React.createElement("option", { value: "" }, "Choisir une matière"),
+            React.createElement("option", { value: "" }, "— Choisir une matière —"),
             [...filantes].sort((a, b) => a.nom.localeCompare(b.nom)).map(f => React.createElement("option", { key: f.code, value: f.code }, f.nom))
           ),
           filantes.length === 0 && React.createElement("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Aucune matière renseignée pour ce semestre pour le moment."),
@@ -4614,7 +4610,7 @@
                           style: { backgroundColor: COLORS.gold, color: COLORS.bg }
                         }, iaLoading === ep.id ? "Génération…" : React.createElement(React.Fragment, null, React.createElement(Icon, { name: "sparkles", size: 13 }), "Générer IA"))
                   ),
-                  iaLoading === ep.id && React.createElement("p", { className: "text-[11px] px-4 pb-3 flex items-center gap-1.5", style: { color: COLORS.textFaint } }, React.createElement(Icon, { name: "clock", size: 11 }), "Ça peut prendre 1 à 2 minutes pour un sujet complet à plusieurs exercices, reste sur la page."),
+                  iaLoading === ep.id && React.createElement("p", { className: "text-[11px] px-4 pb-3 flex items-center gap-1.5", style: { color: COLORS.textFaint } }, React.createElement(Icon, { name: "clock", size: 11 }), "Ça peut prendre 1 à 2 minutes pour un sujet complet à plusieurs exercices — reste sur la page."),
                   iaErreur && iaErreur.id === ep.id && React.createElement("p", { className: "text-[11px] px-4 pb-3", style: { color: COLORS.terraText } }, iaErreur.message),
                   isOpen && React.createElement("div", { className: "px-4 pb-4 border-t", style: { borderColor: COLORS.border } },
                     isOwner && React.createElement("label", {
@@ -4750,7 +4746,7 @@
                   u.admin && React.createElement("span", { className: "text-[9px] font-mono px-1.5 py-0.5 rounded-full", style: { backgroundColor: "rgba(242,202,80,0.15)", color: COLORS.gold } }, "ADMIN"),
                   (() => { const tier = getAbonnementActif(u); return tier !== "free" && React.createElement("span", { className: "text-[9px] font-mono px-1.5 py-0.5 rounded-full", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, tier === "proplus" ? "PRO+" : "PRO"); })()
                 ),
-                React.createElement("p", { className: "text-[11px] font-mono", style: { color: COLORS.textMuted } }, (u.filiere || "N/A") + " · " + (u.annee || "N/A")),
+                React.createElement("p", { className: "text-[11px] font-mono", style: { color: COLORS.textMuted } }, (u.filiere || "—") + " · " + (u.annee || "—")),
                 voitCoordonnees && u.whatsapp && React.createElement("p", { className: "text-[11px] font-mono mt-0.5 flex items-center gap-1", style: { color: COLORS.forestText } }, React.createElement(Icon,{name:"phone",size:10}), " " + u.whatsapp)
               ),
               React.createElement("p", { className: "text-xs font-mono", style: { color: COLORS.gold } }, (u.pointsTotal || 0) + " pts")
@@ -4844,7 +4840,7 @@
         setIaErreur(null);
         const texteSuffisant = (r.contenu || "").trim().length >= CONTENU_MIN_POUR_IA_RESUME;
         if (!texteSuffisant && !r.pdfUrl) {
-          setIaErreur({ id: r.id, message: "Désolé, ce fichier ne dispose pas de résumé, pas assez de contenu et aucun PDF joint." });
+          setIaErreur({ id: r.id, message: "Désolé, ce fichier ne dispose pas de résumé : pas assez de contenu et aucun PDF joint." });
           return;
         }
         setIaLoading(r.id);
@@ -4907,7 +4903,7 @@
 
         // Filtres — année / filière / semestre, comme sur l'onglet Épreuves.
         React.createElement("div", { className: "rounded-xl border p-3 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-          React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Trier : année, filière et semestre"),
+          React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Trier par année, filière et semestre"),
           React.createElement("div", { className: "grid grid-cols-2 gap-2" },
             React.createElement("select", {
               value: filtreAnneeRes,
@@ -4974,7 +4970,7 @@
                         className: "mt-3 flex items-center justify-center gap-1.5 text-xs font-mono py-2 px-3 rounded-lg disabled:opacity-50",
                         style: { backgroundColor: COLORS.gold, color: COLORS.bg }
                       }, iaLoading === r.id ? "Génération…" : React.createElement(React.Fragment, null, React.createElement(Icon, { name: "sparkles", size: 13 }), " Générer un résumé IA")),
-                  iaLoading === r.id && React.createElement("p", { className: "text-[11px] mt-2 flex items-center gap-1.5", style: { color: COLORS.textFaint } }, React.createElement(Icon, { name: "clock", size: 11 }), "Ça peut prendre 1 à 2 minutes pour un cours complet, reste sur la page."),
+                  iaLoading === r.id && React.createElement("p", { className: "text-[11px] mt-2 flex items-center gap-1.5", style: { color: COLORS.textFaint } }, React.createElement(Icon, { name: "clock", size: 11 }), "Ça peut prendre 1 à 2 minutes pour un cours complet — reste sur la page."),
                   iaErreur && iaErreur.id === r.id && React.createElement("p", { className: "text-[11px] mt-2", style: { color: COLORS.textMuted } }, iaErreur.message),
                   React.createElement("div", { className: "flex items-center justify-between mt-3" },
                     React.createElement("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Publié par " + r.auteur),
@@ -5017,7 +5013,7 @@
         ),
         verifPaiementStatut === "ok" && React.createElement("div", { className: "rounded-xl border p-3 flex items-center gap-2", style: { borderColor: COLORS.forest, backgroundColor: "rgba(119,221,106,0.1)" } },
           React.createElement(Icon, { name: "check", size: 14, color: COLORS.forestText }),
-          React.createElement("p", { className: "text-xs", style: { color: COLORS.forestText } }, "Paiement confirmé, ton abonnement est actif !")
+          React.createElement("p", { className: "text-xs", style: { color: COLORS.forestText } }, "Paiement confirmé — ton abonnement est actif !")
         ),
         verifPaiementStatut === "erreur" && React.createElement("div", { className: "rounded-xl border p-3 flex items-center gap-2", style: { borderColor: COLORS.terra, backgroundColor: "rgba(255,180,171,0.1)" } },
           React.createElement(Icon, { name: "x", size: 14, color: COLORS.terraText }),
@@ -5093,14 +5089,14 @@
                   ? React.createElement("p", { className: "text-xs font-mono flex items-center gap-1", style: { color: COLORS.forestText } }, React.createElement(Icon, { name: "check", size: 11 }), " Inclus dans ton abonnement")
                   : !PAIEMENT_AUTO_ACTIF
                     ? (demandesManuellesEnvoyees[cleDemande]
-                        ? React.createElement("p", { className: "text-xs", style: { color: COLORS.forestText } }, "Demande envoyée, en attente de validation par un admin.")
+                        ? React.createElement("p", { className: "text-xs", style: { color: COLORS.forestText } }, "Demande envoyée — en attente de validation par un admin.")
                         : React.createElement("div", { className: "flex flex-col gap-2" },
                             React.createElement("div", { className: "rounded-lg p-2.5", style: { backgroundColor: COLORS.surface2 } },
                               React.createElement("p", { className: "text-[11px]", style: { color: COLORS.textMuted } },
                                 "1. Envoie " + formatFCFA(effectif) + " FCFA par Orange Money / MTN MoMo au ",
                                 React.createElement("span", { style: { color: COLORS.gold, fontWeight: 600 } }, PAIEMENT_MANUEL_NUMERO)
                               ),
-                              React.createElement("p", { className: "text-[11px] mt-1", style: { color: COLORS.textMuted } }, "2. Tape ci-dessous une fois le transfert envoyé, ton abonnement s'active après vérification (quelques heures)."),
+                              React.createElement("p", { className: "text-[11px] mt-1", style: { color: COLORS.textMuted } }, "2. Tape ci-dessous une fois le transfert envoyé — ton abonnement s'active après vérification (quelques heures)."),
                               React.createElement("a", {
                                 href: PAIEMENT_MANUEL_WHATSAPP, target: "_blank", rel: "noopener noreferrer",
                                 onClick: (e) => ouvrirExterne(e, PAIEMENT_MANUEL_WHATSAPP),
@@ -5134,14 +5130,14 @@
             React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider mb-1", style: { color: COLORS.textMuted } }, "Comment ça marche"),
             PAIEMENT_AUTO_ACTIF
               ? React.createElement(React.Fragment, null,
-                  React.createElement("p", { className: "text-sm", style: { color: COLORS.text } }, "1. Tape sur \"Souscrire\", tu es redirigé vers la page de paiement sécurisée"),
+                  React.createElement("p", { className: "text-sm", style: { color: COLORS.text } }, "1. Tape sur \"Souscrire\" — tu es redirigé vers la page de paiement sécurisée"),
                   React.createElement("p", { className: "text-sm", style: { color: COLORS.text } }, "2. Choisis Orange Money ou MTN MoMo et confirme sur ton téléphone"),
                   React.createElement("p", { className: "text-sm", style: { color: COLORS.text } }, "3. Ton abonnement s'active automatiquement dès la confirmation du paiement (quelques minutes)")
                 )
               : React.createElement(React.Fragment, null,
                   React.createElement("p", { className: "text-sm", style: { color: COLORS.text } }, "1. Envoie le montant par Orange Money ou MTN MoMo au numéro indiqué sur le pack choisi"),
                   React.createElement("p", { className: "text-sm", style: { color: COLORS.text } }, "2. Confirme l'envoi avec le bouton \"J'ai envoyé le paiement\""),
-                  React.createElement("p", { className: "text-sm", style: { color: COLORS.text } }, "3. Ton abonnement s'active après vérification manuelle (quelques heures), paiement automatique bientôt disponible")
+                  React.createElement("p", { className: "text-sm", style: { color: COLORS.text } }, "3. Ton abonnement s'active après vérification manuelle (quelques heures) — paiement automatique bientôt disponible")
                 )
           )
         ),
@@ -5171,7 +5167,7 @@
           vip
             ? React.createElement("p", { className: "text-xs font-mono flex items-center gap-1", style: { color: COLORS.forestText } }, React.createElement(Icon,{name:"check",size:11}), " Déjà activé")
             : demandeVipEnvoyee
-            ? React.createElement("p", { className: "text-xs", style: { color: COLORS.forestText } }, "Demande envoyée, en attente de validation par un admin.")
+            ? React.createElement("p", { className: "text-xs", style: { color: COLORS.forestText } }, "Demande envoyée — en attente de validation par un admin.")
             : React.createElement("button", { onClick: () => onBuyVip(() => setDemandeVipEnvoyee(true)), disabled: points < COUT_VIP, className: "rounded-lg py-2 text-sm font-semibold disabled:opacity-30", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Demander pour " + COUT_VIP + " points")
         ),
 
@@ -5233,7 +5229,7 @@
 
         resolues.length > 0 && React.createElement("div", { className: "flex flex-col gap-2 opacity-60" },
           React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider mt-2", style: { color: COLORS.textFaint } }, "Résolues"),
-          resolues.map(b => React.createElement("div", { key: b.id, className: "rounded-lg p-3 text-xs flex items-center gap-1.5", style: { backgroundColor: COLORS.surface, color: COLORS.textFaint } }, React.createElement(Icon,{name:"trophy",size:12}), " " + b.titre + ", gagné par " + b.gagnantPseudo))
+          resolues.map(b => React.createElement("div", { key: b.id, className: "rounded-lg p-3 text-xs flex items-center gap-1.5", style: { backgroundColor: COLORS.surface, color: COLORS.textFaint } }, React.createElement(Icon,{name:"trophy",size:12}), " " + b.titre + " — gagné par " + b.gagnantPseudo))
         ),
 
         !showForm
@@ -5383,11 +5379,11 @@
       // Export PDF d'un document importé (lignes reconnues, avant ou après publication)
       const exporterDocAdmin = (doc) => {
         const lignes = doc.lignes.filter(l => l.note != null && l.note !== "").map(l =>
-          "<tr><td>" + l.matricule + "</td><td>" + (l.pseudo || "N/A") + "</td><td class='note'>" + l.note + "/20</td></tr>"
+          "<tr><td>" + l.matricule + "</td><td>" + (l.pseudo || "—") + "</td><td class='note'>" + l.note + "/20</td></tr>"
         ).join("");
-        imprimerPDF("Import : " + (doc.matiere || "Notes"),
+        imprimerPDF("Import — " + (doc.matiere || "Notes"),
           "<h1>" + (doc.matiere || "Notes") + "</h1>" +
-          "<p class='meta'>Date : " + (doc.dateDePublication || "N/A") + "</p>" +
+          "<p class='meta'>Date : " + (doc.dateDePublication || "—") + "</p>" +
           "<p class='meta'>Édité le " + new Date().toLocaleDateString("fr-FR") + "</p>" +
           "<table><thead><tr><th>Matricule</th><th>Étudiant</th><th>Note</th></tr></thead><tbody>" + lignes + "</tbody></table>"
         );
@@ -5400,11 +5396,11 @@
         const lignes = (tousLesUtilisateurs || []).flatMap(u => {
           const notesUid = Object.values(val[u.uid] || {}).filter(n => n.source !== "simulateur");
           return notesUid.map(n =>
-            "<tr><td>" + (u.matricule || "N/A") + "</td><td>" + (u.pseudo || "") + "</td><td>" + (n.matiere || "") + "</td><td class='note'>" + n.note + "/20</td></tr>"
+            "<tr><td>" + (u.matricule || "—") + "</td><td>" + (u.pseudo || "") + "</td><td>" + (n.matiere || "") + "</td><td class='note'>" + n.note + "/20</td></tr>"
           );
         }).join("");
-        imprimerPDF("Liste complète : MyScore",
-          "<h1>Liste complète des notes : Sabi</h1>" +
+        imprimerPDF("Liste complète — MyScore",
+          "<h1>Liste complète des notes — Sabi</h1>" +
           "<p class='meta'>Édité le " + new Date().toLocaleDateString("fr-FR") + "</p>" +
           "<table><thead><tr><th>Matricule</th><th>Étudiant</th><th>Matière</th><th>Note</th></tr></thead><tbody>" + lignes + "</tbody></table>"
         );
@@ -5476,7 +5472,7 @@
             ),
             React.createElement("div", { className: "rounded-xl border p-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.bg } },
               React.createElement("p", { className: "text-[10px] font-mono uppercase", style: { color: COLORS.textFaint } }, "Moyenne générale"),
-              React.createElement("p", { className: "text-xl font-bold font-mono", style: { color: COLORS.text } }, myscoreStats.moyenne !== null ? myscoreStats.moyenne.toFixed(1) : "N/A"),
+              React.createElement("p", { className: "text-xl font-bold font-mono", style: { color: COLORS.text } }, myscoreStats.moyenne !== null ? myscoreStats.moyenne.toFixed(1) : "—"),
               React.createElement("div", { className: "w-full h-1.5 rounded-full overflow-hidden mt-1", style: { backgroundColor: COLORS.border } },
                 React.createElement("div", { className: "h-full rounded-full", style: { width: (myscoreStats.moyenne !== null ? Math.min(100, myscoreStats.moyenne / 20 * 100) : 0) + "%", backgroundColor: COLORS.forest } })
               )
@@ -5627,7 +5623,7 @@
         // Gestion des promotions : prix réduit + date de fin, indépendamment pour chaque pack/durée
         React.createElement("div", { className: "flex flex-col gap-2 rounded-xl border p-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
           React.createElement("p", { className: "text-sm font-semibold flex items-center gap-1.5", style: { color: COLORS.gold } }, React.createElement(Icon, { name: "tag", size: 14 }), " Promotions Sabi Pro / Pro+"),
-          [["pro", "semestre", "Sabi Pro : Semestriel", PRIX_PRO_SEMESTRE], ["pro", "annee", "Sabi Pro : Annuel", PRIX_PRO_ANNEE], ["proplus", "semestre", "Sabi Pro+ : Semestriel", PRIX_PROPLUS_SEMESTRE], ["proplus", "annee", "Sabi Pro+ : Annuel", PRIX_PROPLUS_ANNEE]].map(([tier, duree, label, prixNormal]) => {
+          [["pro", "semestre", "Sabi Pro — Semestriel", PRIX_PRO_SEMESTRE], ["pro", "annee", "Sabi Pro — Annuel", PRIX_PRO_ANNEE], ["proplus", "semestre", "Sabi Pro+ — Semestriel", PRIX_PROPLUS_SEMESTRE], ["proplus", "annee", "Sabi Pro+ — Annuel", PRIX_PROPLUS_ANNEE]].map(([tier, duree, label, prixNormal]) => {
             const cle = tier + "-" + duree;
             const promoActuelle = promosAdmin && promosAdmin[tier] && promosAdmin[tier][duree];
             const promoActive = promoActuelle && promoActuelle.finLe > Date.now();
@@ -5802,7 +5798,7 @@
           demandes.map(d => React.createElement("div", { key: d.id, className: "rounded-xl border p-3 flex items-center gap-3", style: { borderColor: COLORS.gold, backgroundColor: "rgba(242,202,80,0.08)" } },
             React.createElement("div", { className: "flex-1" },
               React.createElement("p", { className: "text-sm font-medium", style: { color: COLORS.text } }, d.pseudo),
-              React.createElement("p", { className: "text-[11px] font-mono", style: { color: COLORS.textMuted } }, "Souhaite : " + (d.tier === "proplus" ? "Sabi Pro+" : "Sabi Pro") + " · " + (d.duree === "annee" ? "annuel" : "semestriel"))
+              React.createElement("p", { className: "text-[11px] font-mono", style: { color: COLORS.textMuted } }, "Souhaite : " + (d.tier === "proplus" ? "Sabi Pro+" : "Sabi Pro") + " — " + (d.duree === "annee" ? "annuel" : "semestriel"))
             ),
             React.createElement("button", { onClick: () => validerAbonnement(d), className: "text-[11px] font-mono px-3 py-1.5 rounded-full flex items-center gap-1", style: { backgroundColor: COLORS.forest, color: COLORS.text } }, React.createElement(Icon,{name:"check",size:11}), " Valider"),
             React.createElement("button", { onClick: () => rejeterAbonnement(d), className: "text-[11px] font-mono px-2.5 py-1.5 rounded-full flex items-center", style: { color: COLORS.terraText, border: "1px solid rgba(255,180,171,0.4)" } }, React.createElement(Icon,{name:"x",size:11}))
@@ -5849,7 +5845,7 @@
           demandesVip.map(d => React.createElement("div", { key: d.id, className: "rounded-xl border p-3 flex items-center gap-3", style: { borderColor: COLORS.gold, backgroundColor: "rgba(242,202,80,0.08)" } },
             React.createElement("div", { className: "flex-1" },
               React.createElement("p", { className: "text-sm font-medium", style: { color: COLORS.text } }, d.pseudo),
-              React.createElement("p", { className: "text-[11px] font-mono", style: { color: COLORS.textMuted } }, COUT_VIP + " points déjà débités, rejeter les rembourse")
+              React.createElement("p", { className: "text-[11px] font-mono", style: { color: COLORS.textMuted } }, COUT_VIP + " points déjà débités — rejeter les rembourse")
             ),
             React.createElement("button", { onClick: () => validerVip(d), className: "text-[11px] font-mono px-3 py-1.5 rounded-full flex items-center gap-1", style: { backgroundColor: COLORS.forest, color: COLORS.text } }, React.createElement(Icon,{name:"check",size:11}), " Valider"),
             React.createElement("button", { onClick: () => rejeterVip(d), className: "text-[11px] font-mono px-2.5 py-1.5 rounded-full flex items-center", style: { color: COLORS.terraText, border: "1px solid rgba(255,180,171,0.4)" } }, React.createElement(Icon,{name:"x",size:11}))
@@ -5872,7 +5868,7 @@
           }, React.createElement(Icon, { name: "bell", size: 12 }), annonceEnvoi ? "Envoi…" : "Envoyer à tous")
         ),
         filieresPresentesAdmin.length > 0 && React.createElement("div", { className: "flex flex-col gap-2" },
-          React.createElement("p", { className: "text-sm font-semibold flex items-center gap-1.5", style: { color: COLORS.gold } }, React.createElement(Icon, { name: "users", size: 14 }), " Utilisateurs : trier par filière et année"),
+          React.createElement("p", { className: "text-sm font-semibold flex items-center gap-1.5", style: { color: COLORS.gold } }, React.createElement(Icon, { name: "users", size: 14 }), " Utilisateurs — trier par filière et année"),
           React.createElement("div", { className: "flex gap-2 overflow-x-auto pb-1 -mx-1 px-1" },
             React.createElement("button", {
               onClick: () => setFiliereFiltreAdmin("toutes"),
@@ -6040,9 +6036,9 @@
       const ASTUCES_DU_JOUR = [
         "Avec le système LMD, une UE en dessous de 10/20 peut quand même être validée si la moyenne pondérée du semestre dépasse 10.",
         "Pense à activer ton badge actif dans la Boutique : il s'affiche à côté de ton pseudo sur toutes tes contributions.",
-        "Le classement de la semaine se réinitialise chaque lundi, chaque astuce ou réponse utile te fait gagner des points.",
+        "Le classement de la semaine se réinitialise chaque lundi — chaque astuce ou réponse utile te fait gagner des points.",
         "Utilise le Simulateur pour savoir exactement quelle note il te faut à l'examen pour valider ton semestre.",
-        "Les cartes marquées [VÉRIFIÉ] viennent d'un profil Sabi VIP, un bon repère pour les astuces fiables.",
+        "Les cartes marquées [VÉRIFIÉ] viennent d'un profil Sabi VIP — un bon repère pour les astuces fiables.",
         "La Boussole du nouvel arrivant regroupe toutes les démarches administratives dans l'ordre où les faire.",
       ];
       const astuceDuJour = ASTUCES_DU_JOUR[new Date().getDate() % ASTUCES_DU_JOUR.length];
@@ -6438,7 +6434,7 @@
         !isOwner && React.createElement("div", { className: "flex flex-col gap-1.5" },
           React.createElement("label", { className: "text-[10px] font-mono uppercase", style: labelStyle }, "Année d'étude"),
           demandeAnneeEnvoyee
-            ? React.createElement("p", { className: "text-[11px]", style: { color: COLORS.forestText } }, "Demande envoyée, en attente de validation par le propriétaire.")
+            ? React.createElement("p", { className: "text-[11px]", style: { color: COLORS.forestText } }, "Demande envoyée — en attente de validation par le propriétaire.")
             : !demandeAnneeOuverte
             ? React.createElement("div", { className: "flex items-center justify-between" },
                 React.createElement("p", { className: "text-sm", style: { color: COLORS.text } }, profil.annee),
@@ -6453,7 +6449,7 @@
                       setDemandeAnneeMsg(null);
                       onDemandeChangementAnnee(anneeChoisie)
                         .then(() => { setDemandeAnneeEnvoyee(true); setDemandeAnneeOuverte(false); })
-                        .catch(err => setDemandeAnneeMsg(err.message || "Échec de l'envoi. Réessaie."));
+                        .catch(err => setDemandeAnneeMsg(err.message || "Échec de l'envoi — réessaie."));
                     },
                     className: "flex-1 rounded-lg py-2 text-sm font-semibold", style: { backgroundColor: COLORS.gold, color: COLORS.bg }
                   }, "Envoyer la demande"),
@@ -6467,7 +6463,7 @@
         !isOwner && React.createElement("div", { className: "flex flex-col gap-1.5" },
           React.createElement("label", { className: "text-[10px] font-mono uppercase", style: labelStyle }, "Filière"),
           demandeFiliereEnvoyee
-            ? React.createElement("p", { className: "text-[11px]", style: { color: COLORS.forestText } }, "Demande envoyée, en attente de validation par le propriétaire.")
+            ? React.createElement("p", { className: "text-[11px]", style: { color: COLORS.forestText } }, "Demande envoyée — en attente de validation par le propriétaire.")
             : !demandeFiliereOuverte
             ? React.createElement("div", { className: "flex items-center justify-between gap-2" },
                 React.createElement("p", { className: "text-sm truncate", style: { color: COLORS.text } }, profil.filiere),
@@ -6482,7 +6478,7 @@
                       setDemandeFiliereMsg(null);
                       onDemandeChangementFiliere(filiereChoisie)
                         .then(() => { setDemandeFiliereEnvoyee(true); setDemandeFiliereOuverte(false); })
-                        .catch(err => setDemandeFiliereMsg(err.message || "Échec de l'envoi. Réessaie."));
+                        .catch(err => setDemandeFiliereMsg(err.message || "Échec de l'envoi — réessaie."));
                     },
                     className: "flex-1 rounded-lg py-2 text-sm font-semibold", style: { backgroundColor: COLORS.gold, color: COLORS.bg }
                   }, "Envoyer la demande"),
@@ -6499,7 +6495,7 @@
             ? React.createElement(React.Fragment, null,
                 React.createElement("input", { value: matricule, disabled: true, className: "w-full rounded-lg px-3 py-2.5 text-sm outline-none border cursor-not-allowed", style: inputDisabledStyle }),
                 deblocageEnvoyee
-                  ? React.createElement("p", { className: "text-[11px]", style: { color: COLORS.forestText } }, "Demande envoyée, en attente de validation par le propriétaire.")
+                  ? React.createElement("p", { className: "text-[11px]", style: { color: COLORS.forestText } }, "Demande envoyée — en attente de validation par le propriétaire.")
                   : !deblocageOuvert
                   ? React.createElement("button", {
                       onClick: () => setDeblocageOuvert(true),
@@ -6527,7 +6523,7 @@
                     )
               )
             : React.createElement(React.Fragment, null,
-                React.createElement("p", { className: "text-[10px]", style: { color: COLORS.textFaint } }, "Optionnel pour l'instant, mais nécessaire pour recevoir automatiquement tes notes (rubrique MyScore), tu peux le renseigner plus tard. Une fois enregistré, il devient définitif sauf validation du propriétaire."),
+                React.createElement("p", { className: "text-[10px]", style: { color: COLORS.textFaint } }, "Optionnel pour l'instant, mais nécessaire pour recevoir automatiquement tes notes (rubrique MyScore) — tu peux le renseigner plus tard. Une fois enregistré, il devient définitif sauf validation du propriétaire."),
                 React.createElement("div", { className: "flex gap-2" },
                   React.createElement("input", {
                     value: matEdit, onChange: e => setMatEdit(e.target.value.toUpperCase()), placeholder: "Ex: 23GTR0123",
@@ -6602,7 +6598,7 @@
         {
           titre: "Académique",
           liens: [
-            { id: "myscore", label: "MyScore : mes notes", icon: "award" },
+            { id: "myscore", label: "MyScore — mes notes", icon: "award" },
             { id: "resumes", label: "Résumés de cours (Pro+)", icon: "file-text" },
             { id: "simulateur", label: "Simulateur de moyenne", icon: "∑" },
           ],
@@ -6611,8 +6607,8 @@
           titre: "Accompagnement",
           liens: [
             { id: "mentor", label: "Coach Réussite (Pro+)", icon: "target" },
-            { id: "boussole", label: "Boussole : parcours du nouvel arrivant", icon: "compass" },
-            { id: "assistance", label: "Assistance : écrire au propriétaire", icon: "help-circle" },
+            { id: "boussole", label: "Boussole — parcours du nouvel arrivant", icon: "compass" },
+            { id: "assistance", label: "Assistance — écrire au propriétaire", icon: "help-circle" },
           ],
         },
         {
@@ -6627,7 +6623,7 @@
           titre: "Administration",
           liens: [
             { id: "admin", label: "Administration", icon: "wrench" },
-            { id: "myscoreAdmin", label: "MyScore : Administration", icon: "bar-chart-2" },
+            { id: "myscoreAdmin", label: "MyScore — Administration", icon: "bar-chart-2" },
             { id: "promoAdmin", label: "Promotions", icon: "tag" },
             { id: "supportAdmin", label: "Messagerie Assistance", icon: "message-circle" },
           ],
@@ -6747,24 +6743,24 @@
       fenetre.focus();
     }
     function ligneNoteHTML(n) {
-      return "<tr><td>" + (n.matiere || "") + "</td><td>" + (n.dateDePublication || "") + "</td><td class='note'>" + (n.note != null ? n.note : "N/A") + "/20</td></tr>";
+      return "<tr><td>" + (n.matiere || "") + "</td><td>" + (n.dateDePublication || "") + "</td><td class='note'>" + (n.note != null ? n.note : "—") + "/20</td></tr>";
     }
     // Étudiant — relevé complet (bouton global)
     function exporterReleveEtudiant(pseudo, matricule, notes) {
       imprimerPDF("Relevé de notes",
-        "<h1>Relevé de notes : Sabi</h1>" +
+        "<h1>Relevé de notes — Sabi</h1>" +
         "<p class='meta'>Étudiant : " + (pseudo || "") + "</p>" +
-        "<p class='meta'>Matricule : " + (matricule || "N/A") + "</p>" +
+        "<p class='meta'>Matricule : " + (matricule || "—") + "</p>" +
         "<p class='meta'>Édité le " + new Date().toLocaleDateString("fr-FR") + "</p>" +
         "<table><thead><tr><th>Matière</th><th>Date</th><th>Note</th></tr></thead><tbody>" + notes.map(ligneNoteHTML).join("") + "</tbody></table>"
       );
     }
     // Étudiant — une seule note (bouton par ligne)
     function exporterNoteUnique(pseudo, matricule, note) {
-      imprimerPDF("Note : " + (note.matiere || ""),
-        "<h1>Attestation de note : Sabi</h1>" +
+      imprimerPDF("Note — " + (note.matiere || ""),
+        "<h1>Attestation de note — Sabi</h1>" +
         "<p class='meta'>Étudiant : " + (pseudo || "") + "</p>" +
-        "<p class='meta'>Matricule : " + (matricule || "N/A") + "</p>" +
+        "<p class='meta'>Matricule : " + (matricule || "—") + "</p>" +
         "<p class='meta'>Édité le " + new Date().toLocaleDateString("fr-FR") + "</p>" +
         "<table><thead><tr><th>Matière</th><th>Date</th><th>Note</th></tr></thead><tbody>" + ligneNoteHTML(note) + "</tbody></table>"
       );
@@ -6805,7 +6801,7 @@
           React.createElement(Icon, { name: "award", size: 18, color: COLORS.gold }),
           React.createElement("h2", { className: "text-lg font-bold", style: { color: COLORS.text, fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: "-0.02em" } }, "MyScore")
         ),
-        React.createElement("p", { className: "text-xs", style: { color: COLORS.textMuted } }, "Tes notes, attribuées automatiquement à partir des feuilles publiées par l'administration, visibles uniquement par toi."),
+        React.createElement("p", { className: "text-xs", style: { color: COLORS.textMuted } }, "Tes notes, attribuées automatiquement à partir des feuilles publiées par l'administration — visibles uniquement par toi."),
         moyenneGenerale !== null && React.createElement("div", { className: "rounded-xl border p-3 flex items-center justify-between", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
           React.createElement("span", { className: "text-xs font-mono uppercase", style: { color: COLORS.textMuted } }, "Moyenne générale (officielle)"),
           React.createElement("span", { className: "text-lg font-bold font-mono", style: { color: COLORS.gold } }, moyenneGenerale + "/20")
@@ -6831,7 +6827,7 @@
                     React.createElement("p", { className: "text-[10px] font-mono", style: { color: COLORS.textFaint } }, s.dateDePublication || new Date(s.publieLe).toLocaleDateString("fr-FR"))
                   ),
                   React.createElement("div", { className: "flex items-center gap-2 flex-shrink-0 ml-3" },
-                    React.createElement("span", { className: "text-base font-bold font-mono", style: { color: s.note >= 10 ? COLORS.forestText : COLORS.terra } }, (s.note != null ? s.note : "N/A") + "/20"),
+                    React.createElement("span", { className: "text-base font-bold font-mono", style: { color: s.note >= 10 ? COLORS.forestText : COLORS.terra } }, (s.note != null ? s.note : "—") + "/20"),
                     !estSimule && React.createElement("button", {
                       onClick: () => exporterNoteUnique(monProfil.pseudo, monProfil.matricule, s),
                       style: { color: COLORS.textFaint }
@@ -6859,7 +6855,7 @@
           })
         ),
         React.createElement("div", { className: "absolute flex flex-col items-center" },
-          React.createElement("span", { className: "font-bold font-mono", style: { color: COLORS.text, fontSize: taille * 0.22 } }, valeur !== null && valeur !== undefined ? valeur.toFixed(1) : "N/A"),
+          React.createElement("span", { className: "font-bold font-mono", style: { color: COLORS.text, fontSize: taille * 0.22 } }, valeur !== null && valeur !== undefined ? valeur.toFixed(1) : "—"),
           React.createElement("span", { className: "text-xs font-mono", style: { color: COLORS.textFaint } }, "/" + max),
           sousTexte
         )
@@ -6876,7 +6872,7 @@
       // vraies UE (code + nom + coefficient) plutôt que des UE1/UE2 génériques.
       const ueReference = CURRICULUM[profilFiliere]?.[annee]?.[semestre] || null;
       const lignesParDefaut = () => ueReference
-        ? ueReference.map((ue, i) => ({ id: i + 1, nom: ue.code + " : " + ue.nom, noteCC: "", noteExamen: "", coef: String(ue.credit || 1) }))
+        ? ueReference.map((ue, i) => ({ id: i + 1, nom: ue.code + " — " + ue.nom, noteCC: "", noteExamen: "", coef: String(ue.credit || 1) }))
         : [
             { id: 1, nom: "UE1", noteCC: "", noteExamen: "", coef: "3" },
             { id: 2, nom: "UE2", noteCC: "", noteExamen: "", coef: "2" },
@@ -7009,16 +7005,16 @@
             noteRequisePourVides.toFixed(1) + "/20 dans : " + rowsVides.map(r => r.nom).join(", ") + ".";
         }
       } else {
-        statutObjectif = "N/A"; messageObjectif = "Renseigne au moins une UE pour voir la projection.";
+        statutObjectif = "—"; messageObjectif = "Renseigne au moins une UE pour voir la projection.";
       }
 
       return React.createElement("div", { className: "flex flex-col gap-4" },
         React.createElement("h2", { className: "text-lg font-bold", style: { color: COLORS.text, fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: "-0.02em" } }, "Simulateur de moyenne"),
-        React.createElement("p", { className: "text-sm", style: { color: COLORS.textMuted } }, "Ton simulateur personnel, sauvegardé automatiquement sur ton compte, par année et semestre."),
+        React.createElement("p", { className: "text-sm", style: { color: COLORS.textMuted } }, "Ton simulateur personnel — sauvegardé automatiquement sur ton compte, par année et semestre."),
 
         ueReference && ueReference.some(ue => !ue.credit) && React.createElement("div", { className: "rounded-lg border p-2.5 flex items-start gap-2", style: { borderColor: COLORS.gold, backgroundColor: "rgba(242,202,80,0.08)" } },
           React.createElement(Icon, { name: "help-circle", size: 13, color: COLORS.gold, style: { marginTop: 1, flexShrink: 0 } }),
-          React.createElement("p", { className: "text-[11px]", style: { color: COLORS.gold } }, "Les noms d'UE sont préremplis, mais les coefficients de ce semestre ne sont pas encore vérifiés (mis à 1 par défaut), corrige-les avec ton relevé officiel si besoin.")
+          React.createElement("p", { className: "text-[11px]", style: { color: COLORS.gold } }, "Les noms d'UE sont préremplis, mais les coefficients de ce semestre ne sont pas encore vérifiés (mis à 1 par défaut) — corrige-les avec ton relevé officiel si besoin.")
         ),
 
         React.createElement("div", { className: "flex flex-col gap-2" },
@@ -7124,7 +7120,7 @@
           React.createElement("div", { className: "rounded-xl p-5 flex items-center justify-between border", style: { backgroundColor: valide ? "rgba(119,221,106,0.12)" : "rgba(255,180,171,0.1)", borderColor: valide ? COLORS.forest : COLORS.terra } },
             React.createElement("div", null,
               React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Moyenne pondérée · " + annee + " " + semestre),
-              React.createElement("p", { className: "text-3xl font-bold font-mono", style: { color: valide ? COLORS.forestText : COLORS.terra } }, (moyenne !== null ? moyenne.toFixed(2) : "N/A") + React.createElement("span", { className: "text-base", style: { color: COLORS.textMuted } }, " /20"))
+              React.createElement("p", { className: "text-3xl font-bold font-mono", style: { color: valide ? COLORS.forestText : COLORS.terra } }, (moyenne !== null ? moyenne.toFixed(2) : "—") + React.createElement("span", { className: "text-base", style: { color: COLORS.textMuted } }, " /20"))
             ),
             React.createElement("span", { className: "text-xs font-mono uppercase tracking-wider px-3 py-1.5 rounded-full", style: { color: valide ? COLORS.forestText : COLORS.terra, backgroundColor: valide ? "rgba(119,221,106,0.15)" : "rgba(255,180,171,0.15)" } }, moyenne === null ? "En attente" : valide ? "Validé" : "Non validé")
           ),
@@ -7135,7 +7131,7 @@
             className: "w-full rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-30",
             style: { backgroundColor: COLORS.gold, color: COLORS.bg }
           }, React.createElement(Icon, { name: sauvegardeMyScore ? "check" : "save", size: 15 }), sauvegardeMyScore ? "Enregistré dans MyScore" : "Sauvegarder dans MyScore"),
-          React.createElement("p", { className: "text-[10px] text-center", style: { color: COLORS.textFaint } }, "Ces notes simulées apparaîtront dans MyScore avec la mention \"Simulé\", elles ne remplacent pas les notes officielles publiées par l'administration.")
+          React.createElement("p", { className: "text-[10px] text-center", style: { color: COLORS.textFaint } }, "Ces notes simulées apparaîtront dans MyScore avec la mention \"Simulé\" — elles ne remplacent pas les notes officielles publiées par l'administration.")
         )
       );
     }
@@ -7165,10 +7161,10 @@
       const [plan, setPlan] = useState(null); // [{ titre, priorite, description }]
       const [objectifJour, setObjectifJour] = useState(null); // { taches: [{id, texte, fait}] }
       const CONSEILS_SABI = [
-        "Coupe ton téléphone en mode avion pendant la session, chaque notification te coûte ~5 min de concentration perdue.",
+        "Coupe ton téléphone en mode avion pendant la session — chaque notification te coûte ~5 min de concentration perdue.",
         "Une session de 25 min avec une vraie pause de 5 min vaut mieux que 2h en continu sans pause.",
         "Relis tes notes juste après la session : la mémorisation à chaud est bien plus efficace.",
-        "Bois de l'eau avant de démarrer, la déshydratation réduit la concentration de façon mesurable.",
+        "Bois de l'eau avant de démarrer — la déshydratation réduit la concentration de façon mesurable.",
         "Choisis UNE seule matière par session de focus, pas plusieurs à la fois.",
       ];
       const conseilDuJour = CONSEILS_SABI[new Date().getDate() % CONSEILS_SABI.length];
@@ -7547,7 +7543,7 @@
                 React.createElement(JaugeCirculaire, { valeur: diagnostic.scoreGlobal / 5, max: 20, taille: 84, epaisseur: 8, couleur: IA.solide }),
                 React.createElement("div", { className: "flex-1 flex flex-col gap-1" },
                   React.createElement("p", { className: "text-lg font-bold font-mono", style: { color: COLORS.text } }, diagnostic.scoreGlobal + "%"),
-                  React.createElement("span", { className: "text-[10px] font-mono uppercase px-2 py-1 rounded-full inline-block w-fit", style: { color: IA.txt, backgroundColor: IA.soft } }, diagnostic.badge || "N/A")
+                  React.createElement("span", { className: "text-[10px] font-mono uppercase px-2 py-1 rounded-full inline-block w-fit", style: { color: IA.txt, backgroundColor: IA.soft } }, diagnostic.badge || "—")
                 )
               ),
               React.createElement("div", { className: "flex flex-col gap-2" },
@@ -7709,7 +7705,7 @@
                 : React.createElement("div", { className: "rounded-xl border p-4 flex flex-col items-center gap-2 text-center", style: { borderColor: scoreQuiz === quiz.length ? "#4ade80" : COLORS.border, backgroundColor: COLORS.surface } },
                     React.createElement("p", { className: "text-2xl font-bold font-mono", style: { color: scoreQuiz === quiz.length ? "#4ade80" : IA.txt } }, (scoreQuiz === quiz.length ? "🎉 " : "") + scoreQuiz + "/" + quiz.length),
                     React.createElement("p", { className: "text-xs", style: { color: "#a1a1aa" } },
-                      scoreQuiz === quiz.length ? "Score parfait, quiz réussi du 1er coup, comptabilisé dans ta progression !" : "Continue à réviser, tu peux relancer un quiz quand tu veux."),
+                      scoreQuiz === quiz.length ? "Score parfait — quiz réussi du 1er coup, comptabilisé dans ta progression !" : "Continue à réviser, tu peux relancer un quiz quand tu veux."),
                     BoutonGhost({ onClick: recommencerQuiz, className: "mt-1" }, "Nouveau quiz")
                   )
             )
@@ -7777,16 +7773,6 @@
       });
       // Propriétaire reconnu par email — calculé tôt car spendPoints en a besoin.
       const isOwner = !!(authUser && OWNER_EMAILS.includes(authUser.email));
-
-      // Le node "users" ne connaît pas les emails (seul Firebase Auth les a), donc pour
-      // notifier le propriétaire en privé (ex. nouveau message Assistance) il faut un moyen
-      // de retrouver son uid. Le compte propriétaire dépose lui-même son uid ici à chaque
-      // connexion ; nécessite une règle Firebase autorisant ce chemin en écriture pour lui.
-      useEffect(() => {
-        if (isOwner && authUser) {
-          db.ref("proprietaireUid").set(authUser.uid).catch(() => {});
-        }
-      }, [isOwner, authUser]);
       const [tab, setTab] = useState(() => {
         // Permet aux raccourcis du manifest (icône maintenue sur l'app) d'ouvrir directement
         // un onglet précis via ?tab=epreuves — liste blanche pour ignorer toute valeur invalide.
@@ -8234,7 +8220,6 @@
             saveMyVotes(updatedVotes);
             setMyVotes(updatedVotes);
             addPoints(5);
-            envoyerNotification({ diffusion: true, titre: pseudo + " a publié une actualité", corps: contenu.slice(0, 120) || "Nouvelle image partagée" });
           }).catch(err => {
             // Sans ce .catch, un échec d'écriture (règles Firebase, quota dépassé, coupure
             // réseau...) passait inaperçu : le message "Actualité publiée" s'affichait quand
@@ -8297,15 +8282,7 @@
       const handleSendSupportMessage = useCallback(texte => {
         if (!authUser) return;
         supportRef.child(authUser.uid).push({ auteur: "etudiant", texte, timestamp: Date.now(), lu: false });
-        // Notifie le propriétaire en privé (voir proprietaireUid plus haut) : best-effort,
-        // n'empêche jamais l'envoi du message si la notification échoue.
-        db.ref("proprietaireUid").once("value").then(snap => {
-          const uidProprietaire = snap.val();
-          if (uidProprietaire) {
-            envoyerNotification({ cibleUid: uidProprietaire, titre: pseudo + " (Assistance)", corps: texte.slice(0, 120) });
-          }
-        }).catch(() => {});
-      }, [authUser, pseudo]);
+      }, [authUser]);
 
       // Marque comme lues les réponses du propriétaire une fois vues par l'étudiant.
       const handleMarkSupportLu = useCallback(msgIds => {
@@ -8452,7 +8429,7 @@
               currency: "XAF",
               email: (authUser && authUser.email) || "",
               reference: paiementId,
-              description: "Sabi " + (tier === "proplus" ? "Pro+" : "Pro") + " : " + (duree || "semestre"),
+              description: "Sabi " + (tier === "proplus" ? "Pro+" : "Pro") + " — " + (duree || "semestre"),
               // NETLIFY_BASE_URL (pas window.location.origin) : dans l'app native, l'origine
               // vaut "https://localhost" qui n'existe pas sur Internet — NotchPay ne pourrait
               // jamais y rediriger l'utilisateur après paiement.
@@ -8536,7 +8513,7 @@
         // compte d'un autre utilisateur.
         bountyRef.child(bounty.id).update({ statut: "resolu", gagnantUid: reponse.uid, gagnantPseudo: reponse.auteur, reclame: false });
         if (reponse.uid) {
-          envoyerNotification({ cibleUid: reponse.uid, titre: "Tu as gagné un Bounty 🎉", corps: "\"" + bounty.titre + "\", " + bounty.mise + " points t'attendent" });
+          envoyerNotification({ cibleUid: reponse.uid, titre: "Tu as gagné un Bounty 🎉", corps: "\"" + bounty.titre + "\" : " + bounty.mise + " points t'attendent" });
         }
       }, []);
 
@@ -8943,7 +8920,7 @@
               style: { backgroundColor: COLORS.border, color: COLORS.textMuted }
             },
               React.createElement(Icon, { name: "wifi-off", size: 13 }),
-              "Hors connexion, tu vois les dernières infos enregistrées sur cet appareil."
+              "Hors connexion — tu vois les dernières infos enregistrées sur cet appareil."
             ),
             loading
               ? React.createElement("div", { className: "flex flex-col gap-3 pt-2" },
@@ -9036,12 +9013,12 @@
        fuite si une capture "physique" (photo d'écran) échappe malgré tout. -->
   <style>
     #sabi-shield {
-      position: fixed; top:0;left:0;right:0;bottom:0; z-index: 999999;
+      position: fixed; inset: 0; z-index: 999999;
       background: #000; opacity: 0; pointer-events: none;
     }
     #sabi-shield.actif { opacity: 1; pointer-events: auto; }
     #sabi-watermark {
-      position: fixed; top:0;left:0;right:0;bottom:0; z-index: 999998; pointer-events: none;
+      position: fixed; inset: 0; z-index: 999998; pointer-events: none;
       overflow: hidden; opacity: 0.05;
     }
     #sabi-watermark span {
