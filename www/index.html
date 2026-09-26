@@ -3010,7 +3010,7 @@
             // que de laisser un compte fantôme derrière nous — l'étudiant peut alors simplement
             // réessayer l'inscription depuis le début une fois sa connexion rétablie.
             try { await cred.user.delete(); } catch {}
-            setErreur("Ton profil n'a pas pu être enregistré (connexion instable). Le compte n'a pas été créé — réessaie.");
+            setErreur("Ton profil n'a pas pu être enregistré : " + (derniereErreur && (derniereErreur.code || derniereErreur.message) || "erreur inconnue") + " — réessaie.");
             setChargement(false);
             return;
           }
