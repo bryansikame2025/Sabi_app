@@ -7897,8 +7897,8 @@
         return () => promosRef.off("value", listener);
       }, [!!authUser]);
       const [membresList, setMembresList] = useState([]);
-      const [profil, setProfilState] = useState({ annee: ANNEES[0], filiere: FILIERES[0] });
-      const [pseudo, setPseudo] = useState("Étudiant_" + Math.floor(Math.random() * 9000 + 1000));
+      const [profil, setProfilState] = useState({ annee: "", filiere: "" });
+      const [pseudo, setPseudo] = useState("");
 
       // Bulle façon WhatsApp sur les nouveaux messages, uniquement quand on ne regarde pas déjà le chat
       useEffect(() => {
@@ -7949,7 +7949,7 @@
             setMatriculeState(data.matricule || "");
             setPoints(data.points || 0);
             setPointsTotal(data.pointsTotal || 0);
-            setProfilState({ annee: data.annee || ANNEES[0], filiere: data.filiere || FILIERES[0] });
+            setProfilState({ annee: data.annee || "", filiere: data.filiere || "" });
             setBadges(data.badges || {});
             setBadgeActif(data.badgeActif || null);
             setVip(!!data.vip);
