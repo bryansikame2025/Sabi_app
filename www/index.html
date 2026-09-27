@@ -2541,6 +2541,8 @@
       "alert-triangle": "M12 2.5L2 21h20L12 2.5zM12 9v5M12 17h.01",
       image: "M3 3h18a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM9 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM21 15l-4.5-4.5a1.5 1.5 0 0 0-2.1 0L3 21",
       "wifi-off": "M1 1l22 22 M16.72 11.06A10.94 10.94 0 0 1 19 12.55 M5 12.55a10.94 10.94 0 0 1 5.17-2.39 M10.71 5.05A16 16 0 0 1 22.58 9 M1.42 9a15.91 15.91 0 0 1 4.7-2.88 M8.53 16.11a6 6 0 0 1 6.95 0 M12 20h.01",
+      "book-open": "M2 5.5C2 4.7 2.7 4 3.5 4H11v16H3.5C2.7 20 2 19.3 2 18.5V5.5zM22 5.5C22 4.7 21.3 4 20.5 4H13v16h7.5c.8 0 1.5-.7 1.5-1.5V5.5zM11 4v16M13 4v16",
+      "chevron-down": "M6 9l6 6 6-6",
     };
     function Icon({ name, size = 16, color = "currentColor", strokeWidth = 2, className, style }) {
       const d = ICON_PATHS[name];
@@ -2661,9 +2663,207 @@
       );
     }
 
+    // ===== Guide d'utilisation =====
+    // Contenu du guide, affiché en accordéon dans une modale plutôt que via un lien externe
+    // (qui pouvait casser si le lien changeait, et sortait l'utilisateur de l'app).
+    const GUIDE_SECTIONS = [
+      {
+        icone: "user",
+        titre: "1. Créer un compte et se connecter",
+        blocs: [
+          { type: "p", texte: "À la première ouverture, choisis Créer un compte. Renseigne ton pseudo, ton email, un mot de passe, ton année et ta filière. Le matricule est optionnel à l'inscription, tu pourras le renseigner plus tard depuis ton profil. Une fois enregistré, il devient définitif : pour le modifier, il faut passer par une demande de déblocage." },
+          { type: "p", texte: "Un code de vérification (OTP) peut être envoyé à ton email pour confirmer ton inscription. Si tu as déjà un compte, choisis simplement Se connecter avec ton email et ton mot de passe." },
+        ],
+      },
+      {
+        icone: "compass",
+        titre: "2. Se repérer dans l'application",
+        blocs: [
+          { type: "p", texte: "En haut de l'écran : le menu (icône ☰) à gauche ouvre les paramètres, l'accès à l'Assistance et aux Crédits ; l'icône de profil à droite mène à ton espace personnel." },
+          { type: "p", texte: "En bas de l'écran, cinq onglets principaux :" },
+          { type: "list", items: [
+            "Actualités — Fil d'infos et astuces de la communauté",
+            "Épreuves — Sujets d'examens et corrigés",
+            "Accueil — Tableau de bord personnel",
+            "Carte — Plan interactif du campus",
+            "Chat — Discussion et entraide",
+          ]},
+          { type: "p", texte: "Tu peux glisser le doigt horizontalement pour passer d'un onglet à l'autre, comme pour tourner une page. Sur un écran secondaire (Profil, Boussole, Boutique...), un glissement depuis le bord gauche fait office de bouton retour." },
+        ],
+      },
+      {
+        icone: "file-text",
+        titre: "3. Actualités",
+        blocs: [
+          { type: "p", texte: "Ce fil regroupe les astuces, plans et annonces publiées par la communauté. Deux vues sont possibles : Récentes (les annonces épinglées d'abord, puis les plus récentes) et Tendances (triées par votes). Une carte marquée [VÉRIFIÉ] vient d'un membre Sabi VIP, un bon repère de fiabilité." },
+          { type: "p", texte: "Le bouton rond en bas à droite ouvre l'écran Publier pour ajouter ta propre actualité." },
+        ],
+      },
+      {
+        icone: "book",
+        titre: "4. Épreuves",
+        blocs: [
+          { type: "p", texte: "Retrouve les anciens sujets d'examen et leurs corrigés, filtrables par année, filière, semestre et matière. Le contenu correspondant à ta promo apparaît en priorité. L'accès complet aux épreuves et à leurs corrections est réservé aux abonnés Sabi Pro." },
+        ],
+      },
+      {
+        icone: "home",
+        titre: "5. Accueil",
+        blocs: [
+          { type: "p", texte: "Ton tableau de bord : message du matin, astuce du jour, niveau et points, raccourcis vers le Classement, les Membres, la Carte et la Boussole, ainsi que trois fonctionnalités mises en avant : MyScore, le Simulateur de moyenne et les Résumés de cours." },
+        ],
+      },
+      {
+        icone: "map",
+        titre: "6. Carte du campus",
+        blocs: [
+          { type: "p", texte: "Une carte interactive (GPS réel) du campus pour te repérer entre les bâtiments, les salles et les points de photocopie." },
+        ],
+      },
+      {
+        icone: "message-circle",
+        titre: "7. Chat",
+        blocs: [
+          { type: "p", texte: "Un espace de discussion pour les astuces, les plans et l'entraide entre étudiants." },
+        ],
+      },
+      {
+        icone: "user",
+        titre: "8. Profil et fonctionnalités secondaires",
+        blocs: [
+          { type: "p", texte: "L'icône de profil en haut à droite ouvre ton espace personnel : pseudo, points, badges, abonnement, et un accès à toutes les fonctionnalités secondaires, regroupées par thème :" },
+          { type: "sous-titre", texte: "Académique" },
+          { type: "list", items: [
+            "MyScore : consulte tes notes dès qu'elles sont publiées, et exporte-les en PDF",
+            "Résumés de cours : fiches réservées aux abonnés Pro+",
+            "Simulateur de moyenne : calcule la note qu'il te faut à l'examen pour valider ton semestre",
+          ]},
+          { type: "sous-titre", texte: "Accompagnement" },
+          { type: "list", items: [
+            "Coach Réussite : mentor IA réservé aux abonnés Pro+, avec diagnostic, plan de révision et quiz",
+            "Boussole : parcours guidé des démarches administratives pour les nouveaux arrivants",
+            "Assistance : écris directement au responsable de l'application",
+          ]},
+          { type: "sous-titre", texte: "Communauté" },
+          { type: "list", items: [
+            "Classement : top contributeurs de la semaine",
+            "Boutique, VIP et Bounty : dépense tes points en badges, demande le statut VIP, ou lance/réponds à des primes (bounty) entre étudiants",
+            "Membres inscrits : annuaire des étudiants par filière",
+          ]},
+          { type: "p", texte: "Chaque contribution utile (astuce, réponse, publication) rapporte des points, qui font progresser ton niveau : Nouveau, Junior de l'IUT, Ancien de l'IUT, puis Griot Suprême." },
+        ],
+      },
+      {
+        icone: "crown",
+        titre: "9. Sabi Pro et Pro+",
+        blocs: [
+          { type: "p", texte: "Depuis la Boutique, deux formules au choix, en abonnement semestriel ou annuel :" },
+          { type: "sous-titre", texte: "Sabi Pro" },
+          { type: "list", items: [
+            "Accès complet aux épreuves et corrections",
+            "Badge Pro doré",
+            "Recherche et filtres illimités",
+          ]},
+          { type: "sous-titre", texte: "Sabi Pro+" },
+          { type: "list", items: [
+            "Tous les avantages Pro",
+            "Résumés de cours exclusifs",
+            "Groupe WhatsApp d'entraide",
+            "Badge Pro+ doré",
+          ]},
+          { type: "p", texte: "Le paiement se fait par Orange Money ou MTN MoMo. Suis les indications affichées sur l'écran de souscription : selon la configuration en place, l'activation est soit automatique après confirmation du paiement, soit manuelle après vérification par un administrateur (quelques heures)." },
+        ],
+      },
+      {
+        icone: "wrench",
+        titre: "10. Paramètres et assistance",
+        blocs: [
+          { type: "p", texte: "Le menu (icône ☰) en haut à gauche donne accès au mode clair/sombre, aux notifications, à l'Assistance (message direct au responsable) et aux Crédits de l'application." },
+          { type: "p", texte: "Sabi fonctionne aussi hors connexion : les dernières informations enregistrées sur ton appareil restent consultables, un bandeau te prévient quand tu es hors ligne. Une bannière peut te proposer d'installer l'application sur ton téléphone pour un accès plus rapide." },
+        ],
+      },
+    ];
+
+    function GuideBloc({ bloc }) {
+      if (bloc.type === "p") {
+        return React.createElement("p", { className: "text-sm leading-relaxed", style: { color: COLORS.textMuted } }, bloc.texte);
+      }
+      if (bloc.type === "sous-titre") {
+        return React.createElement("p", { className: "text-[10px] font-mono uppercase mt-1", style: { color: COLORS.textFaint, letterSpacing: "0.08em" } }, bloc.texte);
+      }
+      if (bloc.type === "list") {
+        return React.createElement("ul", { className: "flex flex-col gap-1.5" },
+          bloc.items.map((it, i) => React.createElement("li", {
+            key: i, className: "text-sm leading-relaxed flex gap-2", style: { color: COLORS.textMuted }
+          },
+            React.createElement("span", { style: { color: COLORS.gold, flexShrink: 0 } }, "•"),
+            React.createElement("span", null, it)
+          ))
+        );
+      }
+      return null;
+    }
+
+    function GuideSection({ section, ouverte, onToggle }) {
+      return React.createElement("div", {
+        className: "rounded-xl overflow-hidden", style: { border: `1px solid ${COLORS.border}` }
+      },
+        React.createElement("button", {
+          onClick: onToggle,
+          className: "w-full flex items-center justify-between gap-2.5 p-3.5 text-left",
+          style: { backgroundColor: COLORS.surface2 }
+        },
+          React.createElement("div", { className: "flex items-center gap-2.5 min-w-0" },
+            React.createElement(Icon, { name: section.icone, size: 16, color: COLORS.gold }),
+            React.createElement("span", { className: "text-sm font-medium truncate", style: { color: COLORS.text } }, section.titre)
+          ),
+          React.createElement(Icon, {
+            name: "chevron-down", size: 15, color: COLORS.textFaint,
+            style: { flexShrink: 0, transition: "transform 0.15s", transform: ouverte ? "rotate(180deg)" : "rotate(0deg)" }
+          })
+        ),
+        ouverte && React.createElement("div", { className: "flex flex-col gap-2.5 p-3.5 pt-0.5" },
+          section.blocs.map((bloc, i) => React.createElement(GuideBloc, { key: i, bloc }))
+        )
+      );
+    }
+
+    function GuideModal({ ouvert, onFermer }) {
+      const [sectionOuverte, setSectionOuverte] = useState(0);
+      if (!ouvert) return null;
+      return React.createElement("div", {
+        className: "fixed inset-0 z-[200] flex items-end sm:items-center justify-center",
+        style: { backgroundColor: "rgba(0,0,0,0.6)" },
+        onClick: onFermer
+      },
+        React.createElement("div", {
+          className: "w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 flex flex-col gap-4 max-h-[88vh] overflow-y-auto",
+          style: { backgroundColor: COLORS.surface, border: `1px solid ${COLORS.border}` },
+          onClick: e => e.stopPropagation()
+        },
+          React.createElement("div", { className: "flex items-center justify-between" },
+            React.createElement("div", { className: "flex items-center gap-2" },
+              React.createElement(Icon, { name: "book-open", size: 18, color: COLORS.gold }),
+              React.createElement("div", null,
+                React.createElement("p", { className: "text-base font-semibold", style: { color: COLORS.text } }, "Guide d'utilisation"),
+                React.createElement("p", { className: "text-xs", style: { color: COLORS.textFaint } }, "Sabi — IUT FV Bandjoun")
+              )
+            ),
+            React.createElement("button", { onClick: onFermer, "aria-label": "Fermer" }, React.createElement(Icon, { name: "x", size: 18, color: COLORS.textMuted }))
+          ),
+          React.createElement("div", { className: "flex flex-col gap-2" },
+            GUIDE_SECTIONS.map((section, i) => React.createElement(GuideSection, {
+              key: i, section, ouverte: sectionOuverte === i,
+              onToggle: () => setSectionOuverte(sectionOuverte === i ? -1 : i)
+            }))
+          )
+        )
+      );
+    }
+
     // Menu hamburger — tiroir latéral qui ne recouvre qu'une partie de l'écran (le reste reste
     // visible, assombri, et cliquable pour fermer). Regroupe Paramètres, Assistance et Crédits.
-    function MenuLateral({ ouvert, onFermer, themeMode, onToggleTheme, notifsActives, onToggleNotifs, onOuvrirAssistance, onOuvrirCredits }) {
+    function MenuLateral({ ouvert, onFermer, themeMode, onToggleTheme, notifsActives, onToggleNotifs, onOuvrirAssistance, onOuvrirCredits, onOuvrirGuide }) {
       return React.createElement("div", {
         className: "fixed inset-0 z-[150] transition-opacity",
         style: { pointerEvents: ouvert ? "auto" : "none", opacity: ouvert ? 1 : 0 }
@@ -2718,8 +2918,8 @@
               onClick: () => { onOuvrirAssistance(); onFermer(); },
               className: "flex items-center gap-2.5 py-2.5 text-sm text-left", style: { color: COLORS.text }
             }, React.createElement(Icon, { name: "help-circle", size: 16, color: COLORS.textMuted }), "Assistance"),
-            React.createElement("a", {
-              href: "https://claude.ai/artifact/644DnM2xFsZ8eZKemZDUgr", target: "_blank", rel: "noopener noreferrer",
+            React.createElement("button", {
+              onClick: () => { onOuvrirGuide(); onFermer(); },
               className: "flex items-center gap-2.5 py-2.5 text-sm text-left", style: { color: COLORS.text }
             }, React.createElement(Icon, { name: "book-open", size: 16, color: COLORS.textMuted }), "Guide d'utilisation"),
             React.createElement("button", {
@@ -7837,6 +8037,7 @@
       // Menu hamburger (Paramètres / Assistance / Crédits) + son état thème/notifications.
       const [menuOuvert, setMenuOuvert] = useState(false);
       const [creditsOuverts, setCreditsOuverts] = useState(false);
+      const [guideOuvert, setGuideOuvert] = useState(false);
       const [themeMode, setThemeMode] = useState(themeActuel);
       const [notifsActivesState, setNotifsActivesState] = useState(notificationsActives);
       const handleToggleTheme = useCallback(() => {
@@ -8962,11 +9163,15 @@
           themeMode: themeMode, onToggleTheme: handleToggleTheme,
           notifsActives: notifsActivesState, onToggleNotifs: handleToggleNotifs,
           onOuvrirAssistance: () => setTab("assistance"),
-          onOuvrirCredits: () => { setMenuOuvert(false); setCreditsOuverts(true); }
+          onOuvrirCredits: () => { setMenuOuvert(false); setCreditsOuverts(true); },
+          onOuvrirGuide: () => { setMenuOuvert(false); setGuideOuvert(true); }
         }),
         React.createElement(CreditsModal, {
           ouvert: creditsOuverts, onFermer: () => setCreditsOuverts(false),
           onOuvrirAssistance: () => setTab("assistance")
+        }),
+        React.createElement(GuideModal, {
+          ouvert: guideOuvert, onFermer: () => setGuideOuvert(false)
         })
       );
     }
