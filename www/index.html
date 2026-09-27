@@ -2973,64 +2973,31 @@
       const confirmerInscription = async () => {
         setErreur("");
         setChargement(true);
-        const matriculeNorm = matricule.trim().toUpperCase();
-        const matriculeCle = matriculeNorm.replace(/[.#$/\[\]]/g, "_");
-        // On fige les valeurs à écrire dès maintenant, une fois pour toutes — le reste de cette
-        // fonction ne relit plus jamais pseudo/annee/filiere depuis l'état React, pour ne
-        // dépendre d'aucun re-rendu ou changement d'état pendant l'inscription.
-        const profilAEcrire = { pseudo: pseudo.trim(), matricule: matriculeNorm || null, annee, filiere, points: 0, whatsapp: whatsapp.trim() || null };
-        let cred = null;
-        // Empêche l'appli de basculer sur l'écran principal avec un profil vide pendant que ce
-        // bloc travaille encore : voir la vérification correspondante ajoutée dans le
-        // composant App (recherche "sabi_inscription_en_cours").
-        try { localStorage.setItem("sabi_inscription_en_cours", "1"); } catch {}
         try {
-          cred = await auth.createUserWithEmailAndPassword(email.trim(), password);
-          // Force le jeton d'authentification à se rafraîchir tout de suite : sans ça, la base
-          // de données peut encore voir "non connecté" pendant une fraction de seconde juste
-          // après la création du compte, et rejeter TOUTE l'écriture du profil qui suit (un seul
-          // champ refusé = rien n'est enregistré, c'est le fonctionnement normal de Firebase).
-          await cred.user.getIdToken(true);
-          // Ce compte Firebase Auth vient d'être créé juste au-dessus : si l'écriture du profil
-          // (pseudo, filière, etc.) échoue maintenant, ou si Firebase l'accepte localement sans
-          // qu'elle soit vraiment confirmée par le serveur, on se retrouve avec un compte
-          // "fantôme". On réessaie donc plusieurs fois, et surtout on RELIT ce qu'on vient
-          // d'écrire à chaque tentative : une promesse résolue sans erreur ne suffit pas comme
-          // preuve, seule une relecture qui correspond exactement à ce qu'on a envoyé compte.
-          let derniereErreur = null;
-          let confirme = false;
-          for (let tentative = 0; tentative < 5 && !confirme; tentative++) {
-            if (tentative > 0) await new Promise(r => setTimeout(r, 1000 * tentative));
-            try {
-              await usersRef.child(cred.user.uid).set(profilAEcrire);
-              const relu = (await usersRef.child(cred.user.uid).once("value")).val();
-              if (relu && relu.pseudo === profilAEcrire.pseudo && relu.annee === profilAEcrire.annee && relu.filiere === profilAEcrire.filiere) {
-                confirme = true;
-              } else {
-                derniereErreur = new Error("relecture non conforme : " + JSON.stringify(relu));
-              }
-            } catch (err) {
-              derniereErreur = err;
-            }
-          }
-          if (!confirme) {
-            // Toujours en échec après plusieurs essais : on annule la création du compte ET on
-            // nettoie tout ce qui aurait pu être écrit malgré tout, plutôt que de laisser un
-            // compte fantôme derrière nous — l'étudiant peut alors réessayer depuis le début.
-            try { await usersRef.child(cred.user.uid).remove(); } catch {}
-            try { await cred.user.delete(); } catch {}
-            setErreur("Ton profil n'a pas pu être enregistré : " + (derniereErreur && (derniereErreur.code || derniereErreur.message) || "erreur inconnue") + ". Le compte n'a pas été créé, réessaie.");
+          // Le compte ET le profil sont créés côté serveur, en une seule fois, avec les droits
+          // admin — voir netlify/functions/inscription.js. Le téléphone n'a plus qu'à envoyer
+          // les informations et à attendre une réponse claire : succès, ou erreur précise.
+          const resp = await fetch("/.netlify/functions/inscription", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: email.trim(), password,
+              pseudo: pseudo.trim(), matricule: matricule.trim(), annee, filiere, whatsapp: whatsapp.trim()
+            })
+          });
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok || !data.ok) {
+            setErreur(data.erreur || "Une erreur est survenue, réessaie.");
             setChargement(false);
-            try { localStorage.removeItem("sabi_inscription_en_cours"); } catch {}
             return;
           }
-          if (matriculeNorm.length > 0) await matriculesRef.child(matriculeCle).set(cred.user.uid);
+          // Compte et profil confirmés existants côté serveur : on se connecte maintenant
+          // normalement, sans aucun risque de tomber sur un profil vide entre-temps.
+          await auth.signInWithEmailAndPassword(email.trim(), password);
           try { sessionStorage.removeItem("sabiInscriptionBrouillon"); } catch {}
         } catch (e) {
-          setErreur(messageErreur(e.code) + (e.message ? " (" + e.message + ")" : ""));
+          setErreur("Impossible de contacter le serveur, vérifie ta connexion et réessaie.");
           setChargement(false);
-        } finally {
-          try { localStorage.removeItem("sabi_inscription_en_cours"); } catch {}
         }
       };
 
