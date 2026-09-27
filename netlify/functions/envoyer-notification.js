@@ -24,7 +24,7 @@ async function obtenirAccessToken(clientEmail, privateKey) {
   const entete = base64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const revendications = base64url(JSON.stringify({
     iss: clientEmail,
-    scope: "https://www.googleapis.com/auth/firebase.messaging https://www.googleapis.com/auth/firebase.database",
+    scope: "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/firebase.messaging https://www.googleapis.com/auth/firebase.database",
     aud: "https://oauth2.googleapis.com/token",
     iat: maintenant,
     exp: maintenant + 3600
@@ -96,42 +96,24 @@ async function gererRequete(event) {
   try {
     const accessToken = await obtenirAccessToken(FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY);
 
-    // uids : tous les destinataires (pour la pastille en app, qui doit marcher même sans push
-    // activé). tokens : le sous-ensemble qui a un appareil enregistré (pour l'envoi FCM réel).
-    let uids = [];
-    let tokensParUid = {};
+    let tokens = [];
     if (cibleUid) {
-      uids = [cibleUid];
       const resp = await fetch(`${FIREBASE_DB_URL}/users/${cibleUid}/fcmToken.json?access_token=${accessToken}`);
       const token = await resp.json();
-      if (token) tokensParUid[cibleUid] = token;
+      if (token) tokens = [token];
     } else {
       const resp = await fetch(`${FIREBASE_DB_URL}/users.json?shallow=false&access_token=${accessToken}`);
-      const users = await resp.json() || {};
-      uids = Object.keys(users);
-      for (const uid of uids) {
-        if (users[uid] && users[uid].fcmToken) tokensParUid[uid] = users[uid].fcmToken;
-      }
+      const users = await resp.json();
+      tokens = Object.values(users || {}).map(u => u && u.fcmToken).filter(Boolean);
     }
 
-    if (uids.length === 0) {
-      return { statusCode: 200, body: JSON.stringify({ ok: true, envoyes: 0, message: "Aucun destinataire trouvé." }) };
+    if (tokens.length === 0) {
+      return { statusCode: 200, body: JSON.stringify({ ok: true, envoyes: 0, message: "Aucun appareil enregistré pour cette cible." }) };
     }
 
-    // Écrit la pastille pour tout le monde (avec ou sans push actif).
-    const maintenant = Date.now();
-    await Promise.all(uids.map(uid =>
-      fetch(`${FIREBASE_DB_URL}/notifications/${uid}.json?access_token=${accessToken}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ titre, corps, lu: false, date: maintenant })
-      }).catch(() => {})
-    ));
-
-    const tokens = Object.values(tokensParUid);
     const resultats = await Promise.all(tokens.map(t => envoyerAUnToken(FIREBASE_PROJECT_ID, accessToken, t, titre, corps)));
     const envoyes = resultats.filter(Boolean).length;
-    return { statusCode: 200, body: JSON.stringify({ ok: true, envoyes, total: tokens.length, pastille: uids.length }) };
+    return { statusCode: 200, body: JSON.stringify({ ok: true, envoyes, total: tokens.length }) };
   } catch (e) {
     return { statusCode: 500, body: JSON.stringify({ ok: false, message: e.message || "Erreur inconnue." }) };
   }

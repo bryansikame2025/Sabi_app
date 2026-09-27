@@ -19,7 +19,7 @@ async function obtenirAccessToken(clientEmail, privateKey) {
   const entete = base64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const revendications = base64url(JSON.stringify({
     iss: clientEmail,
-    scope: "https://www.googleapis.com/auth/identitytoolkit https://www.googleapis.com/auth/firebase.database",
+    scope: "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/identitytoolkit https://www.googleapis.com/auth/firebase.database",
     aud: "https://oauth2.googleapis.com/token",
     iat: maintenant,
     exp: maintenant + 3600
@@ -68,6 +68,7 @@ exports.handler = async (event) => {
   try {
     accessToken = await obtenirAccessToken(FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY);
   } catch (e) {
+    console.error("Échec authentification Google :", e.message || e);
     return { statusCode: 500, body: JSON.stringify({ erreur: "Erreur serveur (authentification Google)." }) };
   }
 
@@ -81,12 +82,14 @@ exports.handler = async (event) => {
     });
     const data = await resp.json();
     if (!resp.ok || !data.localId) {
+      console.error("Échec création compte :", resp.status, JSON.stringify(data));
       const code = (data.error && data.error.message) || "inconnue";
       const msg = String(code).includes("EMAIL_EXISTS") ? "Cet email a déjà un compte, essaie de te connecter." : "Impossible de créer le compte (" + code + ").";
       return { statusCode: 400, body: JSON.stringify({ erreur: msg }) };
     }
     uid = data.localId;
   } catch (e) {
+    console.error("Erreur réseau création compte :", e.message || e);
     return { statusCode: 500, body: JSON.stringify({ erreur: "Erreur réseau lors de la création du compte." }) };
   }
 
@@ -98,7 +101,10 @@ exports.handler = async (event) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(profil)
     });
-    if (!respEcriture.ok) throw new Error(await respEcriture.text());
+    if (!respEcriture.ok) {
+      const texte = await respEcriture.text();
+      throw new Error("HTTP " + respEcriture.status + " : " + texte);
+    }
 
     if (matriculeNorm) {
       const matriculeCle = matriculeNorm.replace(/[.#$/\[\]]/g, "_");
@@ -107,6 +113,7 @@ exports.handler = async (event) => {
       });
     }
   } catch (e) {
+    console.error("Échec écriture profil pour uid", uid, ":", e.message || e, "| FIREBASE_DB_URL utilisée :", FIREBASE_DB_URL);
     // Écriture du profil impossible malgré les droits admin (cas très rare) : on supprime le
     // compte qu'on vient de créer pour ne rien laisser de fantôme derrière nous.
     try {
@@ -116,7 +123,9 @@ exports.handler = async (event) => {
         body: JSON.stringify({ localId: uid })
       });
     } catch {}
-    return { statusCode: 500, body: JSON.stringify({ erreur: "Le profil n'a pas pu être enregistré, réessaie." }) };
+    // Le détail technique est inclus directement dans la réponse (temporaire, le temps de
+    // diagnostiquer) pour ne plus dépendre de l'accès aux logs Netlify depuis le téléphone.
+    return { statusCode: 500, body: JSON.stringify({ erreur: "Le profil n'a pas pu être enregistré, réessaie.", detail: String(e.message || e) }) };
   }
 
   return { statusCode: 200, body: JSON.stringify({ ok: true, uid }) };

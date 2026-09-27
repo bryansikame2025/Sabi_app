@@ -17,7 +17,7 @@ async function obtenirAccessToken(clientEmail, privateKey) {
   const entete = base64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const revendications = base64url(JSON.stringify({
     iss: clientEmail,
-    scope: "https://www.googleapis.com/auth/firebase.messaging https://www.googleapis.com/auth/firebase.database",
+    scope: "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/firebase.messaging https://www.googleapis.com/auth/firebase.database",
     aud: "https://oauth2.googleapis.com/token",
     iat: maintenant,
     exp: maintenant + 3600
