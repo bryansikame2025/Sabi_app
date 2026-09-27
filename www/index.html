@@ -2718,6 +2718,10 @@
               onClick: () => { onOuvrirAssistance(); onFermer(); },
               className: "flex items-center gap-2.5 py-2.5 text-sm text-left", style: { color: COLORS.text }
             }, React.createElement(Icon, { name: "help-circle", size: 16, color: COLORS.textMuted }), "Assistance"),
+            React.createElement("a", {
+              href: "https://claude.ai/artifact/644DnM2xFsZ8eZKemZDUgr", target: "_blank", rel: "noopener noreferrer",
+              className: "flex items-center gap-2.5 py-2.5 text-sm text-left", style: { color: COLORS.text }
+            }, React.createElement(Icon, { name: "book-open", size: 16, color: COLORS.textMuted }), "Guide d'utilisation"),
             React.createElement("button", {
               onClick: onOuvrirCredits,
               className: "flex items-center gap-2.5 py-2.5 text-sm text-left", style: { color: COLORS.text }
@@ -2987,7 +2991,7 @@
           });
           const data = await resp.json().catch(() => ({}));
           if (!resp.ok || !data.ok) {
-            setErreur(data.erreur || "Une erreur est survenue, réessaie.");
+            setErreur((data.erreur || "Une erreur est survenue, réessaie.") + (data.detail ? " [" + data.detail + "]" : ""));
             setChargement(false);
             return;
           }
