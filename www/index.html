@@ -246,6 +246,14 @@
       *, button, input, textarea, select { transition: none !important; animation: none !important; }
     }
 
+    /* Mode Sauvetage — teinte d'alerte persistante sur tout l'écran tant que le mode est actif */
+    @keyframes sabi-alerte-pulse { 0%,100% { background-color: rgba(239,68,68,0.13); } 50% { background-color: rgba(249,115,22,0.24); } }
+    .sabi-sauvetage-teinte { animation: sabi-alerte-pulse 1.6s ease-in-out infinite; }
+    /* Focus — teinte d'ambiance violette tant qu'une session est en cours */
+    @keyframes sabi-focus-pulse { 0%,100% { background-color: rgba(124,92,240,0.10); } 50% { background-color: rgba(59,130,246,0.20); } }
+    .sabi-focus-teinte { animation: sabi-focus-pulse 3s ease-in-out infinite; }
+    @keyframes sabi-focus-pop { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+    .sabi-focus-fin { animation: sabi-focus-pop 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
     /* Glissement (swipe) entre onglets adjacents — l'onglet entrant arrive du côté vers lequel on a poussé. */
     @keyframes sabi-slide-from-right {
       0%   { transform: translateX(36px); opacity: 0.3; }
@@ -610,11 +618,15 @@
     // de sécurité à 4 Mo. Avant le passage par ce relais serveur (pour cacher GEMINI_API_KEY),
     // Gemini était appelé direct depuis le navigateur et cette limite n'existait pas — c'est ce
     // qui casse silencieusement le traitement des PDF/photos un peu lourds depuis la migration.
-    const LIMITE_FICHIER_IA = 4 * 1024 * 1024;
+    const LIMITE_FICHIER_IA = 4 * 1024 * 1024; // repli inline (Netlify Functions) uniquement
+    // Limite générale pour générer un corrigé / résumé : 20 Mo, via l'API File de Gemini (Edge
+    // Function, sans la limite de 6 Mo des Functions classiques). Au-delà, on refuse d'emblée
+    // avec un message clair plutôt que de laisser l'upload échouer en cours de route.
+    const LIMITE_FICHIER_IA_MAX = 20 * 1024 * 1024;
     function verifierTailleAvantEnvoiIA(blob, typeLabel) {
       if (blob.size > LIMITE_FICHIER_IA) {
         const tailleMo = (blob.size / (1024 * 1024)).toFixed(1);
-        throw new Error(typeLabel + " trop volumineux (" + tailleMo + " Mo) pour être envoyé à l'IA — limite technique d'environ 4 Mo. Essaie un fichier plus léger.");
+        throw new Error(typeLabel + " trop volumineux (" + tailleMo + " Mo) pour être envoyé à l'IA — limite d'environ 4 Mo en mode de secours. Réessaie dans quelques minutes.");
       }
     }
 
@@ -675,7 +687,7 @@
     // quelle que soit la taille du fichier d'origine, puisqu'elle ne transporte plus le fichier.
     async function uploaderFichierVersGeminiFileAPI(blob, mimeType) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      const timeoutId = setTimeout(() => controller.abort(), 180000); // gros fichiers / connexion lente
       let response;
       try {
         response = await fetch(GEMINI_FICHIER_URL, {
@@ -709,10 +721,16 @@
         const res = await fetch(url);
         if (!res.ok) throw new Error("Impossible de récupérer le fichier (HTTP " + res.status + ").");
         const blobBrut = await res.blob();
+        if (blobBrut.size > LIMITE_FICHIER_IA_MAX) {
+          const e = new Error("Ce fichier fait " + (blobBrut.size / (1024 * 1024)).toFixed(1) + " Mo — la génération IA est limitée à 20 Mo. Utilise un fichier plus léger.");
+          e.tropVolumineux = true;
+          throw e;
+        }
         const mimeType = mimeTypePdf || blobBrut.type || "image/jpeg";
         const { uri, mimeType: mimeTypeFinal } = await uploaderFichierVersGeminiFileAPI(blobBrut, mimeType);
         return { file_data: { mime_type: mimeTypeFinal, file_uri: uri } };
       } catch (errUpload) {
+        if (errUpload.tropVolumineux) throw errUpload;
         if (mimeTypePdf === "application/pdf") {
           const base64 = await pdfUrlVersBase64(url);
           return { inline_data: { mime_type: "application/pdf", data: base64 } };
@@ -822,7 +840,7 @@
           }
           return await genererViaRepliChat(mode, prompt, base64Repli, mimeTypeRepli, "sujet.pdf", "Sabi - Corrige IA");
         } catch (errRepli) {
-          throw new Error("Gemini, Groq et OpenRouter sont tous indisponibles pour le moment. Réessaie dans quelques minutes. (" + errRepli.message + ")");
+          throw new Error("Gemini, OpenAI, Groq et OpenRouter sont tous indisponibles pour le moment. Réessaie dans quelques minutes. (" + errRepli.message + ")");
         }
       }
     }
@@ -900,6 +918,7 @@
     //   modèle configuré sur Groq (openai/gpt-oss-120b) ne lit ni PDF ni image.
     async function genererViaRepliChat(mode, prompt, base64, mimeType, nomFichierPdf, titrePourEnTete) {
       const entetesOpenRouter = { "HTTP-Referer": window.location.origin, "X-Title": titrePourEnTete };
+      const DELAI_FICHIER = 120000; // lire un PDF/photo et rédiger un corrigé complet est plus long qu'un simple chat
 
       if (mode === "texte") {
         const messages = [{ role: "user", content: prompt }];
@@ -907,42 +926,50 @@
           return await appellerChatIA("groq", GROQ_MODEL, messages);
         } catch (errGroq) {
           try {
-            return await appellerChatIA("openrouter", OPENROUTER_MODEL, messages, entetesOpenRouter);
-          } catch (errOR) {
+            return await appellerChatIA("openai", OPENAI_MODEL, messages);
+          } catch (errOpenAI) {
             try {
+              return await appellerChatIA("openrouter", OPENROUTER_MODEL, messages, entetesOpenRouter);
+            } catch (errOR) {
               return await appellerChatIA("huggingface", HUGGINGFACE_MODEL, messages);
-            } catch (errHF) {
-              return await appellerChatIA("openai", OPENAI_MODEL, messages);
             }
           }
         }
       }
 
-      // mode "pdf"/"photo" : uniquement OpenRouter, seul fournisseur du groupe dont on sait que le
-      // format d'envoi de fichier ci-dessous (type "file"/"image_url" inline en base64) est bien
-      // supporté par le modèle configuré. Étendre à Hugging Face/OpenAI demanderait de vérifier
-      // leur format d'entrée fichier/image respectif avant de brancher à l'aveugle.
-
+      // mode "pdf"/"photo" : OpenAI d'abord (gpt-4o-mini lit nativement les PDF et les images via
+      // le même format "file"/"image_url" en base64 que OpenRouter, sans exiger de solde minimum),
+      // puis OpenRouter en dernier recours (il exige au moins 0,50 $ de crédit pour les fichiers).
+      // Groq et Hugging Face ne sont pas branchés ici : leurs modèles configurés ne lisent ni
+      // PDF ni image.
+      let messages;
       if (mode === "pdf") {
-        const messages = [{
+        messages = [{
           role: "user",
           content: [
             { type: "text", text: prompt },
             { type: "file", file: { filename: nomFichierPdf, file_data: "data:application/pdf;base64," + base64 } }
           ]
         }];
-        return await appellerChatIA("openrouter", OPENROUTER_MODEL, messages, entetesOpenRouter);
+      } else { // mode === "photo"
+        messages = [{
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: "data:" + mimeType + ";base64," + base64 } }
+          ]
+        }];
       }
-
-      // mode === "photo"
-      const messages = [{
-        role: "user",
-        content: [
-          { type: "text", text: prompt },
-          { type: "image_url", image_url: { url: "data:" + mimeType + ";base64," + base64 } }
-        ]
-      }];
-      return await appellerChatIA("openrouter", OPENROUTER_MODEL, messages, entetesOpenRouter);
+      try {
+        return await appellerChatIA("openai", OPENAI_MODEL, messages, undefined, DELAI_FICHIER);
+      } catch (errOpenAI) {
+        console.error("OpenAI (repli fichier) a échoué :", errOpenAI.message);
+        try {
+          return await appellerChatIA("openrouter", OPENROUTER_MODEL, messages, entetesOpenRouter, DELAI_FICHIER);
+        } catch (errOR) {
+          throw new Error("OpenAI : " + errOpenAI.message + " | OpenRouter : " + errOR.message);
+        }
+      }
     }
 
     async function genererResumeIA(contenuTexte, matiere, pdfUrl) {
@@ -978,11 +1005,36 @@
           const base64Repli = mode === "pdf" ? await pdfUrlVersBase64(pdfUrl) : null;
           return await genererViaRepliChat(mode, prompt, base64Repli, null, "cours.pdf", "Sabi - Resume IA");
         } catch (errRepli) {
-          throw new Error("Gemini, Groq et OpenRouter sont tous indisponibles pour le moment. Réessaie dans quelques minutes. (" + errRepli.message + ")");
+          throw new Error("Gemini, OpenAI, Groq et OpenRouter sont tous indisponibles pour le moment. Réessaie dans quelques minutes. (" + errRepli.message + ")");
         }
       }
     }
 
+
+    // Traduit une erreur technique de génération IA (souvent un message de fournisseur, ex.
+    // "This request requires at least $0.50 in balance for files") en un message compréhensible
+    // pour un·e étudiant·e, qui n'a rien à voir avec un solde de compte fournisseur IA. Le détail
+    // technique original reste dans la console (utile pour l'administrateur qui gère les clés API),
+    // mais ne s'affiche plus jamais tel quel à l'écran de l'utilisateur.
+    function messageErreurIAConvivial(err) {
+      const brut = (err && err.message) || "";
+      console.error("Erreur génération IA :", brut);
+      const b = brut.toLowerCase();
+      if (b.includes("limitée à 20 mo")) return brut; // message déjà clair et destiné à l'étudiant
+      if (b.includes("balance") || b.includes("credit") || b.includes("payment") || b.includes("402")) {
+        return "Le service IA est momentanément à court de crédit côté serveur. L'administrateur a été prévenu implicitement — réessaie un peu plus tard.";
+      }
+      if (b.includes("trop de temps") || b.includes("timeout") || b.includes("abort")) {
+        return "L'IA a mis trop de temps à répondre. Réessaie, ou réessaie avec une meilleure connexion.";
+      }
+      if (b.includes("connexion") || b.includes("réseau") || b.includes("network")) {
+        return "Impossible de contacter l'IA — vérifie ta connexion internet puis réessaie.";
+      }
+      if (b.includes("tous indisponibles")) {
+        return "Le service IA est surchargé pour le moment. Réessaie dans quelques minutes.";
+      }
+      return "La génération IA a échoué. Réessaie dans quelques instants.";
+    }
 
     // ========== GROQ & OPENROUTER (Mentor / Diagnostic IA) ==========
     // Les clés secrètes ne sont plus dans ce fichier : elles vivent côté serveur, dans les
@@ -1002,9 +1054,9 @@
     // /.netlify/functions/chat-ia — celui-ci choisit Groq ou OpenRouter selon `provider` et
     // ajoute la clé secrète correspondante, invisible du navigateur.
     // extraHeaders permet de transmettre les en-têtes demandés par OpenRouter (référent, titre de l'app).
-    async function appellerChatIA(provider, model, messages, extraHeaders) {
+    async function appellerChatIA(provider, model, messages, extraHeaders, timeoutMs) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs || 45000);
       let response;
       try {
         response = await fetch(CHAT_IA_URL, {
@@ -2110,6 +2162,11 @@
       { id: "diplome", nom: "Diplômé d'honneur", emoji: "graduation-cap", cout: 40, couleur: "forest" },
       { id: "lion", nom: "Lion de Bandjoun", emoji: "shield", cout: 60, couleur: "terra" },
       { id: "couronne", nom: "Légende du campus", emoji: "crown", cout: 100, couleur: "gold" },
+      // Badges automatiques : jamais achetables, débloqués par l'activité (voir debloquerBadgeAuto).
+      { id: "marathonien", nom: "Marathonien", emoji: "clock", cout: 0, couleur: "forest", auto: true, condition: "2 h de focus dans la semaine" },
+      { id: "sans_faute", nom: "Sans faute", emoji: "target", cout: 0, couleur: "gold", auto: true, condition: "Un quiz parfait (5/5)" },
+      { id: "leve_tot", nom: "Lève-tôt", emoji: "sun", cout: 0, couleur: "terra", auto: true, condition: "Une session de focus avant 7 h" },
+      { id: "flamme7", nom: "Flamme 7 jours", emoji: "flame", cout: 0, couleur: "terra", auto: true, condition: "7 jours de focus d'affilée" },
     ];
     const COUT_VIP = 75;
     const OWNER_EMAILS = ["bryansikame2026@gmail.com", "bryansikame2025@gmail.com"];
@@ -2395,7 +2452,13 @@
         }, "image/jpeg", 0.85);
       };
 
-      return React.createElement("div", { className: "fixed inset-0 z-50 flex flex-col items-center justify-center p-4", style: { backgroundColor: "rgba(10,10,10,0.92)" } },
+      // Rendu via portail direct dans <body> : ce composant est utilisé depuis des écrans
+      // (Épreuves, Résumés...) placés dans un conteneur qui reçoit un `transform` CSS en ligne
+      // pendant le balayage entre onglets (voir swipeContentRef plus bas). Un ancêtre avec un
+      // `transform` actif devient le "containing block" de tout descendant en `position: fixed`,
+      // ce qui empêche ce plein-écran de couvrir vraiment tout l'écran (il restait coincé entre
+      // l'en-tête et la barre de navigation du bas). Le portail sort ce rendu de cette hiérarchie.
+      return ReactDOM.createPortal(React.createElement("div", { className: "fixed inset-0 z-50 flex flex-col items-center justify-center p-4", style: { backgroundColor: "rgba(10,10,10,0.92)" } },
         React.createElement("div", { className: "relative", style: { lineHeight: 0, touchAction: "none" } },
           url && React.createElement("img", {
             ref: imgRef, src: url, onLoad: onImgLoad, draggable: false,
@@ -2421,7 +2484,7 @@
           React.createElement("button", { onClick: onAnnuler, className: "px-4 py-2 rounded-full text-sm font-semibold", style: { backgroundColor: "rgba(255,255,255,0.12)", color: "#fff" } }, "Annuler"),
           React.createElement("button", { onClick: valider, className: "px-5 py-2 rounded-full text-sm font-semibold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Valider le recadrage")
         )
-      );
+      ), document.body);
     }
 
     // Utilise la visionneuse Google Docs pour afficher un PDF de façon fiable dans un <iframe>,
@@ -2576,9 +2639,322 @@
       }
     }
 
+    // Sourdine "Focus" : pendant une session Focus, les bulles de Sabi sont mises en attente puis
+    // rejouées à la fin (max 5, avec un petit délai entre chaque). Ne concerne QUE les bulles de
+    // l'app — une page web ne peut pas couper les notifications du téléphone (WhatsApp, appels...).
+    let focusSourdine = false;
+    const bullesEnAttente = [];
+    function definirSourdineFocus(active) {
+      if (focusSourdine === active) return;
+      focusSourdine = active;
+      if (active) return;
+      const aRejouer = bullesEnAttente.splice(0, bullesEnAttente.length).slice(-5);
+      aRejouer.forEach((detail, i) => setTimeout(() => window.dispatchEvent(new CustomEvent("sabi-notif", { detail })), 700 + i * 900));
+    }
     function notifierBulle(texte, options = {}) {
       if (!notificationsActives) return;
-      window.dispatchEvent(new CustomEvent("sabi-notif", { detail: { texte, ...options } }));
+      const detail = { texte, ...options };
+      if (focusSourdine) { if (bullesEnAttente.length < 20) bullesEnAttente.push(detail); return; }
+      window.dispatchEvent(new CustomEvent("sabi-notif", { detail }));
+    }
+
+    // ========== FUN : sons, vibrations, confettis, classements hebdo, badges auto, carnet ==========
+    const classementHebdoRef = db.ref("classementHebdo");
+    const duelsRef = db.ref("duels");
+
+    function jourCle(d) { return (d || new Date()).toISOString().slice(0, 10); }
+    // Même formule que la progression hebdomadaire du Coach (semaine "AAAA-Sn").
+    function semaineCle(d) {
+      d = d || new Date();
+      const jan1 = new Date(d.getFullYear(), 0, 1);
+      const semaine = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+      return d.getFullYear() + "-S" + semaine;
+    }
+
+    // Sons doux générés à la volée (aucun fichier audio) — coupables via le menu ☰ (clé "sabi_sons").
+    function sonsActifs() { try { return localStorage.getItem("sabi_sons") !== "off"; } catch { return true; } }
+    let contexteAudio = null;
+    function jouerSon(type) {
+      if (!sonsActifs()) return;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        contexteAudio = contexteAudio || new AC();
+        if (contexteAudio.state === "suspended") contexteAudio.resume();
+        const partitions = {
+          ding: [[880, 0, 0.18], [1320, 0.12, 0.35]],
+          succes: [[523, 0, 0.14], [659, 0.12, 0.14], [784, 0.24, 0.14], [1047, 0.36, 0.4]],
+          tick: [[1000, 0, 0.05]],
+          roue: [[600, 0, 0.06]],
+          oups: [[330, 0, 0.18], [262, 0.16, 0.3]]
+        };
+        (partitions[type] || partitions.ding).forEach(([freq, debut, duree]) => {
+          const o = contexteAudio.createOscillator();
+          const g = contexteAudio.createGain();
+          o.type = "sine"; o.frequency.value = freq;
+          const t0 = contexteAudio.currentTime + debut;
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
+          o.connect(g); g.connect(contexteAudio.destination);
+          o.start(t0); o.stop(t0 + duree + 0.05);
+        });
+      } catch {}
+    }
+    function haptique(motif) { try { if (navigator.vibrate) navigator.vibrate(motif); } catch {} }
+
+    // Confettis en canvas ajouté directement à <body> (pas de React : échappe au transform du swipe).
+    function lancerConfettis() {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:400;";
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext("2d");
+        const couleurs = ["#f2ca50", "#77dd6a", "#ffb4ab", "#7c5cf0", "#3b82f6", "#f97316"];
+        const morceaux = Array.from({ length: 90 }, () => ({
+          x: canvas.width / 2 + (Math.random() - 0.5) * 80, y: canvas.height * 0.55,
+          vx: (Math.random() - 0.5) * 12, vy: -Math.random() * 14 - 4,
+          taille: 5 + Math.random() * 6, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4,
+          couleur: couleurs[Math.floor(Math.random() * couleurs.length)]
+        }));
+        const debut = performance.now();
+        const image = (now) => {
+          const t = now - debut;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          morceaux.forEach(m => {
+            m.vy += 0.35; m.x += m.vx; m.y += m.vy; m.rot += m.vr;
+            ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.rot);
+            ctx.globalAlpha = Math.max(0, 1 - t / 2600);
+            ctx.fillStyle = m.couleur; ctx.fillRect(-m.taille / 2, -m.taille / 2, m.taille, m.taille * 0.6);
+            ctx.restore();
+          });
+          if (t < 2600) requestAnimationFrame(image); else canvas.remove();
+        };
+        requestAnimationFrame(image);
+      } catch {}
+    }
+    // Petit combo "victoire" : confettis + son + vibration.
+    function celebrer() { lancerConfettis(); jouerSon("succes"); haptique([80, 40, 80, 40, 160]); }
+
+    // Débloque un badge automatique (une seule fois). La bulle "Tu as débloqué le badge…" et les
+    // confettis sont déclenchés par l'écoute des badges dans SabiApp.
+    function debloquerBadgeAuto(uid, badgeId) {
+      if (!uid) return;
+      usersRef.child(uid).child("badges").child(badgeId).once("value").then(snap => {
+        if (!snap.val()) usersRef.child(uid).child("badges").child(badgeId).set(true);
+      }).catch(() => {});
+    }
+
+    // Statistiques hebdomadaires publiques (classements Quiz et Focus) : classementHebdo/<semaine>/<uid>.
+    // `delta` = { focusMinutes, quizBons, quizTotal, quizParfaits } — ajoutés par transaction.
+    function enregistrerActiviteHebdo(uid, infos, delta) {
+      if (!uid) return;
+      classementHebdoRef.child(semaineCle()).child(uid).transaction(cur => {
+        const c = cur || {};
+        return {
+          pseudo: infos.pseudo || c.pseudo || "Anonyme",
+          filiere: infos.filiere || c.filiere || "",
+          annee: infos.annee || c.annee || "",
+          focusMinutes: (c.focusMinutes || 0) + (delta.focusMinutes || 0),
+          quizBons: (c.quizBons || 0) + (delta.quizBons || 0),
+          quizTotal: (c.quizTotal || 0) + (delta.quizTotal || 0),
+          quizParfaits: (c.quizParfaits || 0) + (delta.quizParfaits || 0),
+          quizJour: c.quizJour || "", quizJourNb: c.quizJourNb || 0
+        };
+      }).catch(() => {});
+    }
+    // Anti-abus : seuls les 5 premiers quiz de la journée comptent pour le classement. Renvoie
+    // une Promise<boolean> (true = ce quiz compte).
+    function quizCompteCeJour(uid) {
+      const ref = classementHebdoRef.child(semaineCle()).child(uid);
+      const jour = jourCle();
+      return new Promise(resolve => {
+        ref.transaction(cur => {
+          const c = cur || {};
+          const nb = c.quizJour === jour ? (c.quizJourNb || 0) : 0;
+          if (nb >= 5) return; // abandonne la transaction : ne compte pas
+          return { ...c, quizJour: jour, quizJourNb: nb + 1 };
+        }, (err, committed) => resolve(!err && committed), false);
+      });
+    }
+
+    // Carnet d'astuces personnel — stocké sur l'appareil.
+    const carnetStore = createLocalStore("sabi-carnet", []);
+    function chargerCarnet() { const v = carnetStore.load(); return Array.isArray(v) ? v : []; }
+    function basculerCarnet(texte) {
+      const liste = chargerCarnet();
+      const idx = liste.indexOf(texte);
+      if (idx >= 0) liste.splice(idx, 1); else liste.unshift(texte);
+      carnetStore.save(liste.slice(0, 100));
+      return idx < 0; // true = ajoutée
+    }
+
+    // ===== Quiz duel : suivi des duels que j'ai lancés (codes mémorisés sur l'appareil) =====
+    const duelsStore = createLocalStore("sabi-mes-duels", []);
+    function chargerMesDuels() { const v = duelsStore.load(); return Array.isArray(v) ? v : []; }
+    function SuiviDuels({ authUid }) {
+      const [codes] = useState(() => chargerMesDuels());
+      const [duels, setDuels] = useState({});
+      useEffect(() => {
+        const refs = codes.map(c => duelsRef.child(c));
+        const ecouteurs = refs.map((r, i) => r.on("value", snap => setDuels(d => ({ ...d, [codes[i]]: snap.val() })), () => {}));
+        return () => refs.forEach((r, i) => r.off("value", ecouteurs[i]));
+      }, [codes]);
+      const visibles = codes.filter(c => duels[c]);
+      if (visibles.length === 0) return null;
+      return React.createElement("div", { className: "flex flex-col gap-2 mt-3" },
+        React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: "#a1a1aa" } }, "Mes duels"),
+        visibles.slice(0, 5).map(c => {
+          const d = duels[c];
+          const joueurs = Object.values(d.joueurs || {});
+          return React.createElement("div", { key: c, className: "rounded-xl border p-3 flex flex-col gap-1.5", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+            React.createElement("div", { className: "flex items-center justify-between" },
+              React.createElement("p", { className: "text-xs font-semibold", style: { color: COLORS.text } }, (d.sujet || "Quiz") + " · " + c),
+              React.createElement("span", { className: "text-[11px] font-mono", style: { color: COLORS.gold } }, "Toi : " + d.createur.score + "/" + d.createur.total)
+            ),
+            joueurs.length === 0
+              ? React.createElement("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Personne n'a encore relevé ton défi.")
+              : joueurs.map((j, i) => React.createElement("p", { key: i, className: "text-[11px] font-mono", style: { color: j.score > d.createur.score ? "#f87171" : j.score === d.createur.score ? COLORS.textMuted : "#4ade80" } },
+                  j.pseudo + " : " + j.score + "/" + j.total + (j.score > d.createur.score ? " — te bat !" : j.score === d.createur.score ? " — égalité" : " — tu gagnes !")))
+          );
+        })
+      );
+    }
+
+    // ===== Mascotte Sabi : un lion qui réagit (encourage, félicite, s'inquiète) =====
+    function MascotteSabi({ message, humeur = "content", compact = false }) {
+      const emoji = humeur === "triste" ? "🦁💤" : humeur === "fete" ? "🦁🎉" : humeur === "focus" ? "🦁🎧" : "🦁";
+      return React.createElement("div", { className: "flex items-center gap-3 w-full" },
+        React.createElement("div", {
+          className: "flex-shrink-0 flex items-center justify-center rounded-full",
+          style: { width: compact ? 44 : 56, height: compact ? 44 : 56, fontSize: compact ? 18 : 22, backgroundColor: "rgba(242,202,80,0.14)", border: "1px solid rgba(242,202,80,0.4)", animation: "sabi-flame-bounce 1.6s ease-in-out infinite" }
+        }, emoji),
+        React.createElement("div", { className: "relative flex-1 rounded-2xl px-3 py-2", style: { backgroundColor: COLORS.surface2 || COLORS.surface, border: "1px solid " + COLORS.border } },
+          React.createElement("p", { className: "text-xs leading-relaxed", style: { color: COLORS.text } }, message)
+        )
+      );
+    }
+
+    // ===== Roue du jour : un tour gratuit par jour pour gagner des points =====
+    const SEGMENTS_ROUE = [2, 5, 1, 10, 3, 0, 2, 5];
+    const POIDS_ROUE = [3, 2, 3, 0.5, 3, 1.5, 3, 2]; // le 10 est rare
+    function RoueDuJour({ ouvert, onFermer, authUid, onGain }) {
+      const [dejaJoue, setDejaJoue] = useState(null); // null = chargement
+      const [rotation, setRotation] = useState(0);
+      const [enCours, setEnCours] = useState(false);
+      const [gain, setGain] = useState(null);
+      useEffect(() => {
+        if (!ouvert || !authUid) return;
+        setGain(null); setEnCours(false);
+        usersRef.child(authUid).child("derniereRoue").once("value")
+          .then(snap => setDejaJoue(snap.val() === jourCle()))
+          .catch(() => setDejaJoue(false));
+      }, [ouvert, authUid]);
+      if (!ouvert) return null;
+
+      const tourner = () => {
+        if (enCours || dejaJoue) return;
+        setEnCours(true);
+        usersRef.child(authUid).child("derniereRoue").set(jourCle()); // enregistré AVANT de tourner : pas de triche en rechargeant
+        const total = POIDS_ROUE.reduce((a, b) => a + b, 0);
+        let r = Math.random() * total, idx = 0;
+        for (let i = 0; i < POIDS_ROUE.length; i++) { r -= POIDS_ROUE[i]; if (r <= 0) { idx = i; break; } }
+        const angle = 360 * 6 + (360 - (idx + 0.5) * 45);
+        setRotation(angle);
+        let ticks = 0;
+        const tk = setInterval(() => { jouerSon("roue"); if (++ticks > 18) clearInterval(tk); }, 200);
+        setTimeout(() => {
+          const pts = SEGMENTS_ROUE[idx];
+          setGain(pts); setEnCours(false); setDejaJoue(true);
+          if (pts > 0) { onGain(pts); celebrer(); } else { jouerSon("oups"); haptique(120); }
+        }, 4300);
+      };
+
+      const couleurs = ["#f2ca50", "#77dd6a", "#ffb4ab", "#7c5cf0"];
+      const part = (i) => {
+        const a0 = (i * 45 - 90) * Math.PI / 180, a1 = ((i + 1) * 45 - 90) * Math.PI / 180;
+        const x0 = 100 * Math.cos(a0), y0 = 100 * Math.sin(a0), x1 = 100 * Math.cos(a1), y1 = 100 * Math.sin(a1);
+        return "M0 0 L" + x0 + " " + y0 + " A100 100 0 0 1 " + x1 + " " + y1 + " Z";
+      };
+      return ReactDOM.createPortal(React.createElement("div", {
+        className: "fixed inset-0 z-[250] flex items-center justify-center p-5",
+        style: { backgroundColor: "rgba(0,0,0,0.75)" }, onClick: () => { if (!enCours) onFermer(); }
+      },
+        React.createElement("div", {
+          className: "w-full max-w-sm rounded-2xl p-5 flex flex-col items-center gap-4",
+          style: { backgroundColor: COLORS.surface, border: "1px solid " + COLORS.border }, onClick: e => e.stopPropagation()
+        },
+          React.createElement("p", { className: "text-base font-semibold", style: { color: COLORS.text } }, "🎡 Roue du jour"),
+          React.createElement("div", { className: "relative", style: { width: 240, height: 240 } },
+            React.createElement("div", { className: "absolute left-1/2 -top-2 z-10", style: { transform: "translateX(-50%)", fontSize: 26, lineHeight: 1 } }, "🔻"),
+            React.createElement("svg", {
+              viewBox: "-104 -104 208 208", width: 240, height: 240,
+              style: { transform: "rotate(" + rotation + "deg)", transition: "transform 4.2s cubic-bezier(0.12, 0.6, 0.1, 1)" }
+            },
+              SEGMENTS_ROUE.map((pts, i) => React.createElement("g", { key: i },
+                React.createElement("path", { d: part(i), fill: couleurs[i % 4], stroke: "#131313", strokeWidth: 1.5 }),
+                React.createElement("text", {
+                  x: 0, y: -66, textAnchor: "middle", fontSize: 17, fontWeight: 700, fill: "#131313",
+                  transform: "rotate(" + (i * 45 + 22.5) + ")"
+                }, pts === 0 ? "💤" : "+" + pts)
+              )),
+              React.createElement("circle", { r: 14, fill: "#131313" })
+            )
+          ),
+          gain !== null
+            ? React.createElement("p", { className: "text-sm font-semibold text-center", style: { color: gain > 0 ? COLORS.gold : COLORS.textMuted } },
+                gain > 0 ? "🎉 Tu gagnes +" + gain + " point" + (gain > 1 ? "s" : "") + " !" : "Pas de chance aujourd'hui… reviens demain 💪")
+            : React.createElement("p", { className: "text-xs text-center", style: { color: COLORS.textMuted } },
+                dejaJoue === null ? "Chargement…" : dejaJoue ? "Tu as déjà tourné la roue aujourd'hui. Reviens demain !" : "Un tour gratuit par jour. Tente ta chance !"),
+          React.createElement("div", { className: "flex gap-2 w-full" },
+            React.createElement("button", {
+              onClick: tourner, disabled: enCours || dejaJoue !== false,
+              className: "flex-1 rounded-full py-2.5 text-sm font-semibold disabled:opacity-40",
+              style: { background: "linear-gradient(135deg, #f2ca50, #f97316)", color: "#131313" }
+            }, enCours ? "Ça tourne…" : "Tourner la roue"),
+            React.createElement("button", { onClick: onFermer, disabled: enCours, className: "rounded-full px-4 py-2.5 text-sm border disabled:opacity-40", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, "Fermer")
+          )
+        )
+      ), document.body);
+    }
+
+    // ===== Carnet d'astuces : les astuces sauvegardées (sur l'appareil) =====
+    function CarnetModal({ ouvert, onFermer }) {
+      const [liste, setListe] = useState([]);
+      useEffect(() => { if (ouvert) setListe(chargerCarnet()); }, [ouvert]);
+      if (!ouvert) return null;
+      return ReactDOM.createPortal(React.createElement("div", {
+        className: "fixed inset-0 z-[250] flex items-end sm:items-center justify-center",
+        style: { backgroundColor: "rgba(0,0,0,0.6)" }, onClick: onFermer
+      },
+        React.createElement("div", {
+          className: "w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 flex flex-col gap-3 max-h-[80vh] overflow-y-auto",
+          style: { backgroundColor: COLORS.surface, border: "1px solid " + COLORS.border }, onClick: e => e.stopPropagation()
+        },
+          React.createElement("div", { className: "flex items-center justify-between" },
+            React.createElement("p", { className: "text-base font-semibold flex items-center gap-2", style: { color: COLORS.text } }, React.createElement(Icon, { name: "heart", size: 16, color: COLORS.terraText }), "Mon carnet d'astuces"),
+            React.createElement("button", { onClick: onFermer, "aria-label": "Fermer" }, React.createElement(Icon, { name: "x", size: 18, color: COLORS.textMuted }))
+          ),
+          liste.length === 0
+            ? React.createElement("p", { className: "text-sm text-center py-6", style: { color: COLORS.textFaint } }, "Ton carnet est vide. Touche le ♥ sur une astuce pour la garder ici.")
+            : liste.map((t, i) => React.createElement("div", { key: i, className: "rounded-xl p-3 flex items-start gap-2", style: { backgroundColor: COLORS.bg, border: "1px solid " + COLORS.border } },
+                React.createElement("p", { className: "flex-1 text-xs leading-relaxed", style: { color: COLORS.textMuted } }, t),
+                React.createElement("button", {
+                  onClick: () => { basculerCarnet(t); setListe(chargerCarnet()); }, "aria-label": "Retirer du carnet"
+                }, React.createElement(Icon, { name: "trash", size: 14, color: COLORS.textFaint }))
+              ))
+        )
+      ), document.body);
+    }
+
+    // Bouton ♥ pour ajouter/retirer une astuce du carnet.
+    function BoutonCarnet({ texte }) {
+      const [dans, setDans] = useState(() => chargerCarnet().includes(texte));
+      return React.createElement("button", {
+        onClick: (e) => { e.stopPropagation(); const ajoutee = basculerCarnet(texte); setDans(ajoutee); jouerSon("ding"); haptique(30); },
+        "aria-label": dans ? "Retirer du carnet" : "Ajouter au carnet", className: "flex-shrink-0 p-1"
+      }, React.createElement(Icon, { name: "heart", size: 16, color: dans ? "#f87171" : COLORS.textFaint, style: dans ? { fill: "#f87171" } : undefined }));
     }
 
     // Une bulle unique, avec la petite pointe façon message WhatsApp, qui glisse et s'efface seule.
@@ -2711,6 +3087,7 @@
         titre: "5. Accueil",
         blocs: [
           { type: "p", texte: "Ton tableau de bord : message du matin, astuce du jour, niveau et points, raccourcis vers le Classement, les Membres, la Carte et la Boussole, ainsi que trois fonctionnalités mises en avant : MyScore, le Simulateur de moyenne et les Résumés de cours." },
+          { type: "p", texte: "Tu y trouves aussi la mascotte Sabi 🦁 (elle t'encourage, et s'inquiète si tu disparais plus de 3 jours), la Roue du jour 🎡 et ton Carnet d'astuces 📒." },
         ],
       },
       {
@@ -2775,10 +3152,56 @@
         ],
       },
       {
-        icone: "wrench",
-        titre: "10. Paramètres et assistance",
+        icone: "bot",
+        titre: "10. Coach Réussite : pratique, focus et sauvetage",
         blocs: [
-          { type: "p", texte: "Le menu (icône ☰) en haut à gauche donne accès au mode clair/sombre, aux notifications, à l'Assistance (message direct au responsable) et aux Crédits de l'application." },
+          { type: "p", texte: "Le Coach (réservé aux abonnés Pro+) se divise en trois blocs : Coach & Diagnostic, Pratique & Révision, et Focus Hub." },
+          { type: "sous-titre", texte: "Pratique & Révision" },
+          { type: "list", items: [
+            "Mode Sauvetage 🚨 : appuie sur « Lancer le plan de crise » — le téléphone vibre, l'écran se teinte d'alerte et le plan de crise en 48 h s'affiche juste en dessous. Appuie sur « Terminer » pour couper le mode à tout moment.",
+            "Quiz IA : 5 questions générées sur un résumé publié ou un sujet libre. Un score parfait compte dans ta progression et débloque le badge Sans faute.",
+            "Quiz duel ⚔️ : après ton quiz, touche « Défier un ami » pour obtenir un code à 6 caractères à partager. Ton ami le saisit dans « Relever un duel » et vous comparez vos scores. Tes duels lancés apparaissent dans « Mes duels ».",
+          ]},
+          { type: "sous-titre", texte: "Focus Hub" },
+          { type: "list", items: [
+            "Choisis ta durée (15, 25, 45, 60 min ou la tienne, de 1 à 180 min), puis « Lancer ». Le bouton devient « Terminer » ; tu peux aussi mettre en pause.",
+            "Pendant la session : vibration au départ, écran teinté, écran gardé allumé, et les bulles de Sabi sont mises en sourdine (elles reviennent à la fin). Pense à activer « Ne pas déranger » sur ton téléphone : Sabi ne peut pas bloquer les notifications des autres applications.",
+            "Seules les minutes réellement travaillées sont comptées. Chaque jour de focus prolonge ta flamme 🔥 de série.",
+          ]},
+        ],
+      },
+      {
+        icone: "trophy",
+        titre: "11. Jeux, badges et classements",
+        blocs: [
+          { type: "sous-titre", texte: "Classement" },
+          { type: "list", items: [
+            "Quiz : les meilleures réponses de la semaine, dans ta filière ou dans toute l'école. Seuls tes 5 premiers quiz de la journée comptent. Remise à zéro chaque semaine.",
+            "Focus : les minutes de focus de la semaine, plus le défi entre filières.",
+            "Défis : 3 objectifs hebdomadaires (2 h de focus, 10 bonnes réponses, un quiz parfait). Une fois atteints, touche « Réclamer » pour recevoir tes points.",
+            "Contributions : les plus actifs de la semaine.",
+          ]},
+          { type: "sous-titre", texte: "Badges automatiques" },
+          { type: "list", items: [
+            "Marathonien : 2 h de focus dans la semaine.",
+            "Sans faute : un quiz parfait.",
+            "Lève-tôt : une session de focus (10 min minimum) lancée avant 7 h.",
+            "Flamme 7 jours : 7 jours de focus d'affilée.",
+            "Ils apparaissent verrouillés dans la Boutique et se débloquent tout seuls, avec des confettis.",
+          ]},
+          { type: "sous-titre", texte: "Petits plaisirs" },
+          { type: "list", items: [
+            "Roue du jour 🎡 : un tour gratuit par jour depuis l'Accueil (de 0 à 10 points).",
+            "Carnet d'astuces 📒 : touche le ♥ sur une astuce (Accueil ou Focus Hub) pour la garder dans Mon carnet, consultable même hors ligne.",
+            "Confettis, sons et vibrations à chaque réussite. Les sons se coupent dans le menu ☰.",
+          ]},
+        ],
+      },
+      {
+        icone: "wrench",
+        titre: "12. Paramètres et assistance",
+        blocs: [
+          { type: "p", texte: "Le menu (icône ☰) en haut à gauche donne accès au mode clair/sombre, aux notifications, aux sons, à l'Assistance (message direct au responsable), au Guide d'utilisation et aux Crédits de l'application." },
           { type: "p", texte: "Sabi fonctionne aussi hors connexion : les dernières informations enregistrées sur ton appareil restent consultables, un bandeau te prévient quand tu es hors ligne. Une bannière peut te proposer d'installer l'application sur ton téléphone pour un accès plus rapide." },
         ],
       },
@@ -2864,6 +3287,7 @@
     // Menu hamburger — tiroir latéral qui ne recouvre qu'une partie de l'écran (le reste reste
     // visible, assombri, et cliquable pour fermer). Regroupe Paramètres, Assistance et Crédits.
     function MenuLateral({ ouvert, onFermer, themeMode, onToggleTheme, notifsActives, onToggleNotifs, onOuvrirAssistance, onOuvrirCredits, onOuvrirGuide }) {
+      const [sonsOn, setSonsOn] = useState(() => sonsActifs());
       return React.createElement("div", {
         className: "fixed inset-0 z-[150] transition-opacity",
         style: { pointerEvents: ouvert ? "auto" : "none", opacity: ouvert ? 1 : 0 }
@@ -2908,6 +3332,13 @@
                 React.createElement("span", { className: "text-sm", style: { color: COLORS.text } }, "Notifications")
               ),
               React.createElement(ToggleSwitch, { actif: notifsActives, onChange: onToggleNotifs, label: "Notifications" })
+            ),
+            React.createElement("div", { className: "flex items-center justify-between" },
+              React.createElement("div", { className: "flex items-center gap-2.5" },
+                React.createElement(Icon, { name: "radio", size: 16, color: COLORS.textMuted }),
+                React.createElement("span", { className: "text-sm", style: { color: COLORS.text } }, "Sons")
+              ),
+              React.createElement(ToggleSwitch, { actif: sonsOn, onChange: () => { const v = !sonsOn; setSonsOn(v); try { localStorage.setItem("sabi_sons", v ? "on" : "off"); } catch {} if (v) jouerSon("ding"); }, label: "Sons" })
             )
           ),
 
@@ -4264,22 +4695,32 @@
 
 
     function PdfPreviewModal({ rawUrl, onClose }) {
+      const [tentative, setTentative] = useState(0); // incrémenté par "Réessayer" pour forcer un nouveau chargement
       const wrappedUrl = versLienApercuPdf(rawUrl);
       const [echecApercu, setEchecApercu] = useState(false);
       const timerRef = React.useRef(null);
 
       useEffect(() => {
         setEchecApercu(false);
-        timerRef.current = setTimeout(() => setEchecApercu(true), 6000);
+        // 15s plutôt que 6 : sur une connexion lente, la visionneuse Google Docs (qui doit
+        // aller chercher et convertir le PDF avant de l'afficher) peut légitimement prendre
+        // plus de quelques secondes — 6s déclenchait "l'aperçu n'a pas pu se charger" alors
+        // que le PDF aurait fini par s'afficher en patientant un peu plus.
+        timerRef.current = setTimeout(() => setEchecApercu(true), 15000);
         return () => clearTimeout(timerRef.current);
-      }, [rawUrl]);
+      }, [rawUrl, tentative]);
 
       const handleLoad = () => {
         clearTimeout(timerRef.current); // le PDF a bien chargé : on annule le minuteur de secours
         setEchecApercu(false);
       };
 
-      return React.createElement("div", {
+      const reessayer = () => { setEchecApercu(false); setTentative(t => t + 1); };
+
+      // Rendu via portail direct dans <body> — voir l'explication détaillée dans RecadreurImage
+      // ci-dessus : sans ça, cette modale reste coincée entre l'en-tête et la barre du bas au
+      // lieu de couvrir vraiment tout l'écran, à cause du `transform` du conteneur de balayage.
+      return ReactDOM.createPortal(React.createElement("div", {
         className: "fixed inset-0 z-50 flex flex-col",
         style: { backgroundColor: "rgba(20,17,15,0.96)" }
       },
@@ -4303,12 +4744,17 @@
           ? React.createElement("div", { className: "flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center" },
               React.createElement(Icon, { name: "help-circle", size: 32, color: COLORS.textFaint }),
               React.createElement("p", { className: "text-sm", style: { color: COLORS.textMuted } }, "L'aperçu n'a pas pu se charger."),
-              React.createElement("p", { className: "text-xs", style: { color: COLORS.textFaint } }, "Utilise \"Ouvrir directement\" en haut pour voir le PDF dans un nouvel onglet.")
+              React.createElement("p", { className: "text-xs", style: { color: COLORS.textFaint } }, "Ça arrive surtout avec une connexion lente. Réessaie, ou utilise \"Ouvrir directement\" en haut."),
+              React.createElement("button", {
+                onClick: reessayer,
+                className: "mt-1 flex items-center gap-1.5 text-xs font-mono px-4 py-2 rounded-full",
+                style: { backgroundColor: "rgba(242,202,80,0.15)", color: COLORS.gold }
+              }, React.createElement(Icon, { name: "refresh-cw", size: 13 }), "Réessayer")
             )
           : [
               React.createElement("p", { key: "hint", className: "text-[11px] text-center py-1.5", style: { color: COLORS.textFaint, backgroundColor: COLORS.surface } }, "Si l'aperçu ne charge pas, utilise \"Ouvrir directement\" ci-dessus."),
               React.createElement("iframe", {
-                key: "frame",
+                key: "frame-" + tentative,
                 src: wrappedUrl,
                 onLoad: handleLoad,
                 className: "flex-1 w-full",
@@ -4316,7 +4762,7 @@
                 title: "Aperçu PDF"
               })
             ]
-      );
+      ), document.body);
     }
 
     // Paywall générique — affiché quand une fonctionnalité nécessite un abonnement Pro/Pro+
@@ -4449,10 +4895,10 @@
       // serveur pour un fichier visiblement trop lourd. Vérifie que ton compte Cloudinary (plan
       // gratuit) accepte bien des fichiers "raw" jusqu'à cette taille : la limite réelle dépend de
       // ton préréglage d'upload (Settings > Upload > Upload presets) et de ton compte.
-      const TAILLE_MAX_PDF = 80 * 1024 * 1024;
+      const TAILLE_MAX_PDF = 100 * 1024 * 1024;
       const validerTaillePdf = (file) => {
         if (file.size > TAILLE_MAX_PDF) {
-          return "Ce PDF fait " + (file.size / 1024 / 1024).toFixed(1) + " Mo — la limite est de 80 Mo. Essaie de le compresser (par ex. sur ilovepdf.com).";
+          return "Ce PDF fait " + (file.size / 1024 / 1024).toFixed(1) + " Mo — la limite est de 100 Mo. Essaie de le compresser (par ex. sur ilovepdf.com).";
         }
         return null;
       };
@@ -4558,7 +5004,7 @@
         }
         setIaLoading(ep.id);
         onGenerateCorrigeIA(ep)
-          .catch(err => setIaErreur({ id: ep.id, message: err.message }))
+          .catch(err => setIaErreur({ id: ep.id, message: messageErreurIAConvivial(err) }))
           .finally(() => setIaLoading(null));
       };
 
@@ -4937,7 +5383,7 @@
       );
     }
 
-    function ClassementTab({ logs }) {
+    function ClassementContributions({ logs }) {
       const uneSemaine = 7 * 24 * 60 * 60 * 1000;
       const seuil = Date.now() - uneSemaine;
       const recents = logs.filter(l => l.timestamp >= seuil);
@@ -4954,7 +5400,6 @@
       const medailles = [COLORS.gold, "#C0C0C0", "#B08D57"];
 
       return React.createElement("div", { className: "flex flex-col gap-5" },
-        React.createElement("h2", { className: "text-lg font-bold", style: { color: COLORS.text, fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: "-0.02em" } }, "Classement"),
         React.createElement("div", null,
           React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider mb-2", style: { color: COLORS.textMuted } }, "Top contributeurs cette semaine"),
           topContributeurs.length === 0
@@ -4979,6 +5424,141 @@
               )
         ),
         React.createElement("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Basé sur les 7 derniers jours d'activité (publications, votes, contributions).")
+      );
+    }
+
+    // ===== Classement : Contributions / Quiz / Focus / Défis =====
+    const DEFIS_SEMAINE = [
+      { id: "focus120", titre: "2 h de focus", detail: "Cumule 120 min de focus cette semaine", cible: 120, champ: "focusMinutes", unite: "min", recompense: 10 },
+      { id: "quiz10", titre: "10 bonnes réponses", detail: "Réponds juste à 10 questions de quiz", cible: 10, champ: "quizBons", unite: "", recompense: 10 },
+      { id: "parfait1", titre: "Un quiz parfait", detail: "Fais un 5/5 à un quiz", cible: 1, champ: "quizParfaits", unite: "", recompense: 15 },
+    ];
+    function ClassementTab({ logs, authUid, pseudo, profil, onGagnerPoints }) {
+      const [vue, setVue] = useState("quiz");
+      const [portee, setPortee] = useState("filiere"); // "filiere" | "ecole"
+      const [stats, setStats] = useState({});
+      const [reclames, setReclames] = useState({});
+      const semaine = React.useMemo(() => semaineCle(), []);
+      useEffect(() => {
+        const ref = classementHebdoRef.child(semaine);
+        const l = ref.on("value", snap => setStats(snap.val() || {}), () => {});
+        return () => ref.off("value", l);
+      }, [semaine]);
+      useEffect(() => {
+        if (!authUid) return;
+        const ref = usersRef.child(authUid).child("defisReclames").child(semaine);
+        const l = ref.on("value", snap => setReclames(snap.val() || {}), () => {});
+        return () => ref.off("value", l);
+      }, [authUid, semaine]);
+
+      const medailles = [COLORS.gold, "#C0C0C0", "#B08D57"];
+      const moi = stats[authUid] || {};
+      const lignes = Object.entries(stats).map(([uid, v]) => ({ uid, ...v }))
+        .filter(l => portee === "ecole" || !profil.filiere || l.filiere === profil.filiere);
+
+      const ligneClassement = (l, i, valeurPrincipale, valeurSecondaire) => React.createElement("div", {
+        key: l.uid, className: "rounded-xl border p-3 flex items-center gap-3",
+        style: { borderColor: l.uid === authUid ? COLORS.gold : COLORS.border, backgroundColor: l.uid === authUid ? "rgba(242,202,80,0.08)" : COLORS.surface }
+      },
+        i < 3 ? React.createElement(Icon, { name: "medal", size: 22, color: medailles[i] }) : React.createElement("span", { className: "w-[22px] text-center text-xs font-mono", style: { color: COLORS.textFaint } }, i + 1),
+        React.createElement("div", { className: "flex-1 min-w-0" },
+          React.createElement("p", { className: "text-sm font-medium truncate", style: { color: COLORS.text } }, l.pseudo + (l.uid === authUid ? " (toi)" : "")),
+          React.createElement("p", { className: "text-[10px] font-mono truncate", style: { color: COLORS.textFaint } }, [l.filiere, l.annee].filter(Boolean).join(" · "))
+        ),
+        React.createElement("div", { className: "text-right" },
+          React.createElement("p", { className: "font-mono text-sm font-semibold", style: { color: COLORS.gold } }, valeurPrincipale),
+          valeurSecondaire && React.createElement("p", { className: "text-[10px] font-mono", style: { color: COLORS.textMuted } }, valeurSecondaire)
+        )
+      );
+
+      const topQuiz = lignes.filter(l => (l.quizBons || 0) > 0).sort((a, b) =>
+        (b.quizBons || 0) - (a.quizBons || 0) || (b.quizParfaits || 0) - (a.quizParfaits || 0) ||
+        ((b.quizBons || 0) / Math.max(1, b.quizTotal || 1)) - ((a.quizBons || 0) / Math.max(1, a.quizTotal || 1))).slice(0, 10);
+      const topFocus = lignes.filter(l => (l.focusMinutes || 0) > 0).sort((a, b) => (b.focusMinutes || 0) - (a.focusMinutes || 0)).slice(0, 10);
+      // Défi entre filières : total des minutes de focus de chaque filière (toute l'école).
+      const parFiliere = {};
+      Object.values(stats).forEach(v => { if (v.filiere && v.focusMinutes) parFiliere[v.filiere] = (parFiliere[v.filiere] || 0) + v.focusMinutes; });
+      const topFilieresFocus = Object.entries(parFiliere).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+      const reclamer = (d) => {
+        if (reclames[d.id] || (moi[d.champ] || 0) < d.cible) return;
+        usersRef.child(authUid).child("defisReclames").child(semaine).child(d.id).set(true).then(() => {
+          onGagnerPoints(d.recompense); celebrer();
+        }).catch(() => {});
+      };
+
+      const onglets = [["quiz", "Quiz"], ["focus", "Focus"], ["defis", "Défis"], ["contrib", "Contrib."]];
+      return React.createElement("div", { className: "flex flex-col gap-4" },
+        React.createElement("h2", { className: "text-lg font-bold", style: { color: COLORS.text, fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: "-0.02em" } }, "Classement"),
+        React.createElement("div", { className: "grid grid-cols-4 gap-1.5 p-1 rounded-xl", style: { backgroundColor: COLORS.surface, border: "1px solid " + COLORS.border } },
+          onglets.map(([id, label]) => React.createElement("button", {
+            key: id, onClick: () => setVue(id),
+            className: "rounded-lg py-2 text-[11px] font-mono",
+            style: vue === id ? { backgroundColor: COLORS.gold, color: COLORS.bg, fontWeight: 700 } : { color: COLORS.textMuted }
+          }, label))
+        ),
+
+        (vue === "quiz" || vue === "focus") && React.createElement("div", { className: "flex gap-2" },
+          [["filiere", "Ma filière"], ["ecole", "Toute l'école"]].map(([id, label]) => React.createElement("button", {
+            key: id, onClick: () => setPortee(id),
+            className: "rounded-full px-3 py-1 text-[11px] font-mono border",
+            style: portee === id ? { borderColor: COLORS.gold, color: COLORS.gold, backgroundColor: "rgba(242,202,80,0.1)" } : { borderColor: COLORS.border, color: COLORS.textMuted }
+          }, label))
+        ),
+
+        vue === "quiz" && React.createElement("div", { className: "flex flex-col gap-2" },
+          React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Meilleures réponses au quiz cette semaine"),
+          topQuiz.length === 0
+            ? React.createElement("p", { className: "text-sm text-center py-6", style: { color: COLORS.textFaint } }, "Personne n'a encore répondu à un quiz cette semaine. Sois le premier !")
+            : topQuiz.map((l, i) => ligneClassement(l, i, (l.quizBons || 0) + " ✓", Math.round(((l.quizBons || 0) / Math.max(1, l.quizTotal || 1)) * 100) + "% · " + (l.quizParfaits || 0) + " parfait" + ((l.quizParfaits || 0) > 1 ? "s" : ""))),
+          React.createElement("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Nombre de bonnes réponses aux quiz de la semaine (les 5 premiers quiz de chaque jour comptent). Remise à zéro chaque semaine.")
+        ),
+
+        vue === "focus" && React.createElement("div", { className: "flex flex-col gap-2" },
+          React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Minutes de focus cette semaine"),
+          topFocus.length === 0
+            ? React.createElement("p", { className: "text-sm text-center py-6", style: { color: COLORS.textFaint } }, "Aucune session de focus cette semaine pour l'instant.")
+            : topFocus.map((l, i) => ligneClassement(l, i, (l.focusMinutes || 0) + " min", null)),
+          topFilieresFocus.length > 0 && React.createElement("div", { className: "mt-3 flex flex-col gap-2" },
+            React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Défi entre filières"),
+            topFilieresFocus.map(([fil, min], i) => React.createElement("div", { key: fil, className: "rounded-xl border p-3 flex items-center gap-3", style: { borderColor: i === 0 ? COLORS.gold : COLORS.border, backgroundColor: COLORS.surface } },
+              React.createElement("p", { className: "flex-1 text-sm", style: { color: i === 0 ? COLORS.gold : COLORS.text } }, (i === 0 ? "👑 " : "") + fil),
+              React.createElement("p", { className: "font-mono text-xs", style: { color: COLORS.textMuted } }, min + " min")
+            ))
+          )
+        ),
+
+        vue === "defis" && React.createElement("div", { className: "flex flex-col gap-3" },
+          React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Défis de la semaine"),
+          DEFIS_SEMAINE.map(d => {
+            const val = Math.min(d.cible, moi[d.champ] || 0);
+            const fini = val >= d.cible;
+            const pris = !!reclames[d.id];
+            return React.createElement("div", { key: d.id, className: "rounded-xl border p-3.5 flex flex-col gap-2", style: { borderColor: fini ? COLORS.forest : COLORS.border, backgroundColor: COLORS.surface } },
+              React.createElement("div", { className: "flex items-center justify-between gap-2" },
+                React.createElement("p", { className: "text-sm font-semibold", style: { color: COLORS.text } }, d.titre),
+                React.createElement("span", { className: "text-[10px] font-mono", style: { color: COLORS.gold } }, "+" + d.recompense + " pts")
+              ),
+              React.createElement("p", { className: "text-xs", style: { color: COLORS.textMuted } }, d.detail),
+              React.createElement("div", { className: "w-full h-2 rounded-full overflow-hidden", style: { backgroundColor: COLORS.border } },
+                React.createElement("div", { className: "h-full rounded-full", style: { width: (val / d.cible * 100) + "%", backgroundColor: fini ? COLORS.forest : COLORS.gold } })
+              ),
+              React.createElement("div", { className: "flex items-center justify-between" },
+                React.createElement("span", { className: "text-[11px] font-mono", style: { color: COLORS.textMuted } }, val + "/" + d.cible + (d.unite ? " " + d.unite : "")),
+                pris
+                  ? React.createElement("span", { className: "text-[11px] font-mono", style: { color: COLORS.forestText } }, "✓ Récompense reçue")
+                  : React.createElement("button", {
+                      onClick: () => reclamer(d), disabled: !fini,
+                      className: "rounded-full px-3 py-1 text-[11px] font-semibold disabled:opacity-30",
+                      style: { backgroundColor: COLORS.gold, color: COLORS.bg }
+                    }, "Réclamer")
+              )
+            );
+          }),
+          React.createElement("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Les défis se remettent à zéro chaque semaine.")
+        ),
+
+        vue === "contrib" && React.createElement(ClassementContributions, { logs: logs })
       );
     }
 
@@ -5028,7 +5608,7 @@
         }
         setIaLoading(r.id);
         onGenerateResumeIA(r)
-          .catch(err => setIaErreur({ id: r.id, message: "Désolé, ce fichier ne dispose pas de résumé pour l'instant : " + err.message }))
+          .catch(err => setIaErreur({ id: r.id, message: "Désolé, ce fichier ne dispose pas de résumé pour l'instant : " + messageErreurIAConvivial(err) }))
           .finally(() => setIaLoading(null));
       };
 
@@ -5051,7 +5631,7 @@
             });
         };
         if (pdfFile) {
-          if (pdfFile.size > 80 * 1024 * 1024) { setUploadErreur("PDF trop lourd (max 80 Mo)."); return; }
+          if (pdfFile.size > 100 * 1024 * 1024) { setUploadErreur("PDF trop lourd (max 100 Mo)."); return; }
           setUploadPct(0);
           uploaderPdfCloudinary(pdfFile, setUploadPct).then(url => publier(url)).catch(err => { setUploadPct(null); setUploadErreur("Échec : " + err.message); });
         } else publier(null);
@@ -5101,12 +5681,22 @@
               style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
             }, ["Toutes", ...FILIERES].map(f => React.createElement("option", { key: f }, f)))
           ),
-          React.createElement("select", {
-            value: filtreSemestreRes,
-            onChange: e => { setFiltreSemestreRes(e.target.value); setMatiereRapideRes(""); },
-            className: "w-full rounded-lg px-2 py-1.5 text-sm outline-none border",
-            style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
-          }, ["Toutes", ...SEMESTRES].map(s => React.createElement("option", { key: s }, s)))
+          React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider mt-1", style: { color: COLORS.textMuted } }, "Semestre"),
+          React.createElement("div", { className: "grid grid-cols-3 gap-2" },
+            ["Toutes", ...SEMESTRES].map(sem => {
+              const actif = filtreSemestreRes === sem;
+              return React.createElement("button", {
+                key: sem,
+                onClick: () => { setFiltreSemestreRes(sem); setMatiereRapideRes(""); },
+                className: "rounded-lg px-2 py-2 text-xs font-mono border",
+                style: {
+                  backgroundColor: actif ? "rgba(242,202,80,0.15)" : COLORS.bg,
+                  borderColor: actif ? COLORS.gold : COLORS.border,
+                  color: actif ? COLORS.gold : COLORS.textMuted
+                }
+              }, sem === "Toutes" ? "Tous" : sem.replace("Semestre ", "Semestre "));
+            })
+          )
         ),
 
         // Accès rapide à une matière précise, parmi celles qui ont déjà un résumé publié.
@@ -5335,10 +5925,12 @@
               return React.createElement("div", { key: b.id, className: "rounded-xl border p-3.5 flex flex-col items-center text-center gap-1.5", style: { borderColor: actif ? c : COLORS.border, backgroundColor: COLORS.surface } },
                 React.createElement("div", { className: "w-12 h-12 rounded-full flex items-center justify-center", style: { backgroundColor: c + "1f" } }, React.createElement(Icon, { name: b.emoji, size: 22, color: c })),
                 React.createElement("p", { className: "text-xs font-semibold", style: { color: COLORS.text } }, b.nom),
-                React.createElement("p", { className: "text-[10px] font-mono", style: { color: COLORS.textMuted } }, possede ? "Débloqué" : b.cout + " points"),
+                React.createElement("p", { className: "text-[10px] font-mono", style: { color: COLORS.textMuted } }, possede ? "Débloqué" : (b.auto ? b.condition : b.cout + " points")),
                 possede
                   ? React.createElement("button", { onClick: () => onSetBadgeActif(actif ? null : b.id), className: "w-full text-[10px] font-mono py-1.5 rounded-full mt-1", style: actif ? { backgroundColor: c, color: c === COLORS.gold ? COLORS.bg : "#fff" } : { border: `1px solid ${COLORS.border}`, color: COLORS.textMuted } }, actif ? "Actif" : "Activer")
-                  : React.createElement("button", { onClick: () => onBuyBadge(b), disabled: points < b.cout, className: "w-full text-[10px] font-mono py-1.5 rounded-full mt-1 disabled:opacity-30", style: { backgroundColor: c, color: c === COLORS.gold ? COLORS.bg : "#fff" } }, "Acheter")
+                  : b.auto
+                    ? React.createElement("div", { className: "w-full text-[10px] font-mono py-1.5 rounded-full mt-1 text-center", style: { border: `1px dashed ${COLORS.border}`, color: COLORS.textFaint } }, "🔒 À débloquer")
+                    : React.createElement("button", { onClick: () => onBuyBadge(b), disabled: points < b.cout, className: "w-full text-[10px] font-mono py-1.5 rounded-full mt-1 disabled:opacity-30", style: { backgroundColor: c, color: c === COLORS.gold ? COLORS.bg : "#fff" } }, "Acheter")
               );
             })
           )
@@ -6139,8 +6731,21 @@
       );
     }
 
-    function AccueilTab({ cards, epreuves, pseudo, matricule, points, pointsTotal, profil, vip, pointsLogs, badges, onNavigate }) {
+    function AccueilTab({ cards, epreuves, pseudo, matricule, points, pointsTotal, profil, vip, pointsLogs, badges, onNavigate, authUid, onGagnerPoints }) {
       const [recherche, setRecherche] = useState("");
+      const [roueOuverte, setRoueOuverte] = useState(false);
+      const [carnetOuvert, setCarnetOuvert] = useState(false);
+      // Mascotte : s'inquiète si tu es absent·e depuis 3 jours ou plus (dernière visite stockée sur l'appareil).
+      const [joursAbsence] = useState(() => {
+        try {
+          const derniere = parseInt(localStorage.getItem("sabi_derniere_visite"), 10);
+          return derniere ? Math.floor((Date.now() - derniere) / 86400000) : 0;
+        } catch { return 0; }
+      });
+      useEffect(() => { try { localStorage.setItem("sabi_derniere_visite", String(Date.now())); } catch {} }, []);
+      const messageMascotte = joursAbsence >= 3
+        ? "Tu m'as manqué, " + pseudo + " ! Ça fait " + joursAbsence + " jours… Une petite session de focus pour reprendre ?"
+        : "Salut " + pseudo + " ! Tourne la roue du jour, puis lance une session de focus 🔥";
 
       const resultatsCartes = recherche.trim().length >= 2 ? cards.filter(c => c.contenu.toLowerCase().includes(recherche.toLowerCase())).slice(0, 4) : [];
       const resultatsEpreuves = recherche.trim().length >= 2 ? epreuves.filter(e => e.matiere.toLowerCase().includes(recherche.toLowerCase())).slice(0, 4) : [];
@@ -6463,13 +7068,39 @@
           )
         ),
 
+        React.createElement(MascotteSabi, { message: messageMascotte, humeur: joursAbsence >= 3 ? "triste" : "content" }),
+
         React.createElement("div", { className: "rounded-xl p-4 flex items-start gap-3", style: { backgroundColor: "rgba(119,221,106,0.12)", border: `1px solid ${COLORS.forest}` } },
           React.createElement(Icon, { name: "lightbulb", size: 20, color: COLORS.forestText }),
-          React.createElement("div", null,
+          React.createElement("div", { className: "flex-1" },
             React.createElement("p", { className: "text-xs font-semibold mb-1", style: { color: COLORS.forestText } }, "Le saviez-vous ?"),
             React.createElement("p", { className: "text-xs leading-relaxed", style: { color: COLORS.textMuted } }, astuceDuJour)
+          ),
+          React.createElement(BoutonCarnet, { texte: astuceDuJour })
+        ),
+
+        React.createElement("div", { className: "grid grid-cols-2 gap-3" },
+          React.createElement("button", {
+            onClick: () => setRoueOuverte(true),
+            className: "rounded-xl p-3.5 flex flex-col items-center gap-1.5 text-center",
+            style: { background: "linear-gradient(135deg, rgba(242,202,80,0.18), rgba(249,115,22,0.18))", border: `1px solid ${COLORS.gold}` }
+          },
+            React.createElement("span", { style: { fontSize: 26, lineHeight: 1 } }, "🎡"),
+            React.createElement("span", { className: "text-xs font-semibold", style: { color: COLORS.text } }, "Roue du jour"),
+            React.createElement("span", { className: "text-[10px] font-mono", style: { color: COLORS.textMuted } }, "1 tour gratuit / jour")
+          ),
+          React.createElement("button", {
+            onClick: () => setCarnetOuvert(true),
+            className: "rounded-xl p-3.5 flex flex-col items-center gap-1.5 text-center",
+            style: { backgroundColor: COLORS.surface, border: `1px solid ${COLORS.border}` }
+          },
+            React.createElement("span", { style: { fontSize: 26, lineHeight: 1 } }, "📒"),
+            React.createElement("span", { className: "text-xs font-semibold", style: { color: COLORS.text } }, "Mon carnet"),
+            React.createElement("span", { className: "text-[10px] font-mono", style: { color: COLORS.textMuted } }, "Tes astuces ♥")
           )
         ),
+        React.createElement(RoueDuJour, { ouvert: roueOuverte, onFermer: () => setRoueOuverte(false), authUid: authUid, onGain: onGagnerPoints }),
+        React.createElement(CarnetModal, { ouvert: carnetOuvert, onFermer: () => setCarnetOuvert(false) }),
 
         React.createElement("div", null,
           React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider mb-2", style: { color: COLORS.textMuted } }, "Explorer"),
@@ -7326,14 +7957,36 @@
       const [reponse, setReponse] = useState(""); // texte affiché (rendu Markdown via CorrigeRendu)
       const [chargement, setChargement] = useState(null); // id de l'action en cours, ou null
       const [erreur, setErreur] = useState("");
+      const [actionReponse, setActionReponse] = useState(null); // id de l'action ayant produit la réponse/l'erreur affichée (ex. "sauvetage")
       const [question, setQuestion] = useState("");
-      const [focusActif, setFocusActif] = useState(false);
-      const [focusRestant, setFocusRestant] = useState(25 * 60);
+      const [focusActif, setFocusActif] = useState(false); // le minuteur tourne (faux = en pause ou pas lancé)
+      const [focusSession, setFocusSession] = useState(false); // une session est en cours (lancée, éventuellement en pause)
+      const [focusDuree, setFocusDuree] = useState(() => {
+        try { const v = parseInt(localStorage.getItem("sabi_focus_duree"), 10); if (v >= 1 && v <= 180) return v; } catch {}
+        return 25;
+      }); // durée choisie, en minutes (mémorisée sur l'appareil)
+      const [focusRestant, setFocusRestant] = useState(() => {
+        try { const v = parseInt(localStorage.getItem("sabi_focus_duree"), 10); if (v >= 1 && v <= 180) return v * 60; } catch {}
+        return 25 * 60;
+      });
+      const [focusSaisie, setFocusSaisie] = useState(""); // texte du champ "durée personnalisée" ("" = suit la durée choisie)
+      const [focusPhrase, setFocusPhrase] = useState(0);
+      const [focusBilan, setFocusBilan] = useState(null); // { minutes, complet } — message affiché après une session
+      const [focusStreak, setFocusStreak] = useState(0); // jours de focus d'affilée
+      const focusDebutHeureRef = React.useRef(12); // heure de lancement de la session (pour le badge Lève-tôt)
+      const focusFinRef = React.useRef(0); // instant de fin prévu (robuste quand le navigateur ralentit les timers en arrière-plan)
+      const wakeLockRef = React.useRef(null);
       const [progression, setProgression] = useState({ focusMinutes: 0, focusObjectif: 600, quizReussis: 0, quizObjectif: 15 });
       const [diagnostic, setDiagnostic] = useState(null); // { scoreGlobal, competences:{logique,synthese,memorisation}, forces:[], lacunes:[], badge }
 
       // Quiz IA — généré à partir du contenu d'un résumé de cours (ou d'un sujet libre si aucun résumé)
       const [quizSourceId, setQuizSourceId] = useState("libre");
+      const [quizCompte, setQuizCompte] = useState(null); // null | true | false : ce quiz compte-t-il pour le classement hebdo ?
+      const [duelActif, setDuelActif] = useState(null); // duel que je joue : { code, sujet, createur }
+      const [duelResultat, setDuelResultat] = useState(null); // { moi, adversaire, pseudoAdv }
+      const [duelCree, setDuelCree] = useState(null); // code du duel que je viens de lancer
+      const [duelCodeSaisi, setDuelCodeSaisi] = useState("");
+      const [quizSujetCourant, setQuizSujetCourant] = useState("");
       const [quizSujetLibre, setQuizSujetLibre] = useState("");
       const [quiz, setQuiz] = useState(null); // [{ question, options:[4], correctIndex, explication }]
       const [quizReponses, setQuizReponses] = useState({}); // { [indexQuestion]: indexOptionChoisie }
@@ -7404,18 +8057,104 @@
         });
       }, [authUid, jourKey]);
 
-      // Minuteur de focus (Pomodoro 25 min) — à la fin, ajoute 25 min à la progression de la semaine
+      // ===== Session Focus : durée modifiable, Lancer / Terminer, effets fun =====
+      const PHRASES_FOCUS = [
+        "Téléphone en mode zen, cerveau en mode turbo 🚀",
+        "Une session à la fois, et le semestre est à toi 💪",
+        "Les distractions attendront, tes examens non 😎",
+        "Respire, concentre-toi, tu gères 🔥",
+        "Chaque minute ici compte dans ta progression 🌱"
+      ];
+      const vibrer = (motif) => { try { if (navigator.vibrate) navigator.vibrate(motif); } catch {} };
+      const activerVeille = async () => { // garde l'écran allumé pendant la session (si le navigateur le permet)
+        try { if (navigator.wakeLock && !wakeLockRef.current) wakeLockRef.current = await navigator.wakeLock.request("screen"); } catch {}
+      };
+      const relacherVeille = () => {
+        try { if (wakeLockRef.current) { wakeLockRef.current.release(); wakeLockRef.current = null; } } catch { wakeLockRef.current = null; }
+      };
+      const changerDureeFocus = (minutes) => {
+        if (focusSession) return; // pas de changement pendant une session
+        const m = Math.max(1, Math.min(180, Math.round(Number(minutes) || 0)));
+        if (!m) return;
+        setFocusDuree(m);
+        setFocusSaisie("");
+        setFocusRestant(m * 60);
+        try { localStorage.setItem("sabi_focus_duree", String(m)); } catch {}
+      };
+      const lancerFocus = () => {
+        focusFinRef.current = Date.now() + focusDuree * 60 * 1000;
+        setFocusRestant(focusDuree * 60);
+        setFocusPhrase(Math.floor(Math.random() * PHRASES_FOCUS.length));
+        setFocusBilan(null);
+        setFocusSession(true);
+        setFocusActif(true);
+        focusDebutHeureRef.current = new Date().getHours();
+        vibrer([100, 50, 100]);
+        jouerSon("ding");
+        activerVeille();
+      };
+      const pauseFocus = () => { setFocusActif(false); relacherVeille(); };
+      const reprendreFocus = () => { focusFinRef.current = Date.now() + focusRestant * 1000; setFocusActif(true); activerVeille(); };
+      // Termine la session (à la main ou quand le temps est écoulé). Ne comptabilise que les
+      // minutes réellement travaillées : durée complète si le minuteur est arrivé à zéro.
+      const terminerFocus = (complet) => {
+        const minutes = complet ? focusDuree : Math.floor((focusDuree * 60 - focusRestant) / 60);
+        if (minutes > 0) {
+          progressionRef.transaction(v => ({ focusMinutes: ((v && v.focusMinutes) || 0) + minutes, quizReussis: (v && v.quizReussis) || 0 }));
+          // Classement Focus de la semaine
+          enregistrerActiviteHebdo(authUid, { pseudo: pseudo, filiere: profil.filiere || "", annee: profil.annee || "" }, { focusMinutes: minutes });
+          // Série de jours de focus d'affilée
+          const jour = jourCle();
+          const hier = jourCle(new Date(Date.now() - 86400000));
+          focusStreakRef.once("value").then(snap => {
+            const v = snap.val() || {};
+            let count = v.count || 0;
+            if (v.dernierJour !== jour) { count = v.dernierJour === hier ? count + 1 : 1; focusStreakRef.set({ count, dernierJour: jour }); }
+            else count = Math.max(1, count);
+            setFocusStreak(count);
+            if (count >= 7) debloquerBadgeAuto(authUid, "flamme7");
+          }).catch(() => {});
+          // Badges automatiques
+          if (focusDebutHeureRef.current < 7 && minutes >= 10) debloquerBadgeAuto(authUid, "leve_tot");
+          if ((progression.focusMinutes || 0) + minutes >= 120) debloquerBadgeAuto(authUid, "marathonien");
+        }
+        setFocusActif(false);
+        setFocusSession(false);
+        setFocusRestant(focusDuree * 60);
+        setFocusBilan({ minutes, complet });
+        relacherVeille();
+        if (complet) celebrer(); else { vibrer(60); jouerSon("ding"); }
+      };
+      const terminerFocusRef = React.useRef(terminerFocus);
+      terminerFocusRef.current = terminerFocus;
+
+      // Le temps restant se calcule à partir de l'heure de fin prévue, pas en soustrayant 1 s à chaque tick :
+      // sinon un téléphone qui ralentit les timers (écran verrouillé, autre appli) faisait dériver le minuteur.
       useEffect(() => {
         if (!focusActif) return;
-        if (focusRestant <= 0) {
-          setFocusActif(false);
-          setFocusRestant(25 * 60);
-          progressionRef.transaction(v => ({ focusMinutes: ((v && v.focusMinutes) || 0) + 25, quizReussis: (v && v.quizReussis) || 0 }));
-          return;
-        }
-        const t = setTimeout(() => setFocusRestant(s => s - 1), 1000);
-        return () => clearTimeout(t);
-      }, [focusActif, focusRestant]);
+        const id = setInterval(() => {
+          const r = Math.max(0, Math.ceil((focusFinRef.current - Date.now()) / 1000));
+          setFocusRestant(r);
+          if (r <= 0) terminerFocusRef.current(true);
+        }, 500);
+        return () => clearInterval(id);
+      }, [focusActif]);
+      useEffect(() => () => relacherVeille(), []); // libère l'écran si on quitte l'écran Coach
+      const focusStreakRef = React.useMemo(() => usersRef.child(authUid).child("focusStreak"), [authUid]);
+      useEffect(() => {
+        if (!authUid) return;
+        focusStreakRef.once("value").then(snap => {
+          const v = snap.val() || {};
+          const hier = jourCle(new Date(Date.now() - 86400000));
+          // la série n'est valable que si le dernier jour de focus est aujourd'hui ou hier
+          setFocusStreak(v.dernierJour === jourCle() || v.dernierJour === hier ? (v.count || 0) : 0);
+        }).catch(() => {});
+      }, [authUid]);
+      // Bulles Sabi en sourdine pendant la session (rejouées à la fin ou en quittant l'écran).
+      useEffect(() => {
+        definirSourdineFocus(focusSession);
+        return () => definirSourdineFocus(false);
+      }, [focusSession]);
 
       const contexteEtudiant = () => {
         let ctx = "Étudiant : " + pseudo + ", filière " + (profil.filiere || "non renseignée") + ", " + (profil.annee || "année non renseignée") + ".";
@@ -7437,6 +8176,7 @@
 
       const lancerAction = async (id, appel, promptUtilisateur) => {
         setChargement(id);
+        setActionReponse(id);
         setErreur("");
         setReponse("");
         try {
@@ -7564,12 +8304,15 @@
       const genererQuiz = async () => {
         const sourceTexte = resumeChoisi ? resumeChoisi.contenu : null;
         const sujet = resumeChoisi ? resumeChoisi.matiere : quizSujetLibre.trim();
+        setActionReponse("quiz");
         if (!sourceTexte && sujet.length < 2) { setErreur("Choisis un résumé ou précise un sujet pour générer le quiz."); return; }
         setChargement("quiz");
         setErreur("");
         setQuiz(null);
         setQuizReponses({});
         setQuizValide(false);
+        setDuelActif(null); setDuelResultat(null); setDuelCree(null); setQuizCompte(null);
+        setQuizSujetCourant(sujet);
         try {
           const consigne = sourceTexte
             ? "Génère un quiz de 5 questions à choix multiples UNIQUEMENT à partir du contenu de cours suivant (matière : " + sujet + "). " +
@@ -7599,14 +8342,70 @@
 
       const scoreQuiz = quiz ? quiz.reduce((acc, q, i) => acc + (quizReponses[i] === q.correctIndex ? 1 : 0), 0) : 0;
 
+      const infosPublic = { pseudo: pseudo, filiere: profil.filiere || "", annee: profil.annee || "" };
+
       const validerQuiz = () => {
         setQuizValide(true);
-        if (quiz && scoreQuiz === quiz.length) {
+        if (!quiz) return;
+        const parfait = scoreQuiz === quiz.length;
+        if (parfait) {
           progressionRef.transaction(v => ({ focusMinutes: (v && v.focusMinutes) || 0, quizReussis: ((v && v.quizReussis) || 0) + 1 }));
+          debloquerBadgeAuto(authUid, "sans_faute");
+          celebrer();
+        } else if (scoreQuiz >= Math.ceil(quiz.length / 2)) { jouerSon("ding"); haptique(40); }
+        else { jouerSon("oups"); haptique(120); }
+        // Classement hebdo des bonnes réponses (5 premiers quiz de la journée seulement)
+        quizCompteCeJour(authUid).then(compte => {
+          setQuizCompte(compte);
+          if (compte) enregistrerActiviteHebdo(authUid, infosPublic, { quizBons: scoreQuiz, quizTotal: quiz.length, quizParfaits: parfait ? 1 : 0 });
+        });
+        // Duel : j'enregistre mon score et je compare avec le créateur
+        if (duelActif) {
+          duelsRef.child(duelActif.code).child("joueurs").child(authUid).set({ pseudo: pseudo, score: scoreQuiz, total: quiz.length, date: Date.now() }).catch(() => {});
+          setDuelResultat({ moi: scoreQuiz, adversaire: duelActif.createur.score, pseudoAdv: duelActif.createur.pseudo, total: quiz.length });
         }
       };
 
-      const recommencerQuiz = () => { setQuiz(null); setQuizReponses({}); setQuizValide(false); };
+      const recommencerQuiz = () => { setQuiz(null); setQuizReponses({}); setQuizValide(false); setDuelActif(null); setDuelResultat(null); setDuelCree(null); setQuizCompte(null); };
+
+      // ----- Quiz duel : lancer un défi (après avoir fini son quiz) ou relever celui d'un ami via un code -----
+      const creerDuel = () => {
+        if (!quiz || !quizValide || duelActif) return;
+        const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+        const code = Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+        duelsRef.child(code).set({
+          sujet: quizSujetCourant || "Quiz", questions: quiz, createdAt: Date.now(),
+          createur: { uid: authUid, pseudo: pseudo, score: scoreQuiz, total: quiz.length }
+        }).then(() => {
+          duelsStore.save([code, ...chargerMesDuels()].slice(0, 20));
+          setDuelCree(code); jouerSon("ding"); haptique(40);
+        }).catch(() => setErreur("Impossible de créer le duel pour l'instant. Réessaie."));
+      };
+      const partagerDuel = (code) => {
+        const texte = "🦁 Relève mon défi Sabi ! Score à battre : " + scoreQuiz + "/" + (quiz ? quiz.length : 5) + ". Code du duel : " + code + " (Coach → Pratique → Quiz IA → Relever un duel)";
+        if (navigator.share) navigator.share({ text: texte }).catch(() => {});
+        else window.open("https://wa.me/?text=" + encodeURIComponent(texte), "_blank");
+      };
+      const rejoindreDuel = async () => {
+        const code = duelCodeSaisi.trim().toUpperCase();
+        setActionReponse("quiz");
+        if (code.length < 4) { setErreur("Entre le code à 6 caractères de ton ami."); return; }
+        setErreur("");
+        try {
+          const snap = await duelsRef.child(code).once("value");
+          const d = snap.val();
+          if (!d) { setErreur("Aucun duel avec ce code."); return; }
+          if (d.createur && d.createur.uid === authUid) { setErreur("C'est ton propre duel ! Envoie-le à un ami."); return; }
+          if (d.joueurs && d.joueurs[authUid]) { setErreur("Tu as déjà joué ce duel."); return; }
+          setQuiz(d.questions); setQuizReponses({}); setQuizValide(false); setQuizCompte(null); setDuelCree(null); setDuelResultat(null);
+          setQuizSujetCourant(d.sujet || "Quiz");
+          setDuelActif({ code, sujet: d.sujet, createur: d.createur });
+          setDuelCodeSaisi("");
+          jouerSon("ding");
+        } catch (err) {
+          setErreur("Impossible de charger ce duel. Vérifie ta connexion.");
+        }
+      };
 
       const mmss = s => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
 
@@ -7616,6 +8415,28 @@
         { id: "focus", label: "Focus Hub", icone: "clock" },
       ];
       const [blocActif, setBlocActif] = useState("coach");
+      // Mode Sauvetage : "Lancer" fait vibrer le téléphone, génère le plan et teinte tout l'écran
+      // aux couleurs d'alerte jusqu'à ce que l'étudiant appuie sur "Terminer".
+      const PHRASES_SAUVETAGE = [
+        "Respire, on s'occupe de tout 💪",
+        "Même les légendes révisaient la veille 😎",
+        "Le Griot Suprême est en route 🔥",
+        "48h, c'est largement assez. Allez, go !",
+        "Cette épreuve ne sait pas ce qui l'attend 😤"
+      ];
+      const [sauvetageActif, setSauvetageActif] = useState(false);
+      const [phraseSauvetage, setPhraseSauvetage] = useState(0);
+      const declencherSauvetage = () => {
+        setPhraseSauvetage(Math.floor(Math.random() * PHRASES_SAUVETAGE.length));
+        setSauvetageActif(true);
+        vibrer([120, 60, 120, 60, 200]);
+        modeSauvetage();
+      };
+      const terminerSauvetage = () => {
+        setSauvetageActif(false);
+        vibrer(0); // coupe toute vibration en cours
+        vibrer(60);
+      };
       // Couleurs dédiées à cet écran : indigo/violet pour tout ce qui touche à l'IA (Coach,
       // Diagnostic, Plan, Quiz), au lieu du seul jaune répété partout — le jaune redevient un
       // accent ponctuel plutôt que la couleur de la moindre action.
@@ -7783,14 +8604,14 @@
             )
           ),
 
-          chargement !== null && React.createElement("div", { className: "rounded-xl border p-4 flex items-center gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+          chargement !== null && chargement !== "sauvetage" && chargement !== "quiz" && React.createElement("div", { className: "rounded-xl border p-4 flex items-center gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
             React.createElement(Icon, { name: "refresh-cw", size: 14, color: IA.txt }),
             React.createElement("p", { className: "text-xs", style: { color: "#a1a1aa" } }, "Le coach réfléchit...")
           ),
-          erreur && React.createElement("div", { className: "rounded-xl border p-3.5", style: { borderColor: "#f97316", backgroundColor: "rgba(249,115,22,0.1)" } },
+          erreur && actionReponse !== "sauvetage" && actionReponse !== "quiz" && React.createElement("div", { className: "rounded-xl border p-3.5", style: { borderColor: "#f97316", backgroundColor: "rgba(249,115,22,0.1)" } },
             React.createElement("p", { className: "text-xs", style: { color: "#fdba74" } }, erreur)
           ),
-          reponse && React.createElement("div", { className: "rounded-xl border p-4", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+          reponse && actionReponse !== "sauvetage" && React.createElement("div", { className: "rounded-xl border p-4", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
             React.createElement(CorrigeRendu, { texte: reponse })
           ),
 
@@ -7815,6 +8636,11 @@
 
         // ========== BLOC 2 : PRATIQUE & RÉVISION ==========
         blocActif === "pratique" && React.createElement(React.Fragment, null,
+          // Teinte plein écran (portail vers <body>, sans bloquer les clics) tant que le mode est actif.
+          sauvetageActif && ReactDOM.createPortal(
+            React.createElement("div", { className: "sabi-sauvetage-teinte fixed inset-0 z-[45]", style: { pointerEvents: "none" } }),
+            document.body
+          ),
           // Mode Sauvetage — palette d'urgence rouge/orange vive (contraste WCAG AA), plus le
           // ton saumon fade d'avant qui ne se distinguait pas assez du reste de l'écran.
           React.createElement("div", { className: "rounded-2xl p-4 flex flex-col gap-2.5", style: { background: "linear-gradient(135deg, rgba(239,68,68,0.16), rgba(249,115,22,0.10))", border: "1px solid #f97316" } },
@@ -7822,17 +8648,38 @@
               React.createElement(Icon, { name: "flame", size: 18, color: "#fca5a5" }),
               React.createElement("p", { className: "text-sm font-bold", style: { color: "#fecaca" } }, "Mode Sauvetage")
             ),
-            React.createElement("p", { className: "text-xs", style: { color: "#e0e0e0" } }, "Urgence académique ? Plan de crise en 48h."),
-            React.createElement("button", {
-              onClick: modeSauvetage, disabled: chargement !== null,
-              className: "self-start rounded-full px-4 py-2 text-xs font-bold disabled:opacity-50",
-              style: { background: "linear-gradient(135deg, #ef4444, #f97316)", color: "#fff" }
-            }, chargement === "sauvetage" ? "Génération..." : "Lancer le plan de crise")
+            React.createElement("p", { className: "text-xs", style: { color: "#e0e0e0" } }, sauvetageActif ? PHRASES_SAUVETAGE[phraseSauvetage] : "Urgence académique ? Plan de crise en 48h."),
+            sauvetageActif
+              ? React.createElement("button", {
+                  onClick: terminerSauvetage,
+                  className: "self-start rounded-full px-4 py-2 text-xs font-bold",
+                  style: { backgroundColor: "rgba(255,255,255,0.14)", border: "1px solid #fff", color: "#fff" }
+                }, "Terminer")
+              : React.createElement("button", {
+                  onClick: declencherSauvetage, disabled: chargement !== null,
+                  className: "self-start rounded-full px-4 py-2 text-xs font-bold disabled:opacity-50",
+                  style: { background: "linear-gradient(135deg, #ef4444, #f97316)", color: "#fff" }
+                }, "Lancer le plan de crise")
+          ),
+
+          // Réponse du Mode Sauvetage — affichée ici (onglet Pratique), pas dans Coach & Diagnostic.
+          chargement === "sauvetage" && React.createElement("div", { className: "rounded-xl border p-4 flex items-center gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+            React.createElement(Icon, { name: "refresh-cw", size: 14, color: IA.txt }),
+            React.createElement("p", { className: "text-xs", style: { color: "#a1a1aa" } }, "Le coach prépare ton plan de crise...")
+          ),
+          erreur && actionReponse === "sauvetage" && React.createElement("div", { className: "rounded-xl border p-3.5", style: { borderColor: "#f97316", backgroundColor: "rgba(249,115,22,0.1)" } },
+            React.createElement("p", { className: "text-xs", style: { color: "#fdba74" } }, erreur)
+          ),
+          reponse && actionReponse === "sauvetage" && React.createElement("div", { className: "rounded-xl border p-4", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+            React.createElement(CorrigeRendu, { texte: reponse })
           ),
 
           // Quiz IA
           React.createElement("div", null,
             React.createElement("p", { className: "text-xs font-mono uppercase tracking-wider mb-2", style: { color: "#a1a1aa" } }, "Quiz IA"),
+            erreur && actionReponse === "quiz" && React.createElement("div", { className: "rounded-xl border p-3.5 mb-2", style: { borderColor: "#f97316", backgroundColor: "rgba(249,115,22,0.1)" } },
+              React.createElement("p", { className: "text-xs", style: { color: "#fdba74" } }, erreur)
+            ),
             !quiz && React.createElement("div", { className: "rounded-xl border p-4 flex flex-col gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
               React.createElement("p", { className: "text-xs", style: { color: "#a1a1aa" } }, "Teste-toi sur un résumé de cours déjà publié, ou sur un sujet libre."),
               React.createElement("select", {
@@ -7852,7 +8699,21 @@
                 onClick: genererQuiz, disabled: chargement !== null,
                 className: "rounded-lg py-2.5 text-sm font-semibold disabled:opacity-50",
                 style: { background: IA.solide, color: "#fff" }
-              }, chargement === "quiz" ? "Génération du quiz..." : "Générer un quiz (5 questions)")
+              }, chargement === "quiz" ? "Génération du quiz..." : "Générer un quiz (5 questions)"),
+              React.createElement("div", { className: "flex flex-col gap-2 pt-3 mt-1", style: { borderTop: "1px dashed " + COLORS.border } },
+                React.createElement("p", { className: "text-xs", style: { color: "#a1a1aa" } }, "⚔️ Relever un duel : entre le code d'un ami."),
+                React.createElement("div", { className: "flex gap-2" },
+                  React.createElement("input", {
+                    value: duelCodeSaisi, onChange: e => setDuelCodeSaisi(e.target.value.toUpperCase()), maxLength: 6, placeholder: "CODE",
+                    className: "flex-1 rounded-lg px-3 py-2 text-sm font-mono tracking-widest text-center outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
+                  }),
+                  React.createElement("button", { onClick: rejoindreDuel, className: "rounded-lg px-4 py-2 text-sm font-semibold", style: { border: "1px solid " + IA.solide, color: IA.txt } }, "Relever")
+                )
+              )
+            ),
+            !quiz && React.createElement(SuiviDuels, { authUid: authUid }),
+            quiz && duelActif && React.createElement("div", { className: "rounded-xl border p-3 text-center", style: { borderColor: IA.border, backgroundColor: IA.soft } },
+              React.createElement("p", { className: "text-xs font-semibold", style: { color: IA.txt } }, "⚔️ Duel contre " + duelActif.createur.pseudo + " — il a fait " + duelActif.createur.score + "/" + duelActif.createur.total)
             ),
             quiz && React.createElement("div", { className: "flex flex-col gap-3" },
               quiz.map((q, i) => {
@@ -7885,10 +8746,24 @@
                     className: "rounded-lg py-2.5 text-sm font-semibold disabled:opacity-40",
                     style: { background: IA.solide, color: "#fff" }
                   }, "Valider le quiz (" + Object.keys(quizReponses).length + "/" + quiz.length + ")")
-                : React.createElement("div", { className: "rounded-xl border p-4 flex flex-col items-center gap-2 text-center", style: { borderColor: scoreQuiz === quiz.length ? "#4ade80" : COLORS.border, backgroundColor: COLORS.surface } },
+                : React.createElement("div", { className: "rounded-xl border p-4 flex flex-col items-center gap-3 text-center", style: { borderColor: scoreQuiz === quiz.length ? "#4ade80" : COLORS.border, backgroundColor: COLORS.surface } },
                     React.createElement("p", { className: "text-2xl font-bold font-mono", style: { color: scoreQuiz === quiz.length ? "#4ade80" : IA.txt } }, (scoreQuiz === quiz.length ? "🎉 " : "") + scoreQuiz + "/" + quiz.length),
+                    React.createElement(MascotteSabi, {
+                      compact: true, humeur: scoreQuiz === quiz.length ? "fete" : scoreQuiz >= Math.ceil(quiz.length / 2) ? "content" : "triste",
+                      message: scoreQuiz === quiz.length ? "Sans faute, bravo " + pseudo + " ! Tu es en feu 🔥" : scoreQuiz >= Math.ceil(quiz.length / 2) ? "Pas mal du tout ! Encore un petit effort pour le sans-faute 💪" : "Aïe… mais c'est en révisant qu'on progresse. Relis les explications et retente !"
+                    }),
                     React.createElement("p", { className: "text-xs", style: { color: "#a1a1aa" } },
                       scoreQuiz === quiz.length ? "Score parfait — quiz réussi du 1er coup, comptabilisé dans ta progression !" : "Continue à réviser, tu peux relancer un quiz quand tu veux."),
+                    quizCompte === true && React.createElement("p", { className: "text-[11px] font-mono", style: { color: COLORS.gold } }, "🏆 +" + scoreQuiz + " au classement Quiz de la semaine"),
+                    quizCompte === false && React.createElement("p", { className: "text-[11px] font-mono", style: { color: COLORS.textFaint } }, "Limite de 5 quiz comptés par jour atteinte — celui-ci ne compte pas pour le classement."),
+                    duelResultat && React.createElement("p", { className: "text-sm font-semibold", style: { color: duelResultat.moi > duelResultat.adversaire ? "#4ade80" : duelResultat.moi === duelResultat.adversaire ? COLORS.textMuted : "#f87171" } },
+                      duelResultat.moi > duelResultat.adversaire ? "⚔️ Victoire contre " + duelResultat.pseudoAdv + " (" + duelResultat.moi + "-" + duelResultat.adversaire + ") !" : duelResultat.moi === duelResultat.adversaire ? "⚔️ Égalité avec " + duelResultat.pseudoAdv + " (" + duelResultat.moi + "-" + duelResultat.adversaire + ")" : "⚔️ " + duelResultat.pseudoAdv + " gagne (" + duelResultat.adversaire + "-" + duelResultat.moi + ")… revanche ?"),
+                    !duelActif && !duelCree && React.createElement("button", { onClick: creerDuel, className: "rounded-full px-4 py-2 text-xs font-semibold", style: { border: "1px solid " + IA.solide, color: IA.txt } }, "⚔️ Défier un ami avec ce quiz"),
+                    duelCree && React.createElement("div", { className: "flex flex-col items-center gap-2" },
+                      React.createElement("p", { className: "text-[11px]", style: { color: "#a1a1aa" } }, "Code de ton duel :"),
+                      React.createElement("p", { className: "text-2xl font-mono font-bold tracking-widest", style: { color: COLORS.gold } }, duelCree),
+                      React.createElement("button", { onClick: () => partagerDuel(duelCree), className: "rounded-full px-4 py-2 text-xs font-semibold", style: { backgroundColor: IA.solide, color: "#fff" } }, "Partager le défi")
+                    ),
                     BoutonGhost({ onClick: recommencerQuiz, className: "mt-1" }, "Nouveau quiz")
                   )
             )
@@ -7899,7 +8774,12 @@
         // Fusion de l'ancien "Timer de Concentration" et de "Progression Hebdomadaire" en un
         // seul composant : le timer au centre (pièce maîtresse), les jauges d'objectifs juste
         // en dessous — un seul endroit pour tout ce qui concerne la concentration du jour.
-        blocActif === "focus" && React.createElement("div", { className: "rounded-2xl border p-6 flex flex-col items-center gap-5", style: { borderColor: focusActif ? IA.border : COLORS.border, backgroundColor: COLORS.surface, backdropFilter: "blur(6px)" } },
+        blocActif === "focus" && React.createElement("div", { className: "rounded-2xl border p-6 flex flex-col items-center gap-5", style: { borderColor: focusSession ? IA.border : COLORS.border, backgroundColor: COLORS.surface, backdropFilter: "blur(6px)" } },
+          // Teinte d'ambiance plein écran (portail vers <body>, clics non bloqués) tant que la session est en cours.
+          focusSession && ReactDOM.createPortal(
+            React.createElement("div", { className: "sabi-focus-teinte fixed inset-0 z-[45]", style: { pointerEvents: "none" } }),
+            document.body
+          ),
           (() => {
             const pct = Math.min(100, ((progression.focusMinutes / progression.focusObjectif) + (progression.quizReussis / progression.quizObjectif)) / 2 * 100);
             const label = pct >= 75 ? "Warrior de la révision 🔥" : pct >= 40 ? "Sur la bonne voie 💪" : "Débutant motivé 🌱";
@@ -7907,13 +8787,83 @@
           })(),
           React.createElement("p", {
             className: "font-mono font-bold tabular-nums",
-            style: { fontSize: 64, letterSpacing: "0.02em", color: focusActif ? IA.txt : COLORS.text, lineHeight: 1 }
+            style: { fontSize: 64, letterSpacing: "0.02em", color: focusSession ? IA.txt : COLORS.text, lineHeight: 1 }
           }, mmss(focusRestant)),
-          React.createElement("button", {
-            onClick: () => setFocusActif(a => !a),
-            className: "rounded-full px-6 py-2.5 text-sm font-semibold flex items-center gap-2",
-            style: focusActif ? { border: "1px solid #f87171", color: "#f87171" } : { background: IA.solide, color: "#fff" }
-          }, React.createElement(Icon, { name: focusActif ? "pause" : "play", size: 14 }), focusActif ? "Mettre en pause" : "Démarrer la session"),
+
+          // Série de jours de focus : la flamme grandit avec la série
+          focusStreak > 0 && React.createElement("div", { className: "flex items-center gap-2 rounded-full px-3 py-1.5", style: { backgroundColor: "rgba(249,115,22,0.15)", border: "1px solid rgba(249,115,22,0.5)" } },
+            React.createElement("span", { style: { fontSize: Math.min(30, 16 + focusStreak * 2), lineHeight: 1 } }, "🔥"),
+            React.createElement("span", { className: "text-xs font-mono font-semibold", style: { color: "#fdba74" } }, focusStreak + " jour" + (focusStreak > 1 ? "s" : "") + " de focus d'affilée")
+          ),
+
+          // Mascotte : encourage pendant la session, motive avant de lancer
+          React.createElement(MascotteSabi, {
+            compact: true, humeur: focusSession ? "focus" : "content",
+            message: focusSession ? (focusActif ? PHRASES_FOCUS[focusPhrase] : "Session en pause — reprends quand tu es prêt·e.") : (focusStreak > 0 ? "Ta flamme de " + focusStreak + " jour" + (focusStreak > 1 ? "s" : "") + " t'attend, ne la laisse pas s'éteindre !" : "Choisis ta durée et lance une session : on commence ta première flamme 🔥")
+          }),
+          focusSession && React.createElement("p", { className: "text-[11px] text-center", style: { color: COLORS.textFaint } }, "🔕 Notifications Sabi en sourdine — pense à activer « Ne pas déranger » sur ton téléphone."),
+
+          // Bilan après une session
+          !focusSession && focusBilan && React.createElement("div", {
+            className: "sabi-focus-fin w-full rounded-xl p-3 text-center",
+            style: { backgroundColor: IA.soft, border: "1px solid " + IA.border }
+          },
+            React.createElement("p", { className: "text-sm font-semibold", style: { color: IA.txt } },
+              focusBilan.complet ? "🎉 Session terminée, bravo !" : (focusBilan.minutes > 0 ? "Session arrêtée 👍" : "Session trop courte pour compter")),
+            React.createElement("p", { className: "text-xs mt-0.5", style: { color: "#e0e0e0" } },
+              focusBilan.minutes > 0 ? ("+" + focusBilan.minutes + " min ajoutée" + (focusBilan.minutes > 1 ? "s" : "") + " à ta progression.") : "Ce qui compte, c'est d'essayer 💪")
+          ),
+
+          // Choix de la durée (avant de lancer)
+          !focusSession && React.createElement("div", { className: "w-full flex flex-col gap-2" },
+            React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider text-center", style: { color: COLORS.textMuted } }, "Durée de la session"),
+            React.createElement("div", { className: "flex items-center justify-center gap-2 flex-wrap" },
+              [15, 25, 45, 60].map(m => React.createElement("button", {
+                key: m, onClick: () => changerDureeFocus(m),
+                className: "rounded-full px-3 py-1.5 text-xs font-mono border",
+                style: focusDuree === m
+                  ? { borderColor: IA.solide, backgroundColor: IA.soft, color: IA.txt }
+                  : { borderColor: COLORS.border, color: COLORS.textMuted }
+              }, m + " min")),
+              React.createElement("div", { className: "flex items-center gap-1" },
+                React.createElement("input", {
+                  type: "number", min: 1, max: 180, inputMode: "numeric",
+                  value: focusSaisie !== "" ? focusSaisie : focusDuree,
+                  onChange: e => {
+                    const v = e.target.value;
+                    setFocusSaisie(v);
+                    if (v !== "" && Number(v) >= 1) changerDureeFocus(v);
+                    setFocusSaisie(v); // changerDureeFocus vide la saisie : on la remet pour ne pas gêner la frappe
+                  },
+                  onBlur: () => setFocusSaisie(""),
+                  className: "w-16 rounded-lg px-2 py-1.5 text-xs font-mono text-center outline-none border",
+                  style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text },
+                  "aria-label": "Durée personnalisée en minutes"
+                }),
+                React.createElement("span", { className: "text-xs", style: { color: COLORS.textMuted } }, "min")
+              )
+            )
+          ),
+
+          // Lancer <-> Terminer (+ Pause/Reprendre en secondaire)
+          focusSession
+            ? React.createElement("div", { className: "flex items-center gap-2" },
+                React.createElement("button", {
+                  onClick: () => terminerFocus(false),
+                  className: "rounded-full px-6 py-2.5 text-sm font-semibold flex items-center gap-2",
+                  style: { border: "1px solid #f87171", color: "#f87171" }
+                }, React.createElement(Icon, { name: "x", size: 14 }), "Terminer"),
+                React.createElement("button", {
+                  onClick: focusActif ? pauseFocus : reprendreFocus,
+                  className: "rounded-full px-4 py-2.5 text-sm font-semibold flex items-center gap-2 border",
+                  style: { borderColor: COLORS.border, color: COLORS.textMuted }
+                }, React.createElement(Icon, { name: focusActif ? "pause" : "play", size: 14 }), focusActif ? "Pause" : "Reprendre")
+              )
+            : React.createElement("button", {
+                onClick: lancerFocus,
+                className: "rounded-full px-6 py-2.5 text-sm font-semibold flex items-center gap-2",
+                style: { background: IA.solide, color: "#fff" }
+              }, React.createElement(Icon, { name: "play", size: 14 }), "Lancer"),
 
           React.createElement("div", { className: "w-full flex flex-col gap-3 pt-1" },
             React.createElement("div", null,
@@ -7938,10 +8888,11 @@
 
           React.createElement("div", { className: "w-full rounded-xl p-3 flex items-start gap-2", style: { backgroundColor: IA.soft } },
             React.createElement(Icon, { name: "lightbulb", size: 14, color: IA.txt, style: { marginTop: 1, flexShrink: 0 } }),
-            React.createElement("div", null,
+            React.createElement("div", { className: "flex-1" },
               React.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider mb-0.5", style: { color: IA.txt } }, "Conseil Sabi"),
               React.createElement("p", { className: "text-xs leading-relaxed", style: { color: "#e0e0e0" } }, conseilDuJour)
-            )
+            ),
+            React.createElement(BoutonCarnet, { texte: conseilDuJour })
           )
         )
       );
@@ -8174,12 +9125,22 @@
               if (badgeGagne) {
                 const b = BADGES.find(x => x.id === badgeGagne);
                 notifierBulle("Tu as débloqué le badge " + (b ? b.nom : badgeGagne) + " !", { titre: "Sabi", icone: "star" });
+                celebrer();
+              }
+              // Passage de niveau (Nouveau → Junior → Ancien → Griot Suprême) : bulle + confettis
+              const paliers = ["Nouveau", "Junior de l'IUT", "Ancien de l'IUT", "Griot Suprême"];
+              const indexPalier = (pt) => pt >= 5000 ? 3 : pt >= 1000 ? 2 : pt >= 100 ? 1 : 0;
+              const nouveauPalier = indexPalier(data.pointsTotal || 0);
+              if (typeof window.__sabiPalier === "number" && nouveauPalier > window.__sabiPalier) {
+                notifierBulle("Niveau supérieur : " + paliers[nouveauPalier] + " !", { titre: "Sabi", icone: "trophy" });
+                celebrer();
               }
               const nouvelAbo = getAbonnementActif(data);
               if (nouvelAbo && !abonnementRef.current) {
                 notifierBulle("Ton abonnement " + (nouvelAbo === "proplus" ? "Sabi Pro+" : "Sabi Pro") + " est actif !", { titre: "Sabi", icone: "crown" });
               }
             }
+            window.__sabiPalier = (data.pointsTotal || 0) >= 5000 ? 3 : (data.pointsTotal || 0) >= 1000 ? 2 : (data.pointsTotal || 0) >= 100 ? 1 : 0;
             pointsRef.current = data.points || 0;
             badgesRef.current = data.badges || {};
             abonnementRef.current = getAbonnementActif(data);
@@ -8564,6 +9525,7 @@
       }, []);
 
       const handleBuyBadge = useCallback((badge) => {
+        if (badge.auto) return; // badges automatiques : jamais achetables
         spendPoints(badge.cout, () => {
           usersRef.child(authUser.uid).child("badges").child(badge.id).set(true);
           usersRef.child(authUser.uid).child("badgeActif").set(badge.id);
@@ -9007,7 +9969,7 @@
       // Chaque entrée est une fonction (pas un élément déjà créé) pour ne construire
       // que celle réellement affichée, avec les mêmes props qu'avant.
       const TAB_RENDERERS = {
-        accueil: () => React.createElement(AccueilTab, { cards: cards, epreuves: epreuves, pseudo: pseudo, matricule: matricule, points: points, pointsTotal: pointsTotal, profil: profil, vip: vip, pointsLogs: pointsLogs, badges: badges, onNavigate: setTab }),
+        accueil: () => React.createElement(AccueilTab, { cards: cards, epreuves: epreuves, pseudo: pseudo, matricule: matricule, points: points, pointsTotal: pointsTotal, profil: profil, vip: vip, pointsLogs: pointsLogs, badges: badges, onNavigate: setTab, authUid: authUser.uid, onGagnerPoints: addPoints }),
         profil: () => React.createElement(ProfilTab, { pseudo: pseudo, profil: profil, points: points, pointsTotal: pointsTotal, badgeActif: badgeActif, badges: badges, vip: vip, isOwner: isOwner, isAdmin: isAdminEffectif, abonnement: abonnement, whatsapp: whatsapp, matricule: matricule, demandesEnAttente: demandesEnAttente, onSetBadgeActif: handleSetBadgeActif, onNavigate: setTab, onLogout: handleLogout, email: authUser.email, onUpdatePseudo: handleUpdatePseudo, onUpdateWhatsapp: handleUpdateWhatsapp, onUpdatePassword: handleUpdatePassword, onSetMatricule: handleSetMatricule, onDemandeDeblocageMatricule: handleDemandeDeblocageMatricule }),
         myscore: () => React.createElement(MyScoreTab, { authUid: authUser.uid }),
         boussole: () => React.createElement(BoussoleTab, { steps: boussoleSteps, progress: boussoleProgress, onToggle: handleToggleBoussole, onAddStep: handleAddBoussoleStep }),
@@ -9018,7 +9980,7 @@
         promoAdmin: () => React.createElement(PromotionsAdminTab, { isOwner: isOwner }),
         assistance: () => React.createElement(AssistanceTab, { messages: supportMessages, onSend: handleSendSupportMessage, onMarkLu: handleMarkSupportLu }),
         supportAdmin: () => React.createElement(SupportAdminTab, { isOwner: isOwner }),
-        classement: () => React.createElement(ClassementTab, { logs: pointsLogs }),
+        classement: () => React.createElement(ClassementTab, { logs: pointsLogs, authUid: authUser.uid, pseudo: pseudo, profil: profil, onGagnerPoints: addPoints }),
         membres: () => React.createElement(MembresTab, { membres: membresList, isOwner: isOwner, isAdmin: isAdminEffectif }),
         boutique: () => React.createElement(BoutiqueTab, { points: points, badges: badges, badgeActif: badgeActif, vip: vip, bounties: bounties, pseudo: pseudo, authUid: authUser.uid, abonnement: abonnement, promos: promos, verifPaiementStatut: verifPaiementStatut, onBuyBadge: handleBuyBadge, onSetBadgeActif: handleSetBadgeActif, onBuyVip: handleBuyVip, onCreateBounty: handleCreateBounty, onRespondBounty: handleRespondBounty, onChooseWinner: handleChooseWinner, onDemandeAbonnement: handleDemandeAbonnement, onPayerAbonnement: handleDemarrerPaiement }),
         carte: () => React.createElement(CarteTab, { points: cartePoints, onAddPoint: handleAddCartePoint, onUpdatePoint: handleUpdateCartePoint, onDeletePoint: handleDeleteCartePoint, isOwner: isOwner }),
