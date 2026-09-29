@@ -5768,7 +5768,7 @@
       );
     }
 
-    function BoutiqueTab({ points, badges, badgeActif, vip, bounties, pseudo, authUid, abonnement, promos, verifPaiementStatut, onBuyBadge, onSetBadgeActif, onBuyVip, onCreateBounty, onRespondBounty, onChooseWinner, onPayerAbonnement, onDemandeAbonnement }) {
+    function BoutiqueTab({ points, badges, badgeActif, vip, bounties, pseudo, authUid, abonnement, promos, verifPaiementStatut, verifPaiementDetail, onBuyBadge, onSetBadgeActif, onBuyVip, onCreateBounty, onRespondBounty, onChooseWinner, onPayerAbonnement, onDemandeAbonnement }) {
       const [section, setSection] = useState("abonnement");
       const [paiementLance, setPaiementLance] = useState(null); // "pro-semestre", "proplus-annee", etc. — le temps de la redirection
       const [erreurPaiement, setErreurPaiement] = useState("");
@@ -5802,7 +5802,7 @@
         ),
         verifPaiementStatut === "erreur" && React.createElement("div", { className: "rounded-xl border p-3 flex items-center gap-2", style: { borderColor: COLORS.terra, backgroundColor: "rgba(255,180,171,0.1)" } },
           React.createElement(Icon, { name: "x", size: 14, color: COLORS.terraText }),
-          React.createElement("p", { className: "text-xs", style: { color: COLORS.terraText } }, "Paiement non confirmé pour l'instant. Si tu as bien payé, réessaie dans une minute ou contacte l'assistance.")
+          React.createElement("p", { className: "text-xs", style: { color: COLORS.terraText } }, "Paiement non confirmé pour l'instant. Si tu as bien payé, réessaie dans une minute ou contacte l'assistance." + (verifPaiementDetail ? " (Détail : " + verifPaiementDetail + ")" : ""))
         ),
         erreurPaiement && React.createElement("div", { className: "rounded-xl border p-3 flex items-center gap-2", style: { borderColor: COLORS.terra, backgroundColor: "rgba(255,180,171,0.1)" } },
           React.createElement(Icon, { name: "x", size: 14, color: COLORS.terraText }),
@@ -9614,6 +9614,7 @@
       // l'abonnement si c'est confirmé. Tant que la fonction n'a pas répondu, l'abonnement
       // n'est pas considéré comme actif — pas de confiance aveugle dans le retour d'URL.
       const [verifPaiementStatut, setVerifPaiementStatut] = useState(null); // null | "en_cours" | "ok" | "erreur"
+      const [verifPaiementDetail, setVerifPaiementDetail] = useState("");
       const verifierPaiement = useCallback((ref) => {
         if (!authUser || !ref) return;
         setVerifPaiementStatut("en_cours");
@@ -9624,8 +9625,9 @@
         }).then(res => res.json()).then(data => {
           const ok = !!(data && data.ok);
           setVerifPaiementStatut(ok ? "ok" : "erreur");
+          setVerifPaiementDetail(ok ? "" : String((data && data.message) || "Réponse vide du serveur."));
           if (ok) { try { localStorage.removeItem("sabi_paiement_en_attente"); } catch {} }
-        }).catch(() => setVerifPaiementStatut("erreur"));
+        }).catch((e) => { setVerifPaiementStatut("erreur"); setVerifPaiementDetail("Serveur injoignable : " + ((e && e.message) || "réseau")); });
       }, [authUser]);
 
       // Cas web : retour de NotchPay avec ?paiement=retour&ref=...
@@ -10031,7 +10033,7 @@
         supportAdmin: () => React.createElement(SupportAdminTab, { isOwner: isOwner }),
         classement: () => React.createElement(ClassementTab, { logs: pointsLogs, authUid: authUser.uid, pseudo: pseudo, profil: profil, onGagnerPoints: addPoints }),
         membres: () => React.createElement(MembresTab, { membres: membresList, isOwner: isOwner, isAdmin: isAdminEffectif }),
-        boutique: () => React.createElement(BoutiqueTab, { points: points, badges: badges, badgeActif: badgeActif, vip: vip, bounties: bounties, pseudo: pseudo, authUid: authUser.uid, abonnement: abonnement, promos: promos, verifPaiementStatut: verifPaiementStatut, onBuyBadge: handleBuyBadge, onSetBadgeActif: handleSetBadgeActif, onBuyVip: handleBuyVip, onCreateBounty: handleCreateBounty, onRespondBounty: handleRespondBounty, onChooseWinner: handleChooseWinner, onDemandeAbonnement: handleDemandeAbonnement, onPayerAbonnement: handleDemarrerPaiement }),
+        boutique: () => React.createElement(BoutiqueTab, { points: points, badges: badges, badgeActif: badgeActif, vip: vip, bounties: bounties, pseudo: pseudo, authUid: authUser.uid, abonnement: abonnement, promos: promos, verifPaiementStatut: verifPaiementStatut, verifPaiementDetail: verifPaiementDetail, onBuyBadge: handleBuyBadge, onSetBadgeActif: handleSetBadgeActif, onBuyVip: handleBuyVip, onCreateBounty: handleCreateBounty, onRespondBounty: handleRespondBounty, onChooseWinner: handleChooseWinner, onDemandeAbonnement: handleDemandeAbonnement, onPayerAbonnement: handleDemarrerPaiement }),
         carte: () => React.createElement(CarteTab, { points: cartePoints, onAddPoint: handleAddCartePoint, onUpdatePoint: handleUpdateCartePoint, onDeletePoint: handleDeleteCartePoint, isOwner: isOwner }),
         actualites: () => React.createElement(FilTab, { cards: cards, onVote: handleVote, myVotes: myVotes, onPin: handleEpingle, points: points, pseudo: pseudo, isOwner: isOwner, isAdmin: isAdminEffectif, onDelete: handleDeleteCard, onClearAll: handleClearAllCards }),
         chat: () => React.createElement(ChatTab, { messages: chatMessages, pseudo: pseudo, onSend: handleSendMessage }),
