@@ -116,7 +116,10 @@ async function gererRequete(event) {
       headers: { Authorization: NOTCHPAY_SECRET_KEY }
     });
     const notchData = await notchResp.json();
-    const statutNotchPay = notchData && notchData.payment && notchData.payment.status;
+    // NotchPay renvoie le paiement dans "transaction" (et non "payment") : lire "payment" donnait
+    // toujours "inconnu", donc l'abonnement ne s'activait jamais malgré un paiement réussi.
+    const txNotchPay = notchData && (notchData.transaction || notchData.payment);
+    const statutNotchPay = txNotchPay && txNotchPay.status;
     if (statutNotchPay !== "complete") {
       return { statusCode: 200, body: JSON.stringify({ ok: false, message: "Paiement pas encore confirmé par NotchPay (statut : " + (statutNotchPay || "inconnu") + ")." }) };
     }
