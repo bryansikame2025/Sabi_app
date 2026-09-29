@@ -18,10 +18,7 @@
        erreurs de code, plus utiles à moi (Claude) qu'à l'utilisateur. -->
   <script>
     window.addEventListener("error", function (e) {
-      var estBibliothequeManquante = /^[A-Za-z_$][\w$]* is not defined$/.test(e.message || "")
-        && ["React", "ReactDOM", "firebase", "L", "katex", "marked", "emailjs", "Tone"].some(
-          nom => (e.message || "").indexOf(nom + " is not defined") === 0
-        );
+      var estBibliothequeManquante = /\b(React|ReactDOM|firebase|L|katex|marked|emailjs|Tone) is not defined/.test(e.message || "");
       var pre = document.createElement("div");
       if (estBibliothequeManquante) {
         pre.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#131313;color:#f6f3ec;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:sans-serif;gap:14px;";
@@ -62,7 +59,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script>window.React||document.write('<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"><\/script>');</script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script>window.ReactDOM||document.write('<script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"><\/script>');</script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <script>
@@ -82,9 +81,13 @@
   </script>
   <!-- Firebase (version compat = plus simple, pas besoin de "import") -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script>window.firebase||document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/firebase-app-compat.js"><\/script>');</script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script>(window.firebase&&firebase.database)||document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/firebase-database-compat.js"><\/script>');</script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script>(window.firebase&&firebase.auth)||document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/firebase-auth-compat.js"><\/script>');</script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+  <script>(window.firebase&&firebase.messaging)||document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/firebase-messaging-compat.js"><\/script>');</script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     :root {
@@ -9593,7 +9596,16 @@
           })
         ).then(res => res.json().then(data => {
           if (!res.ok || !data.authorization_url) throw new Error((data && data.message) || "Échec de l'initialisation du paiement.");
-          window.location.href = data.authorization_url;
+          // On mémorise la référence : au retour dans l'app (fermeture du navigateur, ou simple
+          // bascule d'application), on vérifie tout seul le paiement — même si NotchPay n'a pas
+          // pu rouvrir Sabi lui-même (une page web ne peut pas relancer une app native).
+          try { localStorage.setItem("sabi_paiement_en_attente", JSON.stringify({ ref: paiementId, ts: Date.now() })); } catch {}
+          const { Browser } = (window.Capacitor && window.Capacitor.Plugins) || {};
+          if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && Browser) {
+            Browser.open({ url: data.authorization_url });
+          } else {
+            window.location.href = data.authorization_url;
+          }
         }));
       }, [authUser, pseudo, promos]);
 
@@ -9602,18 +9614,46 @@
       // l'abonnement si c'est confirmé. Tant que la fonction n'a pas répondu, l'abonnement
       // n'est pas considéré comme actif — pas de confiance aveugle dans le retour d'URL.
       const [verifPaiementStatut, setVerifPaiementStatut] = useState(null); // null | "en_cours" | "ok" | "erreur"
-      useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get("paiement") !== "retour" || !params.get("ref") || !authUser) return;
+      const verifierPaiement = useCallback((ref) => {
+        if (!authUser || !ref) return;
         setVerifPaiementStatut("en_cours");
         fetch(NETLIFY_BASE_URL + "/.netlify/functions/verifier-paiement", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reference: params.get("ref"), uid: authUser.uid })
+          body: JSON.stringify({ reference: ref, uid: authUser.uid })
         }).then(res => res.json()).then(data => {
-          setVerifPaiementStatut(data && data.ok ? "ok" : "erreur");
+          const ok = !!(data && data.ok);
+          setVerifPaiementStatut(ok ? "ok" : "erreur");
+          if (ok) { try { localStorage.removeItem("sabi_paiement_en_attente"); } catch {} }
         }).catch(() => setVerifPaiementStatut("erreur"));
       }, [authUser]);
+
+      // Cas web : retour de NotchPay avec ?paiement=retour&ref=...
+      useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("paiement") !== "retour" || !params.get("ref") || !authUser) return;
+        verifierPaiement(params.get("ref"));
+      }, [authUser, verifierPaiement]);
+
+      // Cas app native : dès que l'utilisateur revient dans Sabi (fermeture du navigateur de
+      // paiement ou bascule d'appli), on vérifie le paiement en attente (valable 24 h).
+      useEffect(() => {
+        if (!authUser) return;
+        const enAttente = () => {
+          try {
+            const p = JSON.parse(localStorage.getItem("sabi_paiement_en_attente") || "null");
+            return p && p.ref && Date.now() - p.ts < 24 * 60 * 60 * 1000 ? p.ref : null;
+          } catch { return null; }
+        };
+        const ref0 = enAttente();
+        if (ref0) verifierPaiement(ref0);
+        const { App, Browser } = (window.Capacitor && window.Capacitor.Plugins) || {};
+        const handles = [];
+        const surRetour = () => { const r = enAttente(); if (r) { if (Browser && Browser.close) { try { Browser.close(); } catch {} } verifierPaiement(r); } };
+        if (App && App.addListener) handles.push(App.addListener("appStateChange", st => { if (st && st.isActive) surRetour(); }));
+        if (Browser && Browser.addListener) handles.push(Browser.addListener("browserFinished", surRetour));
+        return () => { handles.forEach(h => { try { Promise.resolve(h).then(x => x && x.remove && x.remove()); } catch {} }); };
+      }, [authUser, verifierPaiement]);
 
       // L'utilisateur ne peut pas changer son année directement — il soumet une demande,
       // seul le propriétaire peut la valider (voir Security Rules : "annee" n'est plus
@@ -9937,8 +9977,8 @@
           dernierAppuiRetour.current = maintenant;
           showToast("Appuie encore sur retour pour quitter");
         };
-        App.addListener("backButton", gerer);
-        return () => { App.removeAllListeners(); };
+        const handle = App.addListener("backButton", gerer);
+        return () => { Promise.resolve(handle).then(x => x && x.remove && x.remove()); };
       }, [tab, estProfil, afficherRetour, retourVers, tabAvantProfil, menuOuvert]);
 
       // Tant qu'on ne sait pas si l'utilisateur est connecté, on attend
