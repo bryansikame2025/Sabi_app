@@ -2240,7 +2240,7 @@
     // circuit manuel (Orange Money / MTN MoMo envoyé à la main, validé par le propriétaire).
     const PAIEMENT_AUTO_ACTIF = true;
     // Clé publique NotchPay (test ou prod) — sans risque à exposer, voir explication ci-dessus.
-    const NOTCHPAY_CLE_PUBLIQUE = "pk_test.kcBd954zkTwE9JjJQXEog74BPbus4vQQIu0rseJJNCmFMtEeXMTMdxm1oZy6MBM2VGEAZkP4yhLR3XTkdGM2O2kXIs20fI47RyktGjJ4h0C0WtbgZaXvcNefz5fsi";
+    const NOTCHPAY_CLE_PUBLIQUE = "pk.ZFL3RWzskBg99qsMnHUJX5wlxZvjM5z5MLNfEO8C5Rm2QkfiLouuRynHGbp2OUS6T4SxikBtXvK5Fw4v2YR4QiBVwqmaJOPQXzydyiuVB2pRZihjRgOIadcf9aXcL";
     // ⚠️ À REMPLACER : le numéro Orange Money / MTN MoMo qui reçoit les paiements manuels.
     const PAIEMENT_MANUEL_NUMERO = "658 68 25 93";
     // Même numéro, joignable sur WhatsApp — utilisé pour que les étudiants envoient
@@ -5438,10 +5438,11 @@
       const [portee, setPortee] = useState("filiere"); // "filiere" | "ecole"
       const [stats, setStats] = useState({});
       const [reclames, setReclames] = useState({});
+      const [erreurLecture, setErreurLecture] = useState(false);
       const semaine = React.useMemo(() => semaineCle(), []);
       useEffect(() => {
         const ref = classementHebdoRef.child(semaine);
-        const l = ref.on("value", snap => setStats(snap.val() || {}), () => {});
+        const l = ref.on("value", snap => { setErreurLecture(false); setStats(snap.val() || {}); }, () => setErreurLecture(true));
         return () => ref.off("value", l);
       }, [semaine]);
       useEffect(() => {
@@ -5497,6 +5498,8 @@
             style: vue === id ? { backgroundColor: COLORS.gold, color: COLORS.bg, fontWeight: 700 } : { color: COLORS.textMuted }
           }, label))
         ),
+
+        erreurLecture && React.createElement("p", { className: "text-xs rounded-xl border p-3", style: { color: COLORS.gold, borderColor: COLORS.gold } }, "Impossible de lire le classement : les règles Firebase (classementHebdo) ne sont pas encore publiées."),
 
         (vue === "quiz" || vue === "focus") && React.createElement("div", { className: "flex gap-2" },
           [["filiere", "Ma filière"], ["ecole", "Toute l'école"]].map(([id, label]) => React.createElement("button", {
@@ -6779,7 +6782,7 @@
         { id: "carte", label: "Carte du campus", icon: "map", desc: "Salles, bâtiments, photocopies" },
         { id: "chat", label: "Fil & Chat", icon: "message-circle", desc: "Astuces, plans, entraide" },
         { id: "boussole", label: "Boussole", icon: "compass", desc: "Parcours du nouvel arrivant" },
-        { id: "classement", label: "Classement", icon: "trophy", desc: "Top contributeurs de la semaine" },
+        { id: "classement", label: "Classement", icon: "trophy", desc: "Quiz, Focus et défis de la semaine" },
         { id: "boutique", label: "Boutique & Bounty", icon: "shopping-bag", desc: "Badges, VIP, primes" },
       ];
 
