@@ -5591,14 +5591,20 @@
 
       if (!acces) return React.createElement(PaywallSabiPro, { setTab: setTab, palierRequis: "proplus" });
 
-      const resumesFiltres = resumes.filter(r =>
+      // Même restriction que pour les épreuves (voir EpreuvesTab) : un étudiant Pro+ normal ne
+      // voit que les résumés du semestre EN COURS. Son abonnement "semestre" expire à la fin de
+      // celui pour lequel il a payé ; sans ce filtre, il pourrait consulter les résumés de
+      // l'autre semestre pendant que son abonnement est encore valide pour le sien.
+      const resumesVisibles = (isOwner || isAdmin) ? resumes : resumes.filter(r => r.semestre === semestreActuel(Date.now()));
+
+      const resumesFiltres = resumesVisibles.filter(r =>
         (filtreAnneeRes === "Toutes" || r.annee === filtreAnneeRes) &&
         (filtreFiliereRes === "Toutes" || r.filiere === filtreFiliereRes) &&
         (filtreSemestreRes === "Toutes" || r.semestre === filtreSemestreRes) &&
         (!matiereRapideRes || r.matiere === matiereRapideRes)
       );
       const matieresDisponibles = [...new Set(
-        resumes.filter(r => (filtreAnneeRes === "Toutes" || r.annee === filtreAnneeRes) && (filtreFiliereRes === "Toutes" || r.filiere === filtreFiliereRes) && (filtreSemestreRes === "Toutes" || r.semestre === filtreSemestreRes)).map(r => r.matiere)
+        resumesVisibles.filter(r => (filtreAnneeRes === "Toutes" || r.annee === filtreAnneeRes) && (filtreFiliereRes === "Toutes" || r.filiere === filtreFiliereRes) && (filtreSemestreRes === "Toutes" || r.semestre === filtreSemestreRes)).map(r => r.matiere)
       )].sort((a, b) => a.localeCompare(b));
 
       const CONTENU_MIN_POUR_IA_RESUME = 50;
