@@ -3641,7 +3641,9 @@
           // Le compte ET le profil sont créés côté serveur, en une seule fois, avec les droits
           // admin — voir netlify/functions/inscription.js. Le téléphone n'a plus qu'à envoyer
           // les informations et à attendre une réponse claire : succès, ou erreur précise.
-          const resp = await fetch(NETLIFY_BASE_URL + "/.netlify/functions/inscription", {
+          const estNatif = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+          // Web : même domaine que l'appli (pas de CORS). Appli native : adresse complète.
+          const resp = await fetch((estNatif ? NETLIFY_BASE_URL : "") + "/.netlify/functions/inscription", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -3657,13 +3659,19 @@
           }
           // Compte et profil confirmés existants côté serveur : on se connecte maintenant
           // normalement, sans aucun risque de tomber sur un profil vide entre-temps.
-          await auth.signInWithEmailAndPassword(email.trim(), password);
+          try {
+            await auth.signInWithEmailAndPassword(email.trim(), password);
+          } catch (e2) {
+            setErreur("Compte créé, mais la connexion a échoué (" + ((e2 && (e2.code || e2.message)) || "inconnu") + "). Essaie de te connecter.");
+            setChargement(false);
+            return;
+          }
           // Trace de l'acceptation (date). "Au mieux" : si les règles Firebase refusent l'écriture,
           // l'inscription n'est pas bloquée pour autant.
           try { await usersRef.child(auth.currentUser.uid).child("confidentialiteAcceptee").set(Date.now()); } catch {}
           try { sessionStorage.removeItem("sabiInscriptionBrouillon"); } catch {}
         } catch (e) {
-          setErreur("Impossible de contacter le serveur, vérifie ta connexion et réessaie.");
+          setErreur("Impossible de contacter le serveur, vérifie ta connexion et réessaie. [" + ((e && e.message) || "réseau") + "]");
           setChargement(false);
         }
       };
