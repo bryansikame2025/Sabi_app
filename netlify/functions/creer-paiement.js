@@ -48,7 +48,12 @@ exports.handler = async (event) => {
       return S.reponse(502, { ok: false, message: "NotchPay a refusé la création du paiement" + (data && data.message ? " : " + data.message : " (HTTP " + resp.status + ")") + "." });
     }
 
-    const notchRef = data.transaction && data.transaction.reference;
+    // Référence NotchPay (trx.xxx) : dans la réponse, sinon extraite de l'adresse de paiement.
+    let notchRef = data.transaction && data.transaction.reference;
+    if (!notchRef) {
+      const m = String(data.authorization_url).match(/\/(trx[._][\w.-]+)/i);
+      if (m) notchRef = m[1];
+    }
     if (notchRef) await S.db(c, "PATCH", `paiements/${ref}`, { notchRef });
     return S.reponse(200, { ok: true, reference: ref, authorization_url: data.authorization_url, montant: effectif });
   } catch (err) {
