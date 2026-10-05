@@ -62,7 +62,7 @@ async function obtenirAccessToken(c) {
   const entete = base64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const revendications = base64url(JSON.stringify({
     iss: c.clientEmail,
-    scope: "https://www.googleapis.com/auth/firebase.database https://www.googleapis.com/auth/userinfo.email",
+    scope: "https://www.googleapis.com/auth/firebase.database https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/identitytoolkit",
     aud: "https://oauth2.googleapis.com/token",
     iat: maintenant,
     exp: maintenant + 3600
@@ -158,7 +158,7 @@ async function confirmerPaiement(c, ref, source) {
   if (statut !== "complete") {
     return {
       ok: false, code: 200,
-      message: "Paiement pas encore confirmé par NotchPay (statut : " + (statut || "inconnu") + ") [NotchPay HTTP " + http + (data && data.message ? " : " + data.message : "") + "]."
+      message: "Paiement pas encore confirmé par NotchPay (statut : " + (statut || "inconnu") + ") [NotchPay HTTP " + http + (data && data.message ? " : " + data.message : "") + " ; référence testée : " + (paiement.notchRef ? "trx enregistrée" : "aucune trx enregistrée, essai avec " + ref) + "]."
     };
   }
 
@@ -201,7 +201,14 @@ async function confirmerPaiement(c, ref, source) {
   return { ok: true, code: 200, message: "Abonnement activé." };
 }
 
+// Identifiant du projet Firebase, déduit de l'email du compte de service (xxx@PROJET.iam.gserviceaccount.com).
+function projetId(c) {
+  const m = String(c.clientEmail || "").match(/@([^.]+)\.iam\.gserviceaccount\.com$/);
+  return process.env.FIREBASE_PROJECT_ID || (m && m[1]) || "";
+}
+
 module.exports = {
+  projetId,
   PRIX, CORS_HEADERS, reponse, config, manquants, db, verifierIdToken, prixAttendu,
   finDuSemestreActuel, finDeLAnneeActuelle, notchGet, confirmerPaiement, obtenirAccessToken
 };
