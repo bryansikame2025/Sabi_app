@@ -38,7 +38,7 @@ async function obtenirAccessToken(clientEmail, privateKey) {
   return data.access_token;
 }
 
-exports.handler = async (event) => {
+async function traiter(event) {
   if (event.httpMethod !== "POST") return { statusCode: 405, body: JSON.stringify({ erreur: "Méthode non autorisée." }) };
 
   let payload;
@@ -129,4 +129,25 @@ exports.handler = async (event) => {
   }
 
   return { statusCode: 200, body: JSON.stringify({ ok: true, uid }) };
+}
+
+// CORS : l'appli installée (Capacitor) appelle cette fonction depuis une autre origine que
+// le site Netlify. Sans ces en-têtes, le navigateur bloque l'appel (« Failed to fetch »).
+const ENTETES_CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json"
+};
+
+exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: ENTETES_CORS, body: "" };
+  let res;
+  try {
+    res = await traiter(event);
+  } catch (e) {
+    console.error("Erreur inattendue :", e && e.message || e);
+    res = { statusCode: 500, body: JSON.stringify({ erreur: "Erreur serveur inattendue.", detail: String((e && e.message) || e) }) };
+  }
+  return { ...res, headers: { ...ENTETES_CORS, ...(res.headers || {}) } };
 };
