@@ -3641,7 +3641,7 @@
           // Le compte ET le profil sont créés côté serveur, en une seule fois, avec les droits
           // admin — voir netlify/functions/inscription.js. Le téléphone n'a plus qu'à envoyer
           // les informations et à attendre une réponse claire : succès, ou erreur précise.
-          const resp = await fetch("/.netlify/functions/inscription", {
+          const resp = await fetch(NETLIFY_BASE_URL + "/.netlify/functions/inscription", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
