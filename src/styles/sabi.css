@@ -1,0 +1,437 @@
+/* =====================================================================
+   SABI — feuille de style principale (sabi.css)
+   Thème "Nocturne" : encre sombre / lavande clair, verre dépoli, relief doux,
+   effets dynamiques. Les couleurs sont pilotées par des variables CSS qui sont
+   réécrites par le script de l'appli selon le thème (sombre / clair).
+   À placer à côté de index.html.
+   ===================================================================== */
+
+:root {
+  /* ===== "Nocturne" : encre sombre, accent lavande, verre dépoli + néomorphisme ===== */
+  --bg: #0b0a12;
+  --surface: #14121f;
+  --surface-2: #1a1728;
+  --border: #2b2742;
+  --border-strong: #4b4570;
+  --text: #eeebfa;
+  --text-muted: #bdb7d9;
+  --text-faint: #8f89b0;
+  --gold: #a99bff;
+  --accent-rgb: 169,155,255;
+  --accent-grad: linear-gradient(135deg, #c9c0ff 0%, #a99bff 50%, #8d78ff 100%);
+  --glass-bg: rgba(26,23,44,0.62);
+  --glass-border: rgba(255,255,255,0.09);
+  --field-bg: rgba(255,255,255,0.05);
+  --sh-dark: rgba(0,0,0,0.55);
+  --sh-light: rgba(140,120,255,0.055);
+  --hl: rgba(255,255,255,0.055);
+  --aurora-1: rgba(124,92,240,0.20);
+  --aurora-2: rgba(59,130,246,0.10);
+  --aurora-3: rgba(236,72,153,0.07);
+  --gold-soft: rgba(var(--accent-rgb), 0.14);
+  --forest: #6ee7a8;
+  --forest-soft: rgba(110,231,168,0.13);
+  --terra: #ff8f9e;
+  --terra-soft: rgba(255,143,158,0.13);
+  --font-ui: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+body, html { margin: 0; padding: 0; background: var(--bg); overflow-x: hidden; max-width: 100vw; overscroll-behavior-y: contain; }
+body {
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  /* Aurore : trois halos flous (violet, bleu, rose) derrière tout l'écran */
+  background:
+    radial-gradient(ellipse 760px 520px at 12% -6%, var(--aurora-1), transparent 62%),
+    radial-gradient(ellipse 640px 480px at 105% 18%, var(--aurora-2), transparent 58%),
+    radial-gradient(ellipse 600px 420px at 40% 108%, var(--aurora-3), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+::selection { background: rgba(var(--accent-rgb), 0.35); color: var(--text); }
+*:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 6px; }
+.outline-none:focus-visible { outline: none !important; }
+
+/* Étiquettes "petites capitales" : même police que le reste (plus de look "terminal"),
+   seuls les chiffres restent en monospace. */
+.font-mono.uppercase { font-family: var(--font-ui) !important; font-weight: 600; letter-spacing: 0.07em; }
+
+/* Filet décoratif : un simple trait lumineux, plus discret que l'ancien tissage tricolore */
+.kente-rule {
+  height: 1px; border: none; opacity: 1;
+  background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.55), transparent);
+}
+
+/* ===== Cartes : relief doux (néomorphisme) ===== */
+.rounded-lg.border {
+  border-radius: 22px !important;
+  border-color: var(--glass-border);
+  background-image: linear-gradient(145deg, var(--hl), transparent 55%);
+  box-shadow:
+    10px 10px 26px -8px var(--sh-dark),
+    -6px -6px 18px -6px var(--sh-light),
+    inset 0 1px 0 var(--hl);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  position: relative;
+}
+.rounded-lg { border-radius: 18px !important; }
+
+/* Verre dépoli (header, barre du bas, carte de connexion) */
+.sabi-glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid var(--glass-border);
+}
+.sabi-glass-card {
+  width: 100%;
+  padding: 28px 22px;
+  border-radius: 30px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.10), rgba(255,255,255,0.025) 60%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 30px 60px -28px var(--sh-dark), inset 0 1px 0 rgba(255,255,255,0.14);
+}
+
+/* Écrin circulaire du blason */
+.sabi-emblem {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, rgba(var(--accent-rgb),0.22), rgba(var(--accent-rgb),0.03) 70%), var(--surface-2);
+  border: 1px solid rgba(var(--accent-rgb),0.40);
+  box-shadow: 0 0 0 6px rgba(var(--accent-rgb),0.07), 0 18px 34px -12px rgba(var(--accent-rgb),0.45);
+}
+.sabi-emblem img { border-radius: 999px; }
+
+/* Boutons pleins : dégradé lavande + halo coloré */
+.sabi-btn-gold {
+  background: var(--accent-grad) !important;
+  border: none !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.35) inset, 0 14px 28px -12px rgba(var(--accent-rgb),0.75);
+}
+.sabi-btn-gold:active { box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset, 0 6px 14px -8px rgba(var(--accent-rgb),0.6); }
+
+/* Bouton flottant (Publier) : rond, halo violet */
+.sabi-fab {
+  border-radius: 50% !important;
+  background: var(--accent-grad) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.35) inset, 0 16px 30px -10px rgba(var(--accent-rgb),0.8) !important;
+}
+
+/* ===== Barre du bas : capsule de verre flottante + bouton central surélevé ===== */
+.sabi-nav-wrap { padding: 4px 14px calc(12px + env(safe-area-inset-bottom)); flex-shrink: 0; }
+.sabi-nav {
+  position: relative; display: flex; align-items: center; justify-content: space-between;
+  height: 66px; padding: 0 8px; border-radius: 28px;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 22px 40px -18px var(--sh-dark), inset 0 1px 0 var(--hl);
+}
+.sabi-nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.01em; padding: 4px 0;
+}
+.sabi-nav-chip {
+  width: 44px; height: 30px; border-radius: 15px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+}
+.sabi-nav-chip.actif {
+  background: rgba(var(--accent-rgb), 0.16);
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.28) inset, 0 8px 18px -8px rgba(var(--accent-rgb), 0.6);
+  transform: translateY(-1px);
+}
+.sabi-nav-center { flex: 1.15; display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative; font-size: 10px; font-weight: 700; }
+.sabi-nav-orb {
+  width: 58px; height: 58px; margin-top: -34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-grad);
+  /* anneau de la couleur du fond = effet d'encoche autour du bouton */
+  box-shadow: 0 0 0 4px var(--bg), 0 1px 0 rgba(255,255,255,0.4) inset, 0 16px 30px -8px rgba(var(--accent-rgb), 0.8);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.sabi-nav-orb.actif { transform: translateY(-2px) scale(1.04); box-shadow: 0 0 0 4px var(--bg), 0 1px 0 rgba(255,255,255,0.4) inset, 0 20px 36px -8px rgba(var(--accent-rgb), 1); }
+
+/* --- En-tête : verre + halo --- */
+.sabi-header { background: var(--glass-bg); -webkit-backdrop-filter: blur(18px) saturate(150%); backdrop-filter: blur(18px) saturate(150%); }
+.sabi-header-glow {
+  position: absolute; inset: -40% -20%;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(var(--accent-rgb),0.20), transparent 55%),
+    radial-gradient(circle at 88% 70%, rgba(59,130,246,0.14), transparent 55%);
+  pointer-events: none;
+}
+@keyframes sabi-glow-drift { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(4%,-4%) scale(1.08); } }
+.sabi-emblem-pulse { }
+@keyframes sabi-emblem-pulse {
+  0%,100% { box-shadow: 0 0 0 1px rgba(var(--accent-rgb),0.08), 0 10px 24px -10px rgba(0,0,0,0.6); }
+  50% { box-shadow: 0 0 0 5px rgba(var(--accent-rgb),0.10), 0 10px 24px -10px rgba(0,0,0,0.6); }
+}
+.kente-rule-shimmer { position: relative; overflow: hidden; }
+.kente-rule-shimmer::after { content: ""; position: absolute; top: 0; bottom: 0; left: -30%; width: 30%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent); }
+@keyframes sabi-shimmer-sweep { 0% { left: -30%; } 100% { left: 130%; } }
+
+/* Champs : fond translucide, bordure douce, halo à la sélection */
+input, textarea, select { transition: border-color 150ms ease, box-shadow 150ms ease; }
+input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea, select { border-radius: 14px; }
+input:focus, textarea:focus, select:focus { border-color: var(--gold) !important; box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.18); }
+button { transition: transform 120ms ease, opacity 150ms ease, background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease; }
+button:active { transform: scale(0.95); }
+
+/* Barres de défilement discrètes (fil filière, épreuves...) */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, button, input, textarea, select { transition: none !important; animation: none !important; }
+}
+
+/* Mode Sauvetage — teinte d'alerte persistante sur tout l'écran tant que le mode est actif */
+@keyframes sabi-alerte-pulse { 0%,100% { background-color: rgba(239,68,68,0.13); } 50% { background-color: rgba(249,115,22,0.24); } }
+.sabi-sauvetage-teinte { animation: sabi-alerte-pulse 1.6s ease-in-out infinite; }
+/* Focus — teinte d'ambiance violette tant qu'une session est en cours */
+@keyframes sabi-focus-pulse { 0%,100% { background-color: rgba(124,92,240,0.10); } 50% { background-color: rgba(59,130,246,0.20); } }
+.sabi-focus-teinte { animation: sabi-focus-pulse 3s ease-in-out infinite; }
+@keyframes sabi-focus-pop { 0% { transform: scale(0.85); opacity: 0; } 60% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+.sabi-focus-fin { animation: sabi-focus-pop 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+/* Glissement (swipe) entre onglets adjacents — l'onglet entrant arrive du côté vers lequel on a poussé. */
+@keyframes sabi-slide-from-right {
+  0%   { transform: translateX(36px); opacity: 0.3; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+@keyframes sabi-slide-from-left {
+  0%   { transform: translateX(-36px); opacity: 0.3; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+.sabi-swipe-in-left { animation: sabi-slide-from-right 260ms cubic-bezier(0.22, 0.61, 0.36, 1); }
+.sabi-swipe-in-right { animation: sabi-slide-from-left 260ms cubic-bezier(0.22, 0.61, 0.36, 1); }
+@keyframes sabi-fade-up {
+  0%   { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.sabi-tab-fade { animation: sabi-fade-up 280ms cubic-bezier(0.22, 0.61, 0.36, 1); }
+
+/* Révélation en cascade : chaque enfant direct apparaît un peu après le précédent, au lieu
+   que toute une liste surgisse d'un bloc, c'est ça qui donne l'impression de vie sur les
+   écrans à listes (fil, épreuves, chat, classement...). Un seul className à poser sur le
+   conteneur, tout le reste est automatique en CSS pur. */
+.sabi-liste-animee > * {
+  animation: sabi-fade-up 420ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+}
+.sabi-liste-animee > *:nth-child(1) { animation-delay: 0ms; }
+.sabi-liste-animee > *:nth-child(2) { animation-delay: 40ms; }
+.sabi-liste-animee > *:nth-child(3) { animation-delay: 80ms; }
+.sabi-liste-animee > *:nth-child(4) { animation-delay: 120ms; }
+.sabi-liste-animee > *:nth-child(5) { animation-delay: 160ms; }
+.sabi-liste-animee > *:nth-child(6) { animation-delay: 200ms; }
+.sabi-liste-animee > *:nth-child(n+7) { animation-delay: 220ms; }
+
+/* Retour tactile plus vivant sur les cartes/lignes cliquables (pas seulement les boutons). */
+.sabi-carte-interactive { transition: transform 150ms ease, box-shadow 150ms ease; }
+.sabi-carte-interactive:active { transform: scale(0.98); }
+
+/* Toast (points gagnés, confirmations...) */
+@keyframes sabi-toast-in {
+  0%   { opacity: 0; transform: translate(-50%, -12px); }
+  100% { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes sabi-toast-out {
+  0%   { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -12px); }
+}
+.sabi-toast { animation: sabi-toast-in 200ms ease forwards; }
+.sabi-toast.sabi-toast-leaving { animation: sabi-toast-out 200ms ease forwards; }
+
+/* Silhouettes de chargement (skeleton) */
+@keyframes sabi-skeleton-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.sabi-skeleton { animation: sabi-skeleton-pulse 1.3s ease-in-out infinite; border-radius: 10px; }
+
+/* Rendu des corrigés (Markdown converti en HTML par marked.js + formules par KaTeX) */
+.corrige-rendu { line-height: 1.55; }
+.corrige-rendu h1, .corrige-rendu h2, .corrige-rendu h3, .corrige-rendu h4 { font-weight: 700; color: var(--text); margin: 0.9em 0 0.35em; }
+.corrige-rendu h1 { font-size: 1.15rem; }
+.corrige-rendu h2 { font-size: 1.08rem; }
+.corrige-rendu h3, .corrige-rendu h4 { font-size: 1rem; }
+.corrige-rendu p { margin: 0.5em 0; }
+.corrige-rendu strong { color: var(--text); font-weight: 700; }
+.corrige-rendu em { color: var(--gold); font-style: italic; }
+.corrige-rendu ul, .corrige-rendu ol { margin: 0.4em 0 0.6em 1.25em; }
+.corrige-rendu ul { list-style: disc; }
+.corrige-rendu ol { list-style: decimal; }
+.corrige-rendu li { margin: 0.2em 0; }
+.corrige-rendu code { background: rgba(var(--accent-rgb),0.14); color: var(--gold); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.85em; }
+.corrige-rendu pre { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.6em 0.8em; overflow-x: auto; margin: 0.5em 0; }
+.corrige-rendu pre code { background: none; padding: 0; }
+.corrige-rendu hr { border: none; border-top: 1px solid var(--border); margin: 1em 0; }
+.corrige-rendu blockquote { border-left: 3px solid var(--gold); padding-left: 0.75em; color: var(--text-muted); margin: 0.5em 0; }
+.corrige-rendu, .corrige-rendu * { color: var(--text) !important; }
+.corrige-rendu strong { color: var(--text) !important; font-weight: 700; }
+.corrige-rendu em { color: var(--gold) !important; font-style: italic; }
+.corrige-rendu code { color: var(--gold) !important; }
+.corrige-rendu .katex { font-size: 1em; }
+.corrige-rendu .katex-display { overflow-x: auto; overflow-y: hidden; margin: 0.6em 0; }
+.corrige-rendu .katex .frac-line, .corrige-rendu .katex .rule { border-color: var(--text) !important; background: var(--text) !important; }
+
+/* Contenu protégé (épreuves) : ni sélection, ni menu d'enregistrement, ni impression. */
+.sabi-protege, .sabi-protege * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+img { -webkit-touch-callout: none; }
+@media print { #root { display: none !important; } }
+
+/* =====================================================================
+   EFFETS DYNAMIQUES / FUTURISTES
+   Uniquement des animations "transform / opacity" (légères pour le processeur graphique).
+   Désactivées automatiquement si l'appareil demande moins d'animations
+   (prefers-reduced-motion). Le "mode léger" (classe sabi-lite sur <html>) retire
+   seulement le flou de verre et les ombres animées, pour les téléphones à 2 Go de RAM.
+   ===================================================================== */
+:root {
+  --font-num: 'Space Grotesk', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+@keyframes sabi-spin { to { transform: rotate(360deg); } }
+@keyframes sabi-aurora {
+  0%   { transform: translate3d(-3%, -2%, 0) scale(1); }
+  50%  { transform: translate3d(3%, 2%, 0) scale(1.08); }
+  100% { transform: translate3d(-2%, 3%, 0) scale(1.04); }
+}
+@keyframes sabi-sheen {
+  0%, 60% { transform: translateX(-140%) skewX(-18deg); }
+  100%    { transform: translateX(380%) skewX(-18deg); }
+}
+@keyframes sabi-orb-pulse {
+  0%   { transform: scale(1);    opacity: 0.6; }
+  70%  { transform: scale(1.32); opacity: 0; }
+  100% { transform: scale(1.32); opacity: 0; }
+}
+@keyframes sabi-skel { to { transform: translateX(100%); } }
+@keyframes sabi-emblem-pulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(var(--accent-rgb), 0.07), 0 18px 34px -12px rgba(var(--accent-rgb), 0.45); }
+  50%      { box-shadow: 0 0 0 11px rgba(var(--accent-rgb), 0.12), 0 18px 46px -10px rgba(var(--accent-rgb), 0.75); }
+}
+
+/* --- Fond : aurore qui dérive lentement + grille de points façon "interface" --- */
+body::before {
+  content: ""; position: fixed; inset: -15%; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(circle at 25% 25%, rgba(var(--accent-rgb), 0.16), transparent 38%),
+    radial-gradient(circle at 78% 62%, rgba(59, 130, 246, 0.13), transparent 40%),
+    radial-gradient(circle at 45% 92%, rgba(236, 72, 153, 0.09), transparent 36%);
+  animation: sabi-aurora 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(var(--accent-rgb), 0.16) 1px, transparent 1.2px);
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 55% at 50% 0%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(ellipse 90% 55% at 50% 0%, #000 0%, transparent 75%);
+  opacity: 0.55;
+}
+[data-theme="clair"] body::before { opacity: 0.6; }
+
+/* --- Typographie : chiffres et valeurs en Space Grotesk (look technique) --- */
+.font-mono:not(.uppercase) { font-family: var(--font-num) !important; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+h1 { text-shadow: 0 0 28px rgba(var(--accent-rgb), 0.35); }
+
+/* --- Cartes : liseré lumineux sur le bord haut --- */
+.rounded-lg.border::before {
+  content: ""; position: absolute; top: 0; left: 20px; right: 20px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.6), transparent);
+  pointer-events: none;
+}
+
+/* --- Carte de connexion : coins "HUD" néon --- */
+.sabi-glass-card { position: relative; }
+.sabi-glass-card::before, .sabi-glass-card::after {
+  content: ""; position: absolute; width: 22px; height: 22px; pointer-events: none;
+  border: 2px solid rgba(var(--accent-rgb), 0.8);
+  filter: drop-shadow(0 0 6px rgba(var(--accent-rgb), 0.7));
+}
+.sabi-glass-card::before { top: 14px; left: 14px; border-right: 0; border-bottom: 0; border-top-left-radius: 10px; }
+.sabi-glass-card::after  { bottom: 14px; right: 14px; border-left: 0; border-top: 0; border-bottom-right-radius: 10px; }
+
+/* --- Boutons pleins : reflet qui balaie le bouton toutes les quelques secondes --- */
+.sabi-btn-gold { position: relative; overflow: hidden; isolation: isolate; }
+.sabi-btn-gold::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 34%; z-index: -1; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  transform: translateX(-140%) skewX(-18deg);
+  animation: sabi-sheen 4.4s ease-in-out infinite;
+}
+
+/* --- Bouton central de la barre du bas : anneau néon qui tourne + onde pulsée --- */
+.sabi-nav-orb { position: relative; }
+.sabi-nav-orb::before {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 0deg, #a99bff, #3b82f6, #ec4899, #a99bff);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.6px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.6px), #000 calc(100% - 2px));
+  animation: sabi-spin 6s linear infinite;
+}
+.sabi-nav-orb::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  border: 2px solid rgba(var(--accent-rgb), 0.65);
+  animation: sabi-orb-pulse 2.8s ease-out infinite;
+}
+.sabi-nav-chip.actif svg { filter: drop-shadow(0 0 6px rgba(var(--accent-rgb), 0.85)); }
+
+/* --- En-tête : balayage lumineux sur le filet + halo qui respire --- */
+.kente-rule { box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.5); }
+.kente-rule-shimmer::after { animation: sabi-shimmer-sweep 3.4s linear infinite; }
+.sabi-header-glow { animation: sabi-glow-drift 14s ease-in-out infinite alternate; }
+
+/* --- Blason, champs, bulle de confirmation, chargement --- */
+.sabi-emblem { animation: sabi-emblem-pulse 3.8s ease-in-out infinite; }
+input:focus, textarea:focus, select:focus { box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.18), 0 0 24px rgba(var(--accent-rgb), 0.28); }
+.sabi-toast { box-shadow: 0 12px 30px -8px rgba(var(--accent-rgb), 0.85); }
+.sabi-skeleton { position: relative; overflow: hidden; }
+.sabi-skeleton::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.09), transparent);
+  transform: translateX(-100%); animation: sabi-skel 1.5s ease-in-out infinite;
+}
+
+/* --- Mode léger (téléphones à 2 Go de RAM ou réglage manuel) : plus de flou de verre,
+       plus d'ombres animées. Les animations légères (aurore, anneau, reflets) restent. --- */
+html.sabi-lite .sabi-glass, html.sabi-lite .sabi-header, html.sabi-lite .sabi-nav, html.sabi-lite .sabi-glass-card {
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+html.sabi-lite .sabi-nav, html.sabi-lite .sabi-header { background: var(--surface-2) !important; }
+html.sabi-lite .sabi-glass-card { background: var(--surface) !important; }
+html.sabi-lite .sabi-emblem { animation: none; }
+html.sabi-lite .rounded-lg.border { box-shadow: 0 6px 14px -8px var(--sh-dark), inset 0 1px 0 var(--hl); }
+html.sabi-lite .sabi-skeleton::after { animation: none; }
+
+/* --- Animations coupées si l'utilisateur les a désactivées dans Android --- */
+@media (prefers-reduced-motion: reduce) {
+  body::before, .sabi-nav-orb::before, .sabi-nav-orb::after, .sabi-btn-gold::after,
+  .kente-rule-shimmer::after, .sabi-header-glow, .sabi-emblem, .sabi-skeleton::after { animation: none !important; }
+}
+
+
+/* =====================================================================
+   BOUCLIER ANTI-CAPTURE + FILIGRANE (déplacés depuis index.html)
+   ===================================================================== */
+#sabi-shield {
+  position: fixed; inset: 0; z-index: 999999;
+  background: #000; opacity: 0; pointer-events: none;
+}
+#sabi-shield.actif { opacity: 1; pointer-events: auto; }
+#sabi-watermark {
+  position: fixed; inset: 0; z-index: 999998; pointer-events: none;
+  overflow: hidden; opacity: 0.05;
+}
+#sabi-watermark span {
+  position: absolute; white-space: nowrap; color: #000;
+  font-size: 12px; font-weight: 700; transform: rotate(-30deg);
+}
+

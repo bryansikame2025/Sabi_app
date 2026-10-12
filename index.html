@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+  <title>Sabi : épreuves, corrections et suivi de notes pour l'IUT FV Bandjoun</title>
+
+  <!-- ===== Attrape-erreurs de secours ===== 
+       Sans bundler ni outils de dev sur téléphone, un écran blanc ne dit rien sur la
+       cause. Ce script (le tout premier à s'exécuter) affiche quelque chose à l'écran
+       plutôt que rien du tout quand une erreur JS empêche l'app de démarrer.
+       Cas particulier traité proprement : l'app charge React/Firebase/Tailwind/etc depuis
+       Internet à chaque démarrage (rien n'est intégré dans l'app), si le téléphone n'a
+       aucune connexion pile à ce moment, ces bibliothèques ne se chargent pas du tout et
+       une variable comme "React" ou "firebase" est alors "not defined". Dans ce cas précis
+       (repérable via ce message d'erreur), on affiche un écran clair "pas de connexion" avec
+       un bouton réessayer, plutôt que le détail technique en rouge, réservé aux vraies
+       erreurs de code, plus utiles à moi (Claude) qu'à l'utilisateur. -->
+  <script>
+    window.addEventListener("error", function (e) {
+      var estBibliothequeManquante = /\b(React|ReactDOM|firebase|L|katex|marked|emailjs|Tone) is not defined/.test(e.message || "");
+      var pre = document.createElement("div");
+      if (estBibliothequeManquante) {
+        pre.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#131313;color:#f6f3ec;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;font-family:sans-serif;gap:14px;";
+        pre.innerHTML =
+          '<div style="font-size:15px;font-weight:600;">Pas de connexion internet</div>' +
+          '<div style="font-size:13px;color:#a8a29a;max-width:280px;line-height:1.5;">Sabi a besoin d\'internet au moins une fois pour se charger. Connecte-toi puis réessaie.</div>' +
+          '<button id="sabi-reessayer" style="margin-top:8px;padding:10px 24px;border-radius:999px;background:#f2ca50;color:#131313;font-weight:600;border:none;font-size:14px;">Réessayer</button>';
+      } else {
+        pre.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#1a0000;color:#ff6b6b;padding:16px;font-size:12px;white-space:pre-wrap;overflow:auto;margin:0;font-family:monospace;";
+        pre.textContent = "Erreur JS au chargement :\n\n" + e.message + "\n\nFichier : " + e.filename + "\nLigne : " + e.lineno + ", colonne : " + e.colno + (e.error && e.error.stack ? "\n\nDétail :\n" + e.error.stack : "");
+      }
+      document.body.appendChild(pre);
+      var btn = document.getElementById("sabi-reessayer");
+      if (btn) btn.addEventListener("click", function () { window.location.reload(); });
+    });
+  </script>
+
+  <!-- PWA : rend l'appli "installable" sur l'écran d'accueil, sans passer par un store -->
+  <link rel="manifest" href="https://sabi-iut-fv.netlify.app/manifest.json" />
+  <meta name="theme-color" content="#0b0a12" />
+  <meta name="description" content="Révise avec les épreuves et leurs corrections, suis ta moyenne et gagne des points avec Sabi, l'application des étudiants de l'IUT FV Bandjoun." />
+  <link rel="canonical" href="https://sabi-iut-fv.netlify.app/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Sabi" />
+  <meta property="og:locale" content="fr_FR" />
+  <meta property="og:title" content="Sabi : épreuves, corrections et suivi de notes pour l'IUT FV Bandjoun" />
+  <meta property="og:description" content="Révise avec les épreuves et leurs corrections, suis ta moyenne et gagne des points avec Sabi, l'application des étudiants de l'IUT FV Bandjoun." />
+  <meta property="og:url" content="https://sabi-iut-fv.netlify.app/" />
+  <meta property="og:image" content="https://sabi-iut-fv.netlify.app/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Sabi, l'application des étudiants de l'IUT FV Bandjoun" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="background-color" content="#0b0a12" />
+  <link rel="icon" href="https://sabi-iut-fv.netlify.app/icons/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="icon" href="https://sabi-iut-fv.netlify.app/icons/favicon-16.png" sizes="16x16" type="image/png" />
+  <link rel="apple-touch-icon" href="https://sabi-iut-fv.netlify.app/icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sabi" />
+
+  <!-- Préconnexions : négocie DNS/TLS avec ces domaines en avance, pendant que le reste de la
+       page se charge, réduit le temps d'attente réel avant que chaque script démarre.
+       Aucun changement de comportement, juste plus rapide. -->
+  <link rel="preconnect" href="https://unpkg.com" crossorigin />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <script>
+    // Mode léger : sur un téléphone à 2 Go de RAM (ou moins), on retire seulement le flou de verre
+    // (le plus gourmand). Réglage manuel : localStorage.setItem("sabi_effets", "on" | "off").
+    (function () {
+      try {
+        var pref = localStorage.getItem("sabi_effets");
+        var leger = pref === "off" || (pref !== "on" && navigator.deviceMemory && navigator.deviceMemory <= 2);
+        if (leger) document.documentElement.classList.add("sabi-lite");
+      } catch (e) {}
+    })();
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    // Câble les polices importées dans les utilitaires Tailwind (font-sans / font-mono)
+    // — sans ça, les imports Google Fonts ci-dessus ne servent à rien.
+    // Charte "Academic Excellence" : plus de serif (Fraunces) — tout en Inter, mono en JetBrains Mono.
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Plus Jakarta Sans", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+            mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
+          },
+        },
+      },
+    };
+  </script>
+  <!-- Firebase (version compat = plus simple, pas besoin de "import") -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script>window.firebase||document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/firebase-app-compat.js"><\/script>');</script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script>(window.firebase&&firebase.database)||document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/firebase-database-compat.js"><\/script>');</script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script>(window.firebase&&firebase.auth)||document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/firebase-auth-compat.js"><\/script>');</script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+  <script>(window.firebase&&firebase.messaging)||document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/firebase-messaging-compat.js"><\/script>');</script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/marked@11/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/contrib/auto-render.min.js"></script>
+  <!-- Carte du campus — Leaflet + tuiles OpenStreetMap/Esri, gratuit et sans clé API ni facturation. -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Application React (Vite) : tout le code est dans src/ -->
+  <script type="module" src="/src/main.js"></script>
+
+  <script>
+    // Enregistre le service worker (PWA) — silencieux en cas d'échec, l'app reste
+    // utilisable normalement même si le navigateur ne le supporte pas.
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").then((reg) => {
+          // Background Sync : redéclenché à chaque retour réseau (best-effort, voir sw.js).
+          if ("sync" in reg) {
+            window.addEventListener("online", () => reg.sync.register("sabi-sync").catch(() => {}));
+          }
+          // Periodic Background Sync : nécessite en plus une permission explicite, accordée par
+          // Chrome seulement pour une PWA installée avec un usage régulier (jamais garanti).
+          if ("periodicSync" in reg) {
+            navigator.permissions.query({ name: "periodic-background-sync" }).then((status) => {
+              if (status.state === "granted") {
+                reg.periodicSync.register("sabi-rappels-epreuves", { minInterval: 12 * 60 * 60 * 1000 }).catch(() => {});
+              }
+            }).catch(() => {});
+          }
+        }).catch(() => {});
+      });
+    }
+  </script>
+
+  <!-- ===== Protection anti-capture / anti-fuite (best-effort) =====
+       Une vraie capture d'écran (touche du téléphone/PC) ne peut techniquement
+       pas être bloquée ni détectée par un site web, quel qu'il soit. Ce bloc fait
+       deux choses réalistes : (1) noircit l'écran dès que l'app perd le focus,
+       ce qui bloque la plupart des logiciels d'enregistrement d'écran et les
+       captures via changement d'onglet/app ; (2) appose un filigrane discret
+       avec l'identité de l'étudiant connecté, pour dissuader et tracer une
+       fuite si une capture "physique" (photo d'écran) échappe malgré tout. -->
+  
+  <div id="sabi-shield"></div>
+  <div id="sabi-watermark"></div>
+  <script>
+    (function () {
+      var shield = document.getElementById("sabi-shield");
+      function activer() { shield.classList.add("actif"); }
+      function desactiver() { shield.classList.remove("actif"); }
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) activer(); else desactiver();
+      });
+      window.addEventListener("blur", activer);
+      window.addEventListener("focus", desactiver);
+
+      // Limite la copie facile (n'empêche pas une capture physique de l'écran).
+      document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+      document.addEventListener("dragstart", function (e) { e.preventDefault(); });
+
+      // Filigrane traçable : identité de l'étudiant connecté (email Firebase Auth),
+      // répétée en discret sur les onglets Épreuves et Résumés (contenu sensible aux
+      // fuites : sujets, corrigés, résumés de cours). Reste permanent mais léger — pas
+      // de mode "saturé" : impossible de détecter une capture d'écran physique depuis
+      // un site web, donc pas de sens à réserver l'effet à ce moment précis (voir
+      // discussion). Invisible sur les autres onglets.
+      function poserFiligrane(texte) {
+        var wm = document.getElementById("sabi-watermark");
+        if (!wm) return;
+        texte = texte || window.__sabiFiligraneTexte || "Sabi";
+        var onglet = window.__sabiTabActif;
+        var actif = onglet === "epreuves" || onglet === "resumes";
+        wm.style.opacity = actif ? "0.05" : "0";
+        if (!actif) { wm.innerHTML = ""; return; }
+        var html = "";
+        for (var y = 0; y < 10; y++) {
+          for (var x = 0; x < 5; x++) {
+            html += '<span style="top:' + (y * 130) + 'px; left:' + (x * 240 - 80) + 'px;">' + texte + "</span>";
+          }
+        }
+        wm.innerHTML = html;
+      }
+      poserFiligrane();
+      window.__sabiActualiserFiligrane = poserFiligrane;
+      window.addEventListener("resize", function () { poserFiligrane(window.__sabiFiligraneTexte); });
+
+      // Se raccroche à Firebase Auth (déjà initialisé plus haut dans la page)
+      // pour afficher l'email de l'étudiant connecté dans le filigrane.
+      function connecterAuFirebaseAuth() {
+        if (window.firebase && firebase.apps && firebase.apps.length && firebase.auth) {
+          firebase.auth().onAuthStateChanged(function (user) {
+            var texte = (user && (user.email || user.uid)) || "Sabi";
+            window.__sabiFiligraneTexte = texte;
+            poserFiligrane(texte);
+          });
+        } else {
+          setTimeout(connecterAuFirebaseAuth, 500);
+        }
+      }
+      connecterAuFirebaseAuth();
+    })();
+  </script>
+</body>
+</html>

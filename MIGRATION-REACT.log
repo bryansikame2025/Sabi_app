@@ -1,0 +1,10 @@
+www/DESIGN.md -> public/DESIGN.md
+www/index.html rangé dans ancien/index.html
+www/logo-icon.png -> public/logo-icon.png
+www/logo-wordmark.png -> public/logo-wordmark.png
+www/og-image.png -> public/og-image.png
+Déplacés vers public/ : google-services.json, icon-192.png, icon-512-maskable.png, icon-512.png, icon-source.png
+Copié : src/, index.html, vite.config.mjs, workflows
+package.json fusionné (react, react-dom, vite ajoutés)
+netlify.toml : publish = dist, command = npx vite build
+capacitor.config.json : webDir = dist
