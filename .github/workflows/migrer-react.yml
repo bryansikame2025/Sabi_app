@@ -1,0 +1,32 @@
+# À COLLER dans GitHub : Add file > Create new file, nom : .github/workflows/migrer-react.yml
+# Puis envoyer le fichier sabi-react.zip à la racine du dépôt (Add file > Upload files).
+# GitHub prépare alors tout seul une branche "react" : ta branche principale n'est JAMAIS modifiée.
+name: Migrer vers React
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths: ['sabi-react.zip']
+
+permissions:
+  contents: write
+
+jobs:
+  migrer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Déballer le projet React dans une branche "react"
+        run: |
+          set -e
+          test -f sabi-react.zip || { echo "sabi-react.zip introuvable à la racine du dépôt"; exit 1; }
+          git config user.name "sabi-bot"
+          git config user.email "sabi-bot@users.noreply.github.com"
+          git checkout -B react
+          mkdir _nouveau
+          unzip -q sabi-react.zip -d _nouveau
+          python3 _nouveau/_migration/appliquer.py
+          git add -A
+          git commit -m "Migration de Sabi vers React (Vite)"
+          git push -f origin react
