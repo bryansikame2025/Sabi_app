@@ -27,12 +27,6 @@ jobs:
       - name: Installer les dependances
         run: npm install
 
-      - name: Construire le site React (Vite) -> dossier dist/
-        run: |
-          npx vite build
-          test -f dist/index.html || (echo "::error::dist/index.html introuvable : le build Vite a echoue" && exit 1)
-          ls dist
-
       - name: Ajouter la plateforme Android
         run: npx cap add android
 
@@ -45,7 +39,7 @@ jobs:
           pip install pillow -q
           python3 scripts/generate_icon.py
 
-      - name: Synchroniser le contenu web (dist/) vers l'app Android
+      - name: Synchroniser le contenu web (www/) vers l'app Android
         run: npx cap sync android
 
       - name: Generer l'ecran de demarrage (logo Sabi centre sur fond sombre)
@@ -99,7 +93,7 @@ jobs:
         run: cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/sabi.apk
 
       - name: Publier un lien de telechargement public (accessible a tous, sans compte GitHub)
-        if: ${{ github.event.inputs.pour_captures_ecran != 'true' && github.ref == 'refs/heads/main' }}
+        if: ${{ github.event.inputs.pour_captures_ecran != 'true' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: sabi-derniere-version
