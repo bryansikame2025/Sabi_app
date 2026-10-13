@@ -1346,6 +1346,378 @@ html.sabi-lite .hm-blob {
 html.sabi-lite .hm-ring-spin {
   animation: none;
 }
+.hm-fx-pin {
+  position: sticky;
+  top: 0;
+  height: 0;
+  margin-bottom: -2rem;
+  z-index: -1;
+  pointer-events: none;
+}
+.hm-fx {
+  position: absolute;
+  top: -16px;
+  left: -20px;
+  right: -20px;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  contain: layout paint;
+}
+.hm-fx > span {
+  position: absolute;
+  display: block;
+  will-change: transform;
+}
+.hm-stars {
+  left: 0;
+  width: 100%;
+  top: 0;
+  will-change: transform;
+}
+.hm-stars-1 {
+  height: calc(100% + 173px);
+  background-size: 173px 173px;
+  background-image:
+    radial-gradient(
+      1px 1px at 23px 31px,
+      rgba(255, 255, 255, .9),
+      transparent),
+    radial-gradient(
+      1px 1px at 97px 112px,
+      rgba(255, 255, 255, .75),
+      transparent),
+    radial-gradient(
+      1.4px 1.4px at 148px 57px,
+      rgba(255, 255, 255, .85),
+      transparent),
+    radial-gradient(
+      1px 1px at 61px 156px,
+      rgba(255, 255, 255, .7),
+      transparent);
+  animation: hm-drift-173 46s linear infinite;
+}
+.hm-stars-2 {
+  height: calc(100% + 251px);
+  background-size: 251px 251px;
+  opacity: .8;
+  background-image:
+    radial-gradient(
+      1.2px 1.2px at 40px 70px,
+      rgba(255, 255, 255, .85),
+      transparent),
+    radial-gradient(
+      1px 1px at 173px 29px,
+      rgba(255, 255, 255, .7),
+      transparent),
+    radial-gradient(
+      1.6px 1.6px at 210px 190px,
+      rgba(255, 255, 255, .9),
+      transparent),
+    radial-gradient(
+      1px 1px at 96px 220px,
+      rgba(255, 255, 255, .65),
+      transparent);
+  animation: hm-drift-251 78s linear infinite;
+}
+.hm-stars-3 {
+  height: calc(100% + 337px);
+  background-size: 337px 337px;
+  background-image:
+    radial-gradient(
+      2px 2px at 70px 90px,
+      rgba(255, 255, 255, .95),
+      transparent),
+    radial-gradient(
+      2.2px 2.2px at 250px 200px,
+      rgba(255, 235, 200, .95),
+      transparent),
+    radial-gradient(
+      1.8px 1.8px at 150px 300px,
+      rgba(200, 220, 255, .95),
+      transparent);
+  animation: hm-drift-337 120s linear infinite, hm-twinkle 5s ease-in-out infinite alternate;
+}
+@keyframes hm-drift-173 {
+  to {
+    transform: translateY(-173px);
+  }
+}
+@keyframes hm-drift-251 {
+  to {
+    transform: translateY(-251px);
+  }
+}
+@keyframes hm-drift-337 {
+  to {
+    transform: translateY(-337px);
+  }
+}
+@keyframes hm-twinkle {
+  from {
+    opacity: .35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.hm-shoot {
+  top: 14%;
+  left: -140px;
+  width: 120px;
+  height: 2px;
+  border-radius: 2px;
+  opacity: 0;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, .95));
+  transform: rotate(24deg);
+  animation: hm-shoot 11s ease-in 3s infinite;
+}
+@keyframes hm-shoot {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(24deg);
+  }
+  3% {
+    opacity: 1;
+  }
+  12% {
+    opacity: 0;
+    transform: translate(520px, 230px) rotate(24deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(520px, 230px) rotate(24deg);
+  }
+}
+.hm-rib {
+  left: -30%;
+  width: 160%;
+  height: 240px;
+  border-radius: 50%;
+  opacity: .85;
+}
+.hm-rib-1 {
+  top: 6%;
+  background:
+    radial-gradient(
+      ellipse at 50% 50%,
+      var(--hm-blob-a),
+      transparent 68%);
+  transform: rotate(-14deg);
+  animation: hm-rib-1 19s ease-in-out infinite alternate;
+}
+.hm-rib-2 {
+  top: 26%;
+  background:
+    radial-gradient(
+      ellipse at 50% 50%,
+      var(--hm-blob-b),
+      transparent 68%);
+  transform: rotate(10deg);
+  animation: hm-rib-2 25s ease-in-out infinite alternate;
+}
+.hm-rib-3 {
+  top: 48%;
+  background:
+    radial-gradient(
+      ellipse at 50% 50%,
+      var(--hm-blob-c),
+      transparent 68%);
+  transform: rotate(-6deg);
+  animation: hm-rib-3 31s ease-in-out infinite alternate;
+}
+@keyframes hm-rib-1 {
+  from {
+    transform: translateX(-6%) rotate(-14deg) scaleY(1);
+    opacity: .6;
+  }
+  to {
+    transform: translateX(8%) rotate(-8deg) scaleY(1.35);
+    opacity: .95;
+  }
+}
+@keyframes hm-rib-2 {
+  from {
+    transform: translateX(7%) rotate(10deg) scaleY(1.2);
+    opacity: .9;
+  }
+  to {
+    transform: translateX(-9%) rotate(4deg) scaleY(.8);
+    opacity: .55;
+  }
+}
+@keyframes hm-rib-3 {
+  from {
+    transform: translateX(-5%) rotate(-6deg) scaleY(.9);
+    opacity: .55;
+  }
+  to {
+    transform: translateX(6%) rotate(-12deg) scaleY(1.3);
+    opacity: .9;
+  }
+}
+.hm-wave {
+  left: 0;
+  width: 200%;
+  bottom: 0;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 60' preserveAspectRatio='none'%3E%3Cpath d='M0 30C50 6 150 6 200 30S350 54 400 30V60H0Z'/%3E%3C/svg%3E") 0 0 / 25% 100% repeat-x;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 60' preserveAspectRatio='none'%3E%3Cpath d='M0 30C50 6 150 6 200 30S350 54 400 30V60H0Z'/%3E%3C/svg%3E") 0 0 / 25% 100% repeat-x;
+}
+.hm-wave-1 {
+  height: 34%;
+  background:
+    linear-gradient(
+      180deg,
+      var(--hm-blob-c),
+      transparent 92%);
+  opacity: .75;
+  animation: hm-wave-x 34s linear infinite, hm-bob 9s ease-in-out infinite alternate;
+}
+.hm-wave-2 {
+  height: 26%;
+  background:
+    linear-gradient(
+      180deg,
+      var(--hm-blob-a),
+      transparent 92%);
+  opacity: .7;
+  animation: hm-wave-x 23s linear infinite reverse, hm-bob 7s ease-in-out -2s infinite alternate;
+}
+.hm-wave-3 {
+  height: 18%;
+  background:
+    linear-gradient(
+      180deg,
+      var(--hm-blob-b),
+      transparent 92%);
+  opacity: .75;
+  animation: hm-wave-x 15s linear infinite, hm-bob 5s ease-in-out -1s infinite alternate;
+}
+@keyframes hm-wave-x {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes hm-bob {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -14px;
+  }
+}
+.hm-horizon {
+  left: -10%;
+  right: -10%;
+  bottom: -8%;
+  height: 46%;
+  background:
+    radial-gradient(
+      ellipse at 50% 100%,
+      var(--hm-blob-a),
+      transparent 70%);
+  animation: hm-breathe 14s ease-in-out infinite alternate;
+}
+@keyframes hm-breathe {
+  from {
+    transform: scale(1);
+    opacity: .65;
+  }
+  to {
+    transform: scale(1.14);
+    opacity: 1;
+  }
+}
+.hm-fx-crepuscule .hm-blob-a {
+  top: 52%;
+}
+.hm-fx-crepuscule .hm-blob-c {
+  top: 8%;
+}
+.hm-ff {
+  left: var(--x);
+  top: var(--y);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--hm-accent);
+  box-shadow: 0 0 10px 3px rgb(var(--hm-accent-rgb) / .55);
+  animation: hm-ff-move var(--t) ease-in-out var(--d) infinite alternate, hm-ff-blink calc(var(--t) / 3) ease-in-out var(--d) infinite alternate;
+}
+@keyframes hm-ff-move {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+@keyframes hm-ff-blink {
+  from {
+    opacity: .15;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.hm-em {
+  left: var(--x);
+  top: 100%;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background: var(--hm-accent);
+  box-shadow: 0 0 8px 2px rgb(var(--hm-accent-rgb) / .6);
+  opacity: 0;
+  animation: hm-em-up var(--t) linear var(--d) infinite;
+}
+@keyframes hm-em-up {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: .95;
+  }
+  60% {
+    opacity: .7;
+  }
+  100% {
+    transform: translate(var(--sw), -105vh);
+    opacity: 0;
+  }
+}
+.hm-fx-braises .hm-blob-c {
+  top: 60%;
+}
+.hm-fx-braises .hm-blob-a {
+  top: 72%;
+  left: auto;
+  right: -130px;
+}
+html.sabi-lite .hm-fx > span,
+html.sabi-lite .hm-stars {
+  animation: none !important;
+}
+html.sabi-lite .hm-ff,
+html.sabi-lite .hm-em,
+html.sabi-lite .hm-shoot {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hm-fx > span {
+    animation: none !important;
+  }
+  .hm-ff,
+  .hm-em,
+  .hm-shoot {
+    display: none;
+  }
+}
 
   </style>
 </head>
@@ -1848,7 +2220,7 @@ html.sabi-lite .hm-ring-spin {
       clair: false,
       hero: "anneau",
       glass: true,
-      blobs: true,
+      anim: "blobs",
       apercu: ["#0C0E13", "#1A1E29", "#C9A37A"],
       colors: { ...base, bg: "#0C0E13", surface: "#161921", surface2: "#1E222C", border: "#2A2F3B", borderStrong: "#6B7280", text: "#ECEEF2", textMuted: "#C3C7D1", textFaint: "#9AA1B0", textGhost: "#343946", gold: "#C9A37A", goldInk: "#1E140A", forest: "#8FA8D6", terra: "#D49A8A", forestText: "#A9BFE6", terraText: "#E5AFA0" },
       fx: {
@@ -1884,7 +2256,171 @@ html.sabi-lite .hm-ring-spin {
       }
     }
   };
-  var ORDRE_THEMES = ["sombre", "clair", "verre", "aurore", "dune", "savane", "ardoise", "neon"];
+  var GLASS_FX = {
+    sheen: "rgba(255,255,255,.03)",
+    shadow: "0 12px 32px -14px rgba(0,0,0,.65)",
+    "glass-bg": "linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.035))",
+    "glass-border": "rgba(255,255,255,.13)",
+    "glass-blur": "18px",
+    "glass-shadow": "0 14px 34px -16px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.14)",
+    "hero-border": "rgba(255,255,255,.14)",
+    "ring-track": "rgba(255,255,255,.08)",
+    "ring-dash": "2 9",
+    orb: "radial-gradient(circle at 50% 22%,rgba(255,255,255,.16),rgba(255,255,255,.04) 70%)",
+    "orb-shadow": "inset 0 1px 0 rgba(255,255,255,.22), inset 0 0 0 1px rgba(255,255,255,.08), 0 14px 34px -12px rgba(0,0,0,.6)",
+    "orb-text": "#F4F5F8",
+    "orb-muted": "#C4C8D2",
+    "icon-bg": "rgba(255,255,255,.08)"
+  };
+  var animee = (label, anim, apercu, colors, fx) => ({
+    label,
+    clair: false,
+    hero: "anneau",
+    glass: true,
+    anim,
+    apercu,
+    colors: { ...base, ...colors },
+    fx: { ...GLASS_FX, ...fx }
+  });
+  THEMES_PLUS.boreale = animee(
+    "Aurore bor\xE9ale",
+    "boreale",
+    ["#070D12", "#12303A", "#6FE3C1"],
+    { bg: "#070D12", surface: "#101A20", surface2: "#17252C", border: "#223540", borderStrong: "#5C7C86", text: "#E8F3F1", textMuted: "#BCD2CF", textFaint: "#90B2AE", textGhost: "#2B424B", gold: "#6FE3C1", goldInk: "#04201A", forest: "#7BE0A0", terra: "#E9A09A", forestText: "#9BEBB8", terraText: "#F0B5AF" },
+    {
+      muted: "#90B2AE",
+      "glow-a": "rgba(111,227,193,.14)",
+      "glow-b": "rgba(120,110,240,.14)",
+      stage: "linear-gradient(180deg,#07121A 0%,#070D12 60%,#060A10 100%)",
+      "blob-a": "rgba(52,211,153,.34)",
+      "blob-b": "rgba(99,102,241,.42)",
+      "blob-c": "rgba(45,212,191,.26)",
+      "ring-outer": "rgba(111,227,193,.45)",
+      "arc-a": "#6FE3C1",
+      "arc-b": "#9AA6FF",
+      "badge-bg": "linear-gradient(145deg,#7CF0CC,#2FA98B)",
+      "badge-text": "#04201A",
+      "badge-shadow": "0 10px 22px -8px rgba(47,169,139,.55)",
+      "accent-2": "#A7B4FF",
+      "icon-fg": "#6FE3C1"
+    }
+  );
+  THEMES_PLUS.ocean = animee(
+    "Oc\xE9an",
+    "vagues",
+    ["#050E1C", "#0F2A4A", "#5CC8F0"],
+    { bg: "#050E1C", surface: "#0D1B30", surface2: "#132642", border: "#1D3557", borderStrong: "#5A7BA6", text: "#E8F1FB", textMuted: "#BBD0E8", textFaint: "#8FAACB", textGhost: "#243C5F", gold: "#5CC8F0", goldInk: "#04202E", forest: "#7FD8C8", terra: "#F0A59A", forestText: "#9BE6D8", terraText: "#F5B8AE" },
+    {
+      muted: "#8FAACB",
+      "glow-a": "rgba(92,200,240,.14)",
+      "glow-b": "rgba(30,64,175,.20)",
+      stage: "linear-gradient(180deg,#06142A 0%,#050E1C 55%,#040A16 100%)",
+      "blob-a": "rgba(14,116,190,.40)",
+      "blob-b": "rgba(6,182,212,.26)",
+      "blob-c": "rgba(30,64,175,.48)",
+      "ring-outer": "rgba(92,200,240,.45)",
+      "arc-a": "#5CC8F0",
+      "arc-b": "#8FA8FF",
+      "badge-bg": "linear-gradient(145deg,#7DD8F7,#2A8DBF)",
+      "badge-text": "#04202E",
+      "badge-shadow": "0 10px 22px -8px rgba(42,141,191,.55)",
+      "accent-2": "#9DD8F5",
+      "icon-fg": "#5CC8F0"
+    }
+  );
+  THEMES_PLUS.etoiles = animee(
+    "Nuit \xE9toil\xE9e",
+    "etoiles",
+    ["#05060F", "#1A1D3A", "#E9D8A6"],
+    { bg: "#05060F", surface: "#0F1122", surface2: "#171A31", border: "#262A4A", borderStrong: "#5E6492", text: "#EEF0FF", textMuted: "#C3C7E6", textFaint: "#979DC6", textGhost: "#2D3256", gold: "#E9D8A6", goldInk: "#1D1604", forest: "#9FD8FF", terra: "#F0A5B5", forestText: "#B5E2FF", terraText: "#F5B9C6" },
+    {
+      muted: "#979DC6",
+      "glow-a": "rgba(233,216,166,.10)",
+      "glow-b": "rgba(91,70,190,.18)",
+      stage: "linear-gradient(180deg,#080A1C 0%,#05060F 60%,#04050C 100%)",
+      "blob-a": "rgba(91,70,190,.34)",
+      "blob-b": "rgba(37,60,140,.42)",
+      "blob-c": "rgba(160,70,140,.16)",
+      "ring-outer": "rgba(233,216,166,.40)",
+      "arc-a": "#E9D8A6",
+      "arc-b": "#9FB4FF",
+      "badge-bg": "linear-gradient(145deg,#F4E7BC,#C9AE6B)",
+      "badge-text": "#1D1604",
+      "badge-shadow": "0 10px 22px -8px rgba(201,174,107,.5)",
+      "accent-2": "#B9C6FF",
+      "icon-fg": "#E9D8A6"
+    }
+  );
+  THEMES_PLUS.crepuscule = animee(
+    "Cr\xE9puscule",
+    "crepuscule",
+    ["#120A18", "#3A1F45", "#FF9E7A"],
+    { bg: "#120A18", surface: "#1D1226", surface2: "#281A33", border: "#3A2748", borderStrong: "#80628F", text: "#FBEFF3", textMuted: "#E3CAD6", textFaint: "#BE9DB3", textGhost: "#43294F", gold: "#FF9E7A", goldInk: "#2A0F06", forest: "#9BE0B5", terra: "#FF8FA3", forestText: "#B5EBC8", terraText: "#FFA9B8" },
+    {
+      muted: "#BE9DB3",
+      "glow-a": "rgba(255,158,122,.14)",
+      "glow-b": "rgba(190,60,140,.16)",
+      stage: "linear-gradient(180deg,#1A0E26 0%,#120A18 55%,#0E0712 100%)",
+      "blob-a": "rgba(244,114,82,.34)",
+      "blob-b": "rgba(190,60,140,.36)",
+      "blob-c": "rgba(109,64,200,.38)",
+      "ring-outer": "rgba(255,158,122,.45)",
+      "arc-a": "#FF9E7A",
+      "arc-b": "#E58AD0",
+      "badge-bg": "linear-gradient(145deg,#FFB596,#E0654A)",
+      "badge-text": "#2A0F06",
+      "badge-shadow": "0 10px 22px -8px rgba(224,101,74,.55)",
+      "accent-2": "#F4B5E4",
+      "icon-fg": "#FF9E7A"
+    }
+  );
+  THEMES_PLUS.lucioles = animee(
+    "Lucioles",
+    "lucioles",
+    ["#07110C", "#17301F", "#C8E86A"],
+    { bg: "#07110C", surface: "#0F1C15", surface2: "#16281E", border: "#213A2C", borderStrong: "#55806A", text: "#EAF5EC", textMuted: "#BFD8C6", textFaint: "#92B59C", textGhost: "#284636", gold: "#C8E86A", goldInk: "#1A2204", forest: "#7FE0A0", terra: "#EBA79A", forestText: "#9BEBB5", terraText: "#F1BBB0" },
+    {
+      muted: "#92B59C",
+      "glow-a": "rgba(200,232,106,.10)",
+      "glow-b": "rgba(34,120,70,.18)",
+      stage: "linear-gradient(180deg,#08140E 0%,#07110C 60%,#050C09 100%)",
+      "blob-a": "rgba(34,120,70,.36)",
+      "blob-b": "rgba(20,90,80,.36)",
+      "blob-c": "rgba(80,120,30,.24)",
+      "ring-outer": "rgba(200,232,106,.42)",
+      "arc-a": "#C8E86A",
+      "arc-b": "#7FE0C0",
+      "badge-bg": "linear-gradient(145deg,#D9F28A,#8FB838)",
+      "badge-text": "#1A2204",
+      "badge-shadow": "0 10px 22px -8px rgba(143,184,56,.5)",
+      "accent-2": "#A8EBC8",
+      "icon-fg": "#C8E86A"
+    }
+  );
+  THEMES_PLUS.braises = animee(
+    "Braises",
+    "braises",
+    ["#100806", "#3A1A10", "#FF8A3D"],
+    { bg: "#100806", surface: "#1C100D", surface2: "#281813", border: "#3C2519", borderStrong: "#86563A", text: "#FBEFE6", textMuted: "#E6CDBB", textFaint: "#C0A08C", textGhost: "#46291B", gold: "#FF8A3D", goldInk: "#2B1100", forest: "#9AD98C", terra: "#FF8F80", forestText: "#B3E5A8", terraText: "#FFA89B" },
+    {
+      muted: "#C0A08C",
+      "glow-a": "rgba(255,138,61,.14)",
+      "glow-b": "rgba(150,30,30,.18)",
+      stage: "linear-gradient(180deg,#160B08 0%,#100806 55%,#0C0504 100%)",
+      "blob-a": "rgba(220,70,30,.34)",
+      "blob-b": "rgba(255,140,40,.22)",
+      "blob-c": "rgba(150,30,30,.36)",
+      "ring-outer": "rgba(255,138,61,.45)",
+      "arc-a": "#FF8A3D",
+      "arc-b": "#FFC36B",
+      "badge-bg": "linear-gradient(145deg,#FFA25E,#D8531F)",
+      "badge-text": "#2B1100",
+      "badge-shadow": "0 10px 22px -8px rgba(216,83,31,.55)",
+      "accent-2": "#FFC9A0",
+      "icon-fg": "#FF8A3D"
+    }
+  );
+  var ORDRE_THEMES = ["sombre", "clair", "verre", "boreale", "ocean", "etoiles", "crepuscule", "lucioles", "braises", "aurore", "dune", "savane", "ardoise", "neon"];
 
   // src/theme.js
   var COLORS = {
@@ -2982,8 +3518,8 @@ html.sabi-lite .hm-ring-spin {
           className: "hm-press hm-focus rounded-2xl p-2 flex flex-col gap-2 text-left",
           style: { border: actif ? "2px solid var(--hm-accent)" : "1px solid var(--hm-border)", background: "var(--hm-surface)" }
         },
-        /* @__PURE__ */ react_shim_default.createElement("span", { className: "relative block h-14 rounded-xl overflow-hidden", style: { background: fond }, "aria-hidden": "true" }, /* @__PURE__ */ react_shim_default.createElement("span", { className: "absolute left-2 right-2 top-2.5 h-5 rounded-md", style: { background: carte, border: "1px solid rgba(128,128,128,.25)" } }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "absolute left-2 top-[34px] h-2 w-9 rounded-full", style: { background: accent } }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "absolute right-2 top-[34px] h-2 w-5 rounded-full", style: { background: carte, border: "1px solid rgba(128,128,128,.25)" } })),
-        /* @__PURE__ */ react_shim_default.createElement("span", { className: "flex items-center justify-between gap-1 px-0.5" }, /* @__PURE__ */ react_shim_default.createElement("span", { className: "text-sm font-medium", style: { color: "var(--hm-text)" } }, t.label), actif && /* @__PURE__ */ react_shim_default.createElement(Icon, { name: "check-circle", size: 16, color: "var(--hm-accent)" }))
+        /* @__PURE__ */ react_shim_default.createElement("span", { className: "relative block h-14 rounded-xl overflow-hidden", style: { background: fond }, "aria-hidden": "true" }, /* @__PURE__ */ react_shim_default.createElement("span", { className: "absolute left-2 right-2 top-2.5 h-5 rounded-md", style: { background: carte, border: "1px solid rgba(128,128,128,.25)" } }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "absolute left-2 top-[34px] h-2 w-9 rounded-full", style: { background: accent } }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "absolute right-2 top-[34px] h-2 w-5 rounded-full", style: { background: carte, border: "1px solid rgba(128,128,128,.25)" } }), t.anim && /* @__PURE__ */ react_shim_default.createElement("span", { className: "absolute right-1.5 bottom-1 text-[8px] font-bold uppercase tracking-wide rounded-full px-1.5 py-px", style: { color: accent, background: "rgba(0,0,0,.35)" } }, "Anim\xE9")),
+        /* @__PURE__ */ react_shim_default.createElement("span", { className: "flex items-center justify-between gap-1 px-0.5" }, /* @__PURE__ */ react_shim_default.createElement("span", { className: "text-[13px] font-medium truncate", style: { color: "var(--hm-text)" } }, t.label), actif && /* @__PURE__ */ react_shim_default.createElement(Icon, { name: "check-circle", size: 16, color: "var(--hm-accent)" }))
       );
     }));
   }
@@ -5442,9 +5978,59 @@ html.sabi-lite .hm-ring-spin {
   }
 
   // src/tabs/accueil/Backdrop.jsx
+  var LUCIOLES = [
+    [8, 14, 11, 0, 38, -46],
+    [22, 62, 14, -3, -30, -52],
+    [36, 28, 9, -5, 44, 30],
+    [48, 78, 13, -2, -36, -40],
+    [61, 18, 10, -7, 30, 48],
+    [74, 52, 12, -4, -44, 34],
+    [86, 30, 15, -1, 36, -28],
+    [92, 72, 9, -6, -26, -44],
+    [14, 88, 12, -8, 48, -30],
+    [54, 46, 16, -9, -34, 42],
+    [30, 8, 13, -2, 28, 36],
+    [68, 90, 11, -5, -40, -34]
+  ];
+  var BRAISES = [
+    [6, 11, 0, 26],
+    [15, 16, -4, -18],
+    [24, 13, -9, 30],
+    [33, 19, -2, -28],
+    [42, 12, -7, 20],
+    [51, 17, -12, -24],
+    [60, 14, -5, 32],
+    [69, 18, -10, -16],
+    [77, 12, -3, 26],
+    [85, 16, -8, -30],
+    [93, 13, -6, 18],
+    [28, 20, -14, -22],
+    [64, 21, -11, 24],
+    [46, 22, -1, -20]
+  ];
+  function Decor({ anim }) {
+    switch (anim) {
+      case "blobs":
+        return /* @__PURE__ */ react_shim_default.createElement(react_shim_default.Fragment, null, /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-a" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-b" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-c" }));
+      case "boreale":
+        return /* @__PURE__ */ react_shim_default.createElement(react_shim_default.Fragment, null, /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-stars hm-stars-3" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-stars hm-stars-1", style: { opacity: 0.5 } }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-rib hm-rib-1" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-rib hm-rib-2" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-rib hm-rib-3" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-c" }));
+      case "vagues":
+        return /* @__PURE__ */ react_shim_default.createElement(react_shim_default.Fragment, null, /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-a" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-b" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-wave hm-wave-1" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-wave hm-wave-2" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-wave hm-wave-3" }));
+      case "etoiles":
+        return /* @__PURE__ */ react_shim_default.createElement(react_shim_default.Fragment, null, /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-a" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-b" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-stars hm-stars-1" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-stars hm-stars-2" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-stars hm-stars-3" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-shoot" }));
+      case "crepuscule":
+        return /* @__PURE__ */ react_shim_default.createElement(react_shim_default.Fragment, null, /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-a" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-b" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-c" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-horizon" }));
+      case "lucioles":
+        return /* @__PURE__ */ react_shim_default.createElement(react_shim_default.Fragment, null, /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-a" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-b" }), LUCIOLES.map((f, i) => /* @__PURE__ */ react_shim_default.createElement("span", { key: i, className: "hm-ff", style: { "--x": f[0] + "%", "--y": f[1] + "%", "--t": f[2] + "s", "--d": f[3] + "s", "--dx": f[4] + "px", "--dy": f[5] + "px" } })));
+      case "braises":
+        return /* @__PURE__ */ react_shim_default.createElement(react_shim_default.Fragment, null, /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-c" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-a" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-b" }), BRAISES.map((e, i) => /* @__PURE__ */ react_shim_default.createElement("span", { key: i, className: "hm-em", style: { "--x": e[0] + "%", "--t": e[1] + "s", "--d": e[2] + "s", "--sw": e[3] + "px", "--s": 2 + i % 3 + "px" } })));
+      default:
+        return null;
+    }
+  }
   function Backdrop() {
-    const blobs = !!(THEMES[themeActuel] || {}).blobs;
-    return /* @__PURE__ */ react_shim_default.createElement("div", { className: "hm-stage", "aria-hidden": "true" }, blobs && /* @__PURE__ */ react_shim_default.createElement(react_shim_default.Fragment, null, /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-a" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-b" }), /* @__PURE__ */ react_shim_default.createElement("span", { className: "hm-blob hm-blob-c" })));
+    const anim = (THEMES[themeActuel] || {}).anim;
+    return /* @__PURE__ */ react_shim_default.createElement(react_shim_default.Fragment, null, /* @__PURE__ */ react_shim_default.createElement("div", { className: "hm-stage", "aria-hidden": "true" }), anim && /* @__PURE__ */ react_shim_default.createElement("div", { className: "hm-fx-pin", "aria-hidden": "true" }, /* @__PURE__ */ react_shim_default.createElement("div", { className: "hm-fx hm-fx-" + anim }, /* @__PURE__ */ react_shim_default.createElement(Decor, { anim }))));
   }
 
   // src/tabs/accueil/SearchAndCta.jsx
@@ -5468,7 +6054,7 @@ html.sabi-lite .hm-ring-spin {
       "button",
       {
         type: "button",
-        onClick: () => onNavigate("contribuer"),
+        onClick: () => onNavigate("chat"),
         className: "hm-press hm-focus w-full rounded-2xl py-4 text-base font-semibold flex items-center justify-center gap-2 bg-[color:var(--hm-accent)] text-[color:var(--hm-accent-ink)]"
       },
       /* @__PURE__ */ react_shim_default.createElement(Icon, { name: "edit-2", size: 16 }),
