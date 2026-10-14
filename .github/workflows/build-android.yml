@@ -59,6 +59,9 @@ jobs:
             cp android-template/MainActivity.java "$DEST"
           fi
 
+      - name: Icones alternatives (changer l'icone de l'app depuis le menu Sabi)
+        run: python3 scripts/patch_icones.py
+
       - name: Installer Java
         uses: actions/setup-java@v4
         with:
