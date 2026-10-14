@@ -73,10 +73,14 @@ def premier(noms):
 
 def generer_icones():
     from PIL import Image
-    legacy_src = premier(["icon-source.png", "icon-512.png"])
-    adapt_src = premier(["icon-512-maskable.png", "icon-512.png", "icon-source.png"])
+    # Cherche les images source a la racine, dans www/, puis dans l'icone deja generee par le build.
+    legacy_src = premier(["icon-source.png", "icon-512.png", "www/icon-512.png", "www/icons/icon-512.png",
+                          "www/icon-source.png", RES + "/mipmap-xxxhdpi/ic_launcher.png", RES + "/mipmap-xxhdpi/ic_launcher.png"])
+    adapt_src = premier(["icon-512-maskable.png", "www/icon-512-maskable.png", "www/icons/icon-512-maskable.png",
+                         RES + "/mipmap-xxxhdpi/ic_launcher_foreground.png", RES + "/mipmap-xxhdpi/ic_launcher_foreground.png"]) or legacy_src
     if not legacy_src or not adapt_src:
-        raise RuntimeError("icon-512.png / icon-512-maskable.png introuvables a la racine")
+        raise RuntimeError("aucune image d'icone source trouvee")
+    print("Icone source : " + legacy_src + " / adaptative : " + adapt_src)
     legacy = Image.open(legacy_src).convert("RGBA").resize((1024, 1024))
     adapt = Image.open(adapt_src).convert("RGBA").resize((1024, 1024))
     adaptatif_dir = os.path.join(RES, "mipmap-anydpi-v26")
@@ -185,7 +189,7 @@ def installer_plugin():
     print("Plugin IconSwitcher installe et enregistre.")
 
 
-def patcher_manifest():
+def patcher_manifest(icones_ok=True):
     with open(MANIFEST, encoding="utf-8") as f:
         xml = f.read()
     if "activity-alias" in xml:
@@ -199,7 +203,7 @@ def patcher_manifest():
     # 2) ajoute un alias par icone (seul « defaut » est actif au depart)
     alias = ""
     for ident, _, _ in ICONES:
-        nom = "ic_launcher" if ident == "defaut" else "ic_launcher_" + ident
+        nom = "ic_launcher" if (ident == "defaut" or not icones_ok) else "ic_launcher_" + ident
         alias += ('        <activity-alias\n'
                   '            android:name=".' + CLASSES[ident] + '"\n'
                   '            android:targetActivity=".MainActivity"\n'
@@ -225,10 +229,15 @@ def main():
     if not os.path.exists(MANIFEST):
         print("AndroidManifest.xml introuvable - icones alternatives ignorees.")
         return
+    icones_ok = True
     try:
         generer_icones()
+    except Exception as e:
+        icones_ok = False
+        print("ATTENTION : generation des icones coloree impossible (" + str(e) + "). Les alias utiliseront l'icone normale.")
+    try:
         installer_plugin()
-        patcher_manifest()
+        patcher_manifest(icones_ok)
     except Exception as e:  # le build continue, l'app garde simplement son icone habituelle
         print("ATTENTION : icones alternatives non installees (" + str(e) + "). Le build continue sans elles.")
 
