@@ -12906,6 +12906,8 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
           filiere: u.filiere,
           admin: !!u.admin,
           badgeActif: u.badgeActif,
+          badges: u.badges || {},
+          photoUrl: u.photoUrl || "",
           pointsTotal: u.pointsTotal,
           abonnement: u.abonnement,
           ...isAdminEffectif ? { whatsapp: u.whatsapp } : {}
