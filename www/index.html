@@ -77,11 +77,15 @@
     (function () {
       try {
         var pref = localStorage.getItem("sabi_effets");
-        var leger = pref === "off" || (pref !== "on" && navigator.deviceMemory && navigator.deviceMemory <= 2);
+        var leger = pref === "off" || (pref !== "on" && (navigator.deviceMemory && navigator.deviceMemory <= 2 || navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4));
         if (leger) document.documentElement.classList.add("sabi-lite");
       } catch (e) {}
     })();
   </script>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <!-- React 18 (chargé depuis Internet, avec une source de secours) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script>window.React||document.write('<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"><\/script>');</script>
@@ -1325,8 +1329,16 @@ html.sabi-lite[data-glass] .hm-glass {
   backdrop-filter: none;
   background: rgba(32, 35, 45, .94) !important;
 }
-html.sabi-lite .hm-blob {
-  animation: none;
+html.sabi-lite .hm-blob,
+html.sabi-lite .hm-fx,
+html.sabi-lite .hm-fx *,
+html.sabi-lite .hm-stage *::before,
+html.sabi-lite .hm-stage *::after {
+  animation: none !important;
+}
+html.sabi-lite body::before,
+html.sabi-lite .sabi-nav-orb::before {
+  animation: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
   .hm-blob,
@@ -3536,14 +3548,41 @@ html.sabi-lite .hm-shoot {
   ];
   var plugin;
   function lePlugin() {
-    if (plugin !== void 0) return plugin;
     try {
       const C2 = window.Capacitor;
-      plugin = C2 && C2.isNativePlatform && C2.isNativePlatform() ? C2.registerPlugin("IconSwitcher") : null;
+      const natif = !!C2 && (C2.isNativePlatform ? C2.isNativePlatform() : C2.getPlatform && C2.getPlatform() !== "web");
+      plugin = natif ? C2.Plugins && C2.Plugins.IconSwitcher || C2.registerPlugin("IconSwitcher") : null;
     } catch (e) {
       plugin = null;
     }
     return plugin;
+  }
+  function ModeRapideToggle() {
+    const [on, setOn] = react_shim_default.useState(() => document.documentElement.classList.contains("sabi-lite"));
+    return react_shim_default.createElement(
+      "div",
+      { className: "flex items-center justify-between gap-3" },
+      react_shim_default.createElement(
+        "div",
+        { className: "flex flex-col" },
+        react_shim_default.createElement(
+          "div",
+          { className: "flex items-center gap-2.5" },
+          react_shim_default.createElement(Icon, { name: "zap", size: 16, color: COLORS.textMuted }),
+          react_shim_default.createElement("span", { className: "text-sm", style: { color: COLORS.text } }, "Mode rapide")
+        ),
+        react_shim_default.createElement("span", { className: "text-[11px] mt-0.5", style: { color: COLORS.textFaint } }, "Coupe flou et animations de fond pour un t\xE9l\xE9phone plus fluide")
+      ),
+      react_shim_default.createElement(ToggleSwitch, { actif: on, onChange: () => {
+        const v = !on;
+        setOn(v);
+        document.documentElement.classList.toggle("sabi-lite", v);
+        try {
+          localStorage.setItem("sabi_effets", v ? "off" : "on");
+        } catch (e) {
+        }
+      }, label: "Mode rapide" })
+    );
   }
   function IconePicker() {
     const p = lePlugin();
@@ -3564,7 +3603,8 @@ html.sabi-lite .hm-shoot {
     }, []);
     const choisir = async (id) => {
       if (!p) {
-        setMsg("Le changement d'ic\xF4ne est disponible dans l'appli Android (APK), pas sur le site.");
+        const C3 = window.Capacitor;
+        setMsg("Ic\xF4ne indisponible ici (" + (C3 ? "Capacitor d\xE9tect\xE9, plateforme : " + (C3.getPlatform ? C3.getPlatform() : "?") : "ouvert dans un navigateur, pas dans l'APK") + "). Utilise l'appli Android install\xE9e depuis sabi.apk.");
         return;
       }
       try {
@@ -3576,7 +3616,7 @@ html.sabi-lite .hm-shoot {
         }
         setMsg("Ic\xF4ne chang\xE9e. Selon ton t\xE9l\xE9phone, elle appara\xEEt sur l'\xE9cran d'accueil au bout de quelques secondes.");
       } catch (e) {
-        setMsg("Pas encore disponible dans cette version de l'appli : installe la derni\xE8re version de l'APK.");
+        setMsg("Erreur : " + (e && e.message ? e.message : e) + " \u2014 si on lit \u00AB not implemented \u00BB, le plugin n'est pas dans ton APK : v\xE9rifie l'\xE9tape \u00AB Icones alternatives \u00BB du workflow.");
       }
     };
     return /* @__PURE__ */ react_shim_default.createElement("div", { className: "flex flex-col gap-2.5" }, /* @__PURE__ */ react_shim_default.createElement("div", { role: "radiogroup", "aria-label": "Ic\xF4ne de l'appli", className: "grid grid-cols-3 gap-2.5" }, ICONES.map((ic) => {
@@ -3697,6 +3737,7 @@ html.sabi-lite .hm-shoot {
             ),
             react_shim_default.createElement(IconePicker)
           ),
+          react_shim_default.createElement(ModeRapideToggle),
           react_shim_default.createElement(
             "div",
             { className: "flex items-center justify-between" },
@@ -5978,9 +6019,14 @@ html.sabi-lite .hm-shoot {
       try {
         setPct(0);
         const url = await uploaderImageCloudinary(fichier, setPct);
-        await usersRef.child(u.uid).child("photoUrl").set(url);
-        definirPhotoProfil(url);
-        setMsg("Photo mise \xE0 jour.");
+        try {
+          await usersRef.child(u.uid).child("photoUrl").set(url);
+          definirPhotoProfil(url);
+          setMsg("Photo mise \xE0 jour.");
+        } catch (e2) {
+          definirPhotoProfil(url);
+          setMsg(/permission/i.test(e2 && e2.message || "") ? "Photo gard\xE9e sur cet appareil (r\xE8gle Firebase \xE0 autoriser pour la synchroniser)." : "Photo gard\xE9e sur cet appareil seulement.");
+        }
       } catch (err) {
         setMsg("\xC9chec : " + (err && err.message ? err.message : "r\xE9essaie."));
       } finally {
