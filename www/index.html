@@ -1724,7 +1724,7 @@ html.sabi-lite .hm-shoot {
 <body>
   <div id="root"></div>
 
-  <!-- Application Sabi (code compilé : Accueil, thèmes, onglets…) -->
+  <!-- Application Sabi (code compilé : Accueil, thèmes, icônes, onglets…) -->
   <script>
 (() => {
   // ../single/react-shim.js
@@ -1739,6 +1739,7 @@ html.sabi-lite .hm-shoot {
 
   // src/components/Icon.js
   var ICON_PATHS = {
+    "camera": "M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
     sunrise: "M12 2v8 M4.93 10.93l1.41 1.41 M2 18h2 M20 18h2 M19.07 10.93l-1.41 1.41 M22 22H2 M8 6l4-4 4 4 M16 18a4 4 0 0 0-8 0",
     zap: "M13 2L3 14h9l-1 8 10-12h-9l1-8z",
     swords: "M14.5 17.5L3 6V3h3l11.5 11.5 M13 19l6-6 M16 16l4 4 M19 21l2-2 M14.5 6.5L18 3h3v3l-9.5 9.5 M5 14l4 4 M7 17l-3 3 M3 19l2 2",
@@ -3524,6 +3525,87 @@ html.sabi-lite .hm-shoot {
     }));
   }
 
+  // src/components/IconePicker.jsx
+  var ICONES = [
+    { id: "defaut", label: "Or", filtre: "none" },
+    { id: "violet", label: "Violet", filtre: "hue-rotate(215deg)" },
+    { id: "emeraude", label: "\xC9meraude", filtre: "hue-rotate(95deg)" },
+    { id: "ocean", label: "Oc\xE9an", filtre: "hue-rotate(165deg)" },
+    { id: "corail", label: "Corail", filtre: "hue-rotate(-45deg)" },
+    { id: "graphite", label: "Graphite", filtre: "grayscale(1)" }
+  ];
+  var plugin;
+  function lePlugin() {
+    if (plugin !== void 0) return plugin;
+    try {
+      const C2 = window.Capacitor;
+      plugin = C2 && C2.isNativePlatform && C2.isNativePlatform() ? C2.registerPlugin("IconSwitcher") : null;
+    } catch (e) {
+      plugin = null;
+    }
+    return plugin;
+  }
+  function IconePicker() {
+    const p = lePlugin();
+    const [actuel, setActuel] = useState(() => {
+      try {
+        return localStorage.getItem("sabi_icone") || "defaut";
+      } catch (e) {
+        return "defaut";
+      }
+    });
+    const [msg, setMsg] = useState("");
+    useEffect(() => {
+      if (!p) return;
+      p.getIcon().then((r) => {
+        if (r && r.name) setActuel(r.name);
+      }).catch(() => {
+      });
+    }, []);
+    const choisir = async (id) => {
+      if (!p) {
+        setMsg("Le changement d'ic\xF4ne est disponible dans l'appli Android (APK), pas sur le site.");
+        return;
+      }
+      try {
+        await p.setIcon({ name: id });
+        setActuel(id);
+        try {
+          localStorage.setItem("sabi_icone", id);
+        } catch (e) {
+        }
+        setMsg("Ic\xF4ne chang\xE9e. Selon ton t\xE9l\xE9phone, elle appara\xEEt sur l'\xE9cran d'accueil au bout de quelques secondes.");
+      } catch (e) {
+        setMsg("Pas encore disponible dans cette version de l'appli : installe la derni\xE8re version de l'APK.");
+      }
+    };
+    return /* @__PURE__ */ react_shim_default.createElement("div", { className: "flex flex-col gap-2.5" }, /* @__PURE__ */ react_shim_default.createElement("div", { role: "radiogroup", "aria-label": "Ic\xF4ne de l'appli", className: "grid grid-cols-3 gap-2.5" }, ICONES.map((ic) => {
+      const on = ic.id === actuel;
+      return /* @__PURE__ */ react_shim_default.createElement(
+        "button",
+        {
+          key: ic.id,
+          type: "button",
+          role: "radio",
+          "aria-checked": on,
+          onClick: () => choisir(ic.id),
+          className: "hm-press hm-focus rounded-2xl p-2 flex flex-col items-center gap-1.5",
+          style: { border: on ? "2px solid var(--hm-accent)" : "1px solid var(--hm-border)", background: "var(--hm-surface)", opacity: p ? 1 : 0.8 }
+        },
+        /* @__PURE__ */ react_shim_default.createElement(
+          "span",
+          {
+            className: "flex items-center justify-center overflow-hidden",
+            "aria-hidden": "true",
+            style: { width: 54, height: 54, borderRadius: "24%", background: "#131313", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.08)" }
+          },
+          /* @__PURE__ */ react_shim_default.createElement("img", { src: "logo-icon.png", alt: "", draggable: "false", style: { height: "66%", width: "auto", filter: ic.filtre } })
+        ),
+        /* @__PURE__ */ react_shim_default.createElement("span", { className: "text-[12px] font-medium", style: { color: "var(--hm-text)" } }, ic.label)
+      );
+    })), /* @__PURE__ */ react_shim_default.createElement("p", { className: "text-xs leading-relaxed", style: { color: "var(--hm-muted)" } }, msg || (p ? "L'ic\xF4ne de Sabi sur l'\xE9cran d'accueil de ton t\xE9l\xE9phone." : "Disponible dans l'appli Android (APK).")));
+  }
+
   // src/components/MenuLateral.js
   function MenuLateral({ ouvert, onFermer, themeMode, onToggleTheme, onChoisirTheme, notifsActives, onToggleNotifs, onOuvrirAssistance, onOuvrirCredits, onOuvrirGuide }) {
     const [sonsOn, setSonsOn] = useState(() => sonsActifs());
@@ -3603,6 +3685,17 @@ html.sabi-lite .hm-shoot {
               react_shim_default.createElement("span", { className: "text-sm", style: { color: COLORS.text } }, "Th\xE8mes")
             ),
             react_shim_default.createElement(ThemePicker, { themeId: themeMode, onChoisir: onChoisirTheme })
+          ),
+          react_shim_default.createElement(
+            "div",
+            { className: "flex flex-col gap-3 pt-1" },
+            react_shim_default.createElement(
+              "div",
+              { className: "flex items-center gap-2.5" },
+              react_shim_default.createElement(Icon, { name: "image", size: 16, color: COLORS.textMuted }),
+              react_shim_default.createElement("span", { className: "text-sm", style: { color: COLORS.text } }, "Ic\xF4ne de l'appli")
+            ),
+            react_shim_default.createElement(IconePicker)
           ),
           react_shim_default.createElement(
             "div",
@@ -5512,7 +5605,7 @@ html.sabi-lite .hm-shoot {
       }
     }
   }
-  async function genererResumeIA(contenuTexte, matiere, pdfUrl) {
+  async function genererResumeIA(contenuTexte, matiere, pdfUrl, imageUrl) {
     const texteSuffisant = (contenuTexte || "").trim().length >= 50;
     const parts = [];
     let mode, prompt;
@@ -5526,15 +5619,26 @@ html.sabi-lite .hm-shoot {
       prompt = "Tu es un professeur d'IUT au Cameroun. Le cours de " + matiere + " destin\xE9 \xE0 des \xE9tudiants se trouve dans le PDF ci-joint. Lis-le attentivement en entier. " + consigne + " Si le PDF est illisible, dis-le clairement au lieu d'inventer un contenu.";
       parts.push({ text: prompt });
       parts.push(await partieGeminiPourFichier(pdfUrl, "application/pdf"));
+    } else if (imageUrl) {
+      mode = "photo";
+      prompt = "Tu es un professeur d'IUT au Cameroun. Le cours de " + matiere + " destin\xE9 \xE0 des \xE9tudiants se trouve sur les photos ci-jointes. Lis-les attentivement en entier, m\xEAme si elles sont un peu inclin\xE9es. " + consigne;
+      parts.push({ text: prompt });
+      for (const u of [].concat(imageUrl)) parts.push(await partieGeminiPourFichier(u, null));
     } else {
-      throw new Error("Ni contenu texte suffisant ni PDF disponible pour g\xE9n\xE9rer un r\xE9sum\xE9.");
+      throw new Error("Ni contenu texte suffisant ni PDF ni photo disponible pour g\xE9n\xE9rer un r\xE9sum\xE9.");
     }
     try {
       return await genererViaGeminiParts(parts, "r\xE9sum\xE9");
     } catch (errGemini) {
       try {
-        const base64Repli = mode === "pdf" ? await pdfUrlVersBase64(pdfUrl) : null;
-        return await genererViaRepliChat(mode, prompt, base64Repli, null, "cours.pdf", "Sabi - Resume IA");
+        let base64Repli = null, mimeRepli = null;
+        if (mode === "pdf") base64Repli = await pdfUrlVersBase64(pdfUrl);
+        else if (mode === "photo") {
+          const img = await imageUrlVersBase64([].concat(imageUrl)[0]);
+          base64Repli = img.base64;
+          mimeRepli = img.mimeType;
+        }
+        return await genererViaRepliChat(mode, prompt, base64Repli, mimeRepli, "cours.pdf", "Sabi - Resume IA");
       } catch (errRepli) {
         throw new Error("Gemini, OpenAI, Groq et OpenRouter sont tous indisponibles pour le moment. R\xE9essaie dans quelques minutes. (" + errRepli.message + ")");
       }
@@ -5819,6 +5923,102 @@ html.sabi-lite .hm-shoot {
     return val;
   }
 
+  // src/components/AvatarPhoto.js
+  var photoProfilCourante = (function() { try { return localStorage.getItem("sabi_photo") || ""; } catch (e) { return ""; } })();
+  function definirPhotoProfil(url) {
+    photoProfilCourante = url || "";
+    try { if (url) localStorage.setItem("sabi_photo", url); else localStorage.removeItem("sabi_photo"); } catch (e) {}
+    window.dispatchEvent(new Event("sabi-photo"));
+  }
+  function useMaPhoto() {
+    const [p, setP] = react_shim_default.useState(photoProfilCourante);
+    react_shim_default.useEffect(() => {
+      const f = () => setP(photoProfilCourante);
+      window.addEventListener("sabi-photo", f);
+      f();
+      return () => window.removeEventListener("sabi-photo", f);
+    }, []);
+    return p;
+  }
+  function AvatarPhoto({ nom, size, rond, url, children, style }) {
+    const maPhoto = useMaPhoto();
+    const src = url !== void 0 ? url : maPhoto;
+    const [casse, setCasse] = react_shim_default.useState(false);
+    react_shim_default.useEffect(() => setCasse(false), [src]);
+    if (src && !casse) {
+      return react_shim_default.createElement("img", { src, alt: "Photo de " + (nom || "profil"), onError: () => setCasse(true), className: "flex-shrink-0 object-cover " + (rond === false ? "rounded-2xl" : "rounded-full"), style: Object.assign({ width: size, height: size }, style || {}) });
+    }
+    return children || null;
+  }
+  function PhotoProfil({ pseudo }) {
+    const photo = useMaPhoto();
+    const [aCadrer, setACadrer] = react_shim_default.useState(null);
+    const [pct, setPct] = react_shim_default.useState(null);
+    const [msg, setMsg] = react_shim_default.useState("");
+    const inputRef = react_shim_default.useRef(null);
+    const choisir = (e) => {
+      const f = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!f) return;
+      setMsg("");
+      const err = validerTailleImageActu(f);
+      if (err) {
+        setMsg(err);
+        return;
+      }
+      setACadrer(f);
+    };
+    const envoyer = async (fichier) => {
+      setACadrer(null);
+      const u = auth.currentUser;
+      if (!u) {
+        setMsg("Non connect\xE9.");
+        return;
+      }
+      try {
+        setPct(0);
+        const url = await uploaderImageCloudinary(fichier, setPct);
+        await usersRef.child(u.uid).child("photoUrl").set(url);
+        definirPhotoProfil(url);
+        setMsg("Photo mise \xE0 jour.");
+      } catch (err) {
+        setMsg("\xC9chec : " + (err && err.message ? err.message : "r\xE9essaie."));
+      } finally {
+        setPct(null);
+      }
+    };
+    const retirer = async () => {
+      const u = auth.currentUser;
+      if (!u) return;
+      try {
+        await usersRef.child(u.uid).child("photoUrl").remove();
+        definirPhotoProfil("");
+        setMsg("Photo retir\xE9e.");
+      } catch (err) {
+        setMsg("\xC9chec : " + (err && err.message ? err.message : "r\xE9essaie."));
+      }
+    };
+    return react_shim_default.createElement(
+      "div",
+      { className: "flex flex-col items-center gap-1 flex-shrink-0", style: { width: 76 } },
+      react_shim_default.createElement("input", { ref: inputRef, type: "file", accept: "image/*", onChange: choisir, className: "hidden", "aria-label": "Choisir une photo de profil" }),
+      react_shim_default.createElement(
+        "div",
+        { className: "relative flex-shrink-0", style: { width: 64, height: 64 } },
+        react_shim_default.createElement(
+          "button",
+          { type: "button", onClick: () => inputRef.current && inputRef.current.click(), disabled: pct !== null, "aria-label": "Changer la photo de profil", className: "w-16 h-16 rounded-full flex items-center justify-center overflow-hidden", style: { border: "1.5px solid " + COLORS.gold, backgroundColor: "rgba(var(--accent-rgb),0.1)", padding: 0 } },
+          photo ? react_shim_default.createElement(AvatarPhoto, { nom: pseudo, size: 61 }) : react_shim_default.createElement("span", { className: "text-2xl font-bold", style: { color: COLORS.gold, fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" } }, (pseudo || "?").charAt(0).toUpperCase())
+        ),
+        react_shim_default.createElement("span", { className: "absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center pointer-events-none", style: { backgroundColor: COLORS.gold, color: COLORS.bg, border: "2px solid " + COLORS.surface } }, react_shim_default.createElement(Icon, { name: "camera", size: 12, color: COLORS.bg }))
+      ),
+      aCadrer && react_shim_default.createElement(RecadreurImage, { file: aCadrer, onValider: envoyer, onAnnuler: () => setACadrer(null) }),
+      pct !== null && react_shim_default.createElement("span", { className: "text-[10px] font-mono", style: { color: COLORS.textMuted } }, "Envoi " + pct + "%"),
+      pct === null && photo && react_shim_default.createElement("button", { type: "button", onClick: retirer, className: "text-[10px] font-mono underline", style: { color: COLORS.textMuted } }, "Retirer"),
+      msg && react_shim_default.createElement("span", { className: "text-[10px] text-center leading-tight", style: { color: COLORS.textMuted } }, msg)
+    );
+  }
+
   // src/tabs/accueil/HeroCard.jsx
   function HeroCard({ pseudo, matricule, profil, niveau, pointsTotal, pointsSemaine, contributions }) {
     const affiche = useCountUp(pointsTotal);
@@ -5828,7 +6028,7 @@ html.sabi-lite .hm-shoot {
       { label: "Posts", valeur: contributions, icon: "message-circle" },
       { label: "Rang", valeur: niveau.actuel.niv + "/4", icon: "award" }
     ];
-    return /* @__PURE__ */ react_shim_default.createElement("section", { className: "hm-rise hm-hero relative overflow-hidden rounded-3xl border border-[color:var(--hm-border)] p-6 flex flex-col gap-6", "aria-label": "Mon profil" }, /* @__PURE__ */ react_shim_default.createElement("div", { className: "flex items-center gap-4" }, /* @__PURE__ */ react_shim_default.createElement("div", { className: "w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold shrink-0 bg-[color:var(--hm-surface-2)] border border-[color:var(--hm-border)] text-[color:var(--hm-accent)]", "aria-hidden": "true" }, initiale), /* @__PURE__ */ react_shim_default.createElement("div", { className: "min-w-0 flex-1" }, /* @__PURE__ */ react_shim_default.createElement("p", { className: "text-lg font-semibold truncate " + T.text }, pseudo), matricule && /* @__PURE__ */ react_shim_default.createElement("p", { className: "text-sm font-mono tracking-wide truncate " + T.muted }, "MAT : ", matricule))), /* @__PURE__ */ react_shim_default.createElement("div", null, /* @__PURE__ */ react_shim_default.createElement("div", { className: "flex items-center justify-between gap-3" }, /* @__PURE__ */ react_shim_default.createElement("p", { className: T.eyebrow }, "Mes points"), /* @__PURE__ */ react_shim_default.createElement("span", { className: "shrink-0 rounded-full px-3 py-1 text-xs font-semibold border border-[color:var(--hm-border)] bg-[color:var(--hm-surface-2)] text-[color:var(--hm-accent)]" }, "Niv. ", niveau.actuel.niv, " \xB7 ", niveau.actuel.label)), /* @__PURE__ */ react_shim_default.createElement("p", { className: "flex items-baseline gap-2 mt-1" }, /* @__PURE__ */ react_shim_default.createElement("span", { className: "text-6xl font-extrabold tracking-tight tabular-nums leading-none " + T.text, "aria-label": pointsTotal + " points" }, affiche), /* @__PURE__ */ react_shim_default.createElement("span", { className: "text-lg font-medium " + T.muted }, "pts"))), /* @__PURE__ */ react_shim_default.createElement(LevelProgress, { niveau }), /* @__PURE__ */ react_shim_default.createElement("div", { className: "grid grid-cols-3 gap-3" }, stats.map((s) => /* @__PURE__ */ react_shim_default.createElement("div", { key: s.label, className: "rounded-xl p-3 bg-[color:var(--hm-surface-2)] border border-[color:var(--hm-border)] flex flex-col gap-1.5" }, /* @__PURE__ */ react_shim_default.createElement(Icon, { name: s.icon, size: 16, color: s.ok ? "var(--hm-ok)" : "var(--hm-muted)" }), /* @__PURE__ */ react_shim_default.createElement("p", { className: "text-base font-bold tabular-nums " + (s.ok ? "text-[color:var(--hm-ok)]" : T.text) }, s.valeur), /* @__PURE__ */ react_shim_default.createElement("p", { className: "text-xs leading-tight " + T.muted }, s.label)))), ((profil == null ? void 0 : profil.filiere) || (profil == null ? void 0 : profil.annee)) && /* @__PURE__ */ react_shim_default.createElement("div", { className: "flex items-center gap-3 pt-5 border-t border-[color:var(--hm-border)]" }, /* @__PURE__ */ react_shim_default.createElement(Icon, { name: "landmark", size: 16, color: "var(--hm-muted)" }), /* @__PURE__ */ react_shim_default.createElement("p", { className: "text-sm " + T.muted }, /* @__PURE__ */ react_shim_default.createElement("span", { className: T.text + " font-medium" }, "IUT FV Bandjoun"), " \xB7 ", [profil.filiere, profil.annee].filter(Boolean).join(" \xB7 "))));
+    return /* @__PURE__ */ react_shim_default.createElement("section", { className: "hm-rise hm-hero relative overflow-hidden rounded-3xl border border-[color:var(--hm-border)] p-6 flex flex-col gap-6", "aria-label": "Mon profil" }, /* @__PURE__ */ react_shim_default.createElement("div", { className: "flex items-center gap-4" }, /* @__PURE__ */ react_shim_default.createElement(AvatarPhoto, { nom: pseudo, size: 56, rond: false }, /* @__PURE__ */ react_shim_default.createElement("div", { className: "w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold shrink-0 bg-[color:var(--hm-surface-2)] border border-[color:var(--hm-border)] text-[color:var(--hm-accent)]", "aria-hidden": "true" }, initiale)), /* @__PURE__ */ react_shim_default.createElement("div", { className: "min-w-0 flex-1" }, /* @__PURE__ */ react_shim_default.createElement("p", { className: "text-lg font-semibold truncate " + T.text }, pseudo), matricule && /* @__PURE__ */ react_shim_default.createElement("p", { className: "text-sm font-mono tracking-wide truncate " + T.muted }, "MAT : ", matricule))), /* @__PURE__ */ react_shim_default.createElement("div", null, /* @__PURE__ */ react_shim_default.createElement("div", { className: "flex items-center justify-between gap-3" }, /* @__PURE__ */ react_shim_default.createElement("p", { className: T.eyebrow }, "Mes points"), /* @__PURE__ */ react_shim_default.createElement("span", { className: "shrink-0 rounded-full px-3 py-1 text-xs font-semibold border border-[color:var(--hm-border)] bg-[color:var(--hm-surface-2)] text-[color:var(--hm-accent)]" }, "Niv. ", niveau.actuel.niv, " \xB7 ", niveau.actuel.label)), /* @__PURE__ */ react_shim_default.createElement("p", { className: "flex items-baseline gap-2 mt-1" }, /* @__PURE__ */ react_shim_default.createElement("span", { className: "text-6xl font-extrabold tracking-tight tabular-nums leading-none " + T.text, "aria-label": pointsTotal + " points" }, affiche), /* @__PURE__ */ react_shim_default.createElement("span", { className: "text-lg font-medium " + T.muted }, "pts"))), /* @__PURE__ */ react_shim_default.createElement(LevelProgress, { niveau }), /* @__PURE__ */ react_shim_default.createElement("div", { className: "grid grid-cols-3 gap-3" }, stats.map((s) => /* @__PURE__ */ react_shim_default.createElement("div", { key: s.label, className: "rounded-xl p-3 bg-[color:var(--hm-surface-2)] border border-[color:var(--hm-border)] flex flex-col gap-1.5" }, /* @__PURE__ */ react_shim_default.createElement(Icon, { name: s.icon, size: 16, color: s.ok ? "var(--hm-ok)" : "var(--hm-muted)" }), /* @__PURE__ */ react_shim_default.createElement("p", { className: "text-base font-bold tabular-nums " + (s.ok ? "text-[color:var(--hm-ok)]" : T.text) }, s.valeur), /* @__PURE__ */ react_shim_default.createElement("p", { className: "text-xs leading-tight " + T.muted }, s.label)))), ((profil == null ? void 0 : profil.filiere) || (profil == null ? void 0 : profil.annee)) && /* @__PURE__ */ react_shim_default.createElement("div", { className: "flex items-center gap-3 pt-5 border-t border-[color:var(--hm-border)]" }, /* @__PURE__ */ react_shim_default.createElement(Icon, { name: "landmark", size: 16, color: "var(--hm-muted)" }), /* @__PURE__ */ react_shim_default.createElement("p", { className: "text-sm " + T.muted }, /* @__PURE__ */ react_shim_default.createElement("span", { className: T.text + " font-medium" }, "IUT FV Bandjoun"), " \xB7 ", [profil.filiere, profil.annee].filter(Boolean).join(" \xB7 "))));
   }
 
   // src/tabs/accueil/DailyReminder.jsx
@@ -11324,11 +11524,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       react_shim_default.createElement(
         "div",
         { className: "rounded-lg border p-5 flex items-center gap-4", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
-        react_shim_default.createElement(
-          "div",
-          { className: "w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0", style: { border: `1.5px solid ${COLORS.gold}`, backgroundColor: "rgba(var(--accent-rgb),0.1)" } },
-          react_shim_default.createElement("span", { className: "text-xl font-bold", style: { color: COLORS.gold, fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif", fontWeight: 700, letterSpacing: "-0.02em" } }, (pseudo || "?").charAt(0).toUpperCase())
-        ),
+        react_shim_default.createElement(PhotoProfil, { pseudo }),
         react_shim_default.createElement(
           "div",
           { className: "flex-1 min-w-0" },
@@ -11529,6 +11725,8 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
     const [filiere, setFiliere] = useState(FILIERES[0]);
     const [contenu, setContenu] = useState("");
     const [pdfFile, setPdfFile] = useState(null);
+    const [imagesRes, setImagesRes] = useState([]);
+    const [imageZoomRes, setImageZoomRes] = useState(null);
     const [uploadPct, setUploadPct] = useState(null);
     const [uploadErreur, setUploadErreur] = useState("");
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -11550,13 +11748,27 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
     const handleGenererResumeIA = (r) => {
       setIaErreur(null);
       const texteSuffisant = (r.contenu || "").trim().length >= CONTENU_MIN_POUR_IA_RESUME;
-      if (!texteSuffisant && !r.pdfUrl) {
-        setIaErreur({ id: r.id, message: "D\xE9sol\xE9, ce fichier ne dispose pas de r\xE9sum\xE9 : pas assez de contenu et aucun PDF joint." });
+      if (!texteSuffisant && !r.pdfUrl && !r.imageUrl) {
+        setIaErreur({ id: r.id, message: "D\xE9sol\xE9, ce fichier ne dispose pas de r\xE9sum\xE9 : pas assez de contenu et aucun PDF ni photo joint." });
         return;
       }
       setIaLoading(r.id);
       onGenerateResumeIA(r).catch((err) => setIaErreur({ id: r.id, message: "D\xE9sol\xE9, ce fichier ne dispose pas de r\xE9sum\xE9 pour l'instant : " + messageErreurIAConvivial(err) })).finally(() => setIaLoading(null));
     };
+    const choisirImagesRes = (liste) => {
+      setUploadErreur("");
+      const fichiers = Array.from(liste || []);
+      if (!fichiers.length) return;
+      for (const f of fichiers) {
+        const err = validerTailleImageActu(f);
+        if (err) {
+          setUploadErreur(f.name + " : " + err);
+          return;
+        }
+      }
+      setImagesRes((prev) => prev.concat(fichiers.map((f) => ({ file: f, preview: URL.createObjectURL(f) }))));
+    };
+    const retirerImageRes = (i) => setImagesRes((prev) => prev.filter((_, k) => k !== i));
     const handleAdd = () => {
       setUploadErreur("");
       if (matiere.trim().length < 2) {
@@ -11567,11 +11779,12 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
         setUploadErreur("Le contenu du r\xE9sum\xE9 doit faire au moins 10 caract\xE8res.");
         return;
       }
-      const publier = (pdfUrl) => {
-        Promise.resolve(onAddResume({ matiere: matiere.trim(), annee, semestre, filiere, contenu: contenu.trim(), pdfUrl: pdfUrl || null })).then(() => {
+      const publier = (pdfUrl, imageUrls) => {
+        Promise.resolve(onAddResume({ matiere: matiere.trim(), annee, semestre, filiere, contenu: contenu.trim(), pdfUrl: pdfUrl || null, imageUrl: imageUrls && imageUrls[0] || null, imagesUrls: imageUrls || [] })).then(() => {
           setMatiere("");
           setContenu("");
           setPdfFile(null);
+          setImagesRes([]);
           setShowForm(false);
           setUploadPct(null);
         }).catch((err) => {
@@ -11579,17 +11792,34 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
           setUploadErreur("\xC9chec de la publication (les donn\xE9es ne sont pas enregistr\xE9es) : " + (err && err.message ? err.message : "v\xE9rifie ta connexion."));
         });
       };
-      if (pdfFile) {
-        if (pdfFile.size > 100 * 1024 * 1024) {
-          setUploadErreur("PDF trop lourd (max 100 Mo).");
-          return;
+      if (pdfFile && pdfFile.size > 100 * 1024 * 1024) {
+        setUploadErreur("PDF trop lourd (max 100 Mo).");
+        return;
+      }
+      if (!pdfFile && !imagesRes.length) {
+        publier(null, []);
+        return;
+      }
+      setUploadPct(0);
+      (async () => {
+        const nbEtapes = (pdfFile ? 1 : 0) + imagesRes.length;
+        let fait = 0;
+        const pct = (p) => setUploadPct(Math.round((fait + p / 100) / nbEtapes * 100));
+        let pdfUrl = null;
+        if (pdfFile) {
+          pdfUrl = await uploaderPdfCloudinary(pdfFile, pct);
+          fait++;
         }
-        setUploadPct(0);
-        uploaderPdfCloudinary(pdfFile, setUploadPct).then((url) => publier(url)).catch((err) => {
-          setUploadPct(null);
-          setUploadErreur("\xC9chec : " + err.message);
-        });
-      } else publier(null);
+        const urls = [];
+        for (const im of imagesRes) {
+          urls.push(await uploaderImageCloudinary(im.file, pct));
+          fait++;
+        }
+        publier(pdfUrl, urls);
+      })().catch((err) => {
+        setUploadPct(null);
+        setUploadErreur("\xC9chec : " + err.message);
+      });
     };
     return react_shim_default.createElement(
       "div",
@@ -11611,6 +11841,21 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
         ),
         react_shim_default.createElement("textarea", { value: contenu, onChange: (e) => setContenu(e.target.value), placeholder: "Contenu du r\xE9sum\xE9...", rows: 5, className: "w-full rounded-lg px-3 py-2 text-sm outline-none border resize-none", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
         react_shim_default.createElement("input", { type: "file", accept: ".pdf,application/pdf", onChange: (e) => setPdfFile(e.target.files[0] || null), disabled: uploadPct !== null, className: "text-xs", style: { color: COLORS.textMuted } }),
+        react_shim_default.createElement("label", { htmlFor: "photos-resume", className: "text-[11px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "S\xE9lectionnez vos photos (plusieurs possibles) :"),
+        react_shim_default.createElement("input", { type: "file", id: "photos-resume", name: "photos[]", accept: "image/*", multiple: true, disabled: uploadPct !== null, onChange: (e) => {
+          choisirImagesRes(e.target.files);
+          e.target.value = "";
+        }, className: "text-xs", style: { color: COLORS.textMuted } }),
+        imagesRes.length > 0 && react_shim_default.createElement(
+          "div",
+          { className: "flex gap-2 flex-wrap" },
+          imagesRes.map((im, i) => react_shim_default.createElement(
+            "div",
+            { key: i, className: "relative", style: { width: 64, height: 64 } },
+            react_shim_default.createElement("img", { src: im.preview, alt: "Photo " + (i + 1), className: "w-full h-full object-cover rounded-lg" }),
+            uploadPct === null && react_shim_default.createElement("button", { type: "button", onClick: () => retirerImageRes(i), "aria-label": "Retirer la photo " + (i + 1), className: "absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[11px] leading-none flex items-center justify-center", style: { backgroundColor: COLORS.terra, color: "#fff" } }, "\u00D7")
+          ))
+        ),
         uploadPct !== null && react_shim_default.createElement("p", { className: "text-[11px]", style: { color: COLORS.textMuted } }, "Envoi... " + uploadPct + "%"),
         uploadErreur && react_shim_default.createElement("p", { className: "text-[11px]", style: { color: COLORS.textMuted } }, uploadErreur),
         react_shim_default.createElement(
@@ -11702,6 +11947,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
           isOpen && react_shim_default.createElement(
             "div",
             { className: "px-4 pb-4 border-t", style: { borderColor: COLORS.border } },
+            (r.imagesUrls && r.imagesUrls.length ? r.imagesUrls : r.imageUrl ? [r.imageUrl] : []).map((u, i) => react_shim_default.createElement("img", { key: "img" + i, src: u, alt: "Photo du r\xE9sum\xE9 " + (i + 1), onClick: () => setImageZoomRes(u), className: "w-full rounded-lg mt-3", style: { maxHeight: 420, objectFit: "contain", backgroundColor: COLORS.bg } })),
             r.pdfUrl && react_shim_default.createElement("button", { onClick: () => setPreviewUrl(r.pdfUrl), className: "mt-3 mb-1 text-xs font-mono px-3 py-1.5 rounded-full", style: { backgroundColor: "rgba(var(--accent-rgb),0.12)", color: COLORS.gold } }, react_shim_default.createElement(Icon, { name: "eye", size: 14 }), " Aper\xE7u PDF"),
             react_shim_default.createElement("p", { className: "text-sm whitespace-pre-wrap mt-2", style: { color: COLORS.text } }, r.contenu),
             r.resumeIA ? react_shim_default.createElement(
@@ -11733,7 +11979,13 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
           )
         );
       }),
-      previewUrl && react_shim_default.createElement(PdfPreviewModal, { rawUrl: previewUrl, onClose: () => setPreviewUrl(null) })
+      previewUrl && react_shim_default.createElement(PdfPreviewModal, { rawUrl: previewUrl, onClose: () => setPreviewUrl(null) }),
+      imageZoomRes && dom_shim_default.createPortal(react_shim_default.createElement(
+        "div",
+        { className: "fixed inset-0 z-50 flex items-center justify-center p-3", style: { backgroundColor: "rgba(10,10,10,0.94)" }, onClick: () => setImageZoomRes(null) },
+        react_shim_default.createElement("img", { src: imageZoomRes, alt: "Photo agrandie", style: { maxWidth: "100%", maxHeight: "100%", objectFit: "contain" } }),
+        react_shim_default.createElement("button", { type: "button", "aria-label": "Fermer", className: "absolute top-3 right-3 w-10 h-10 rounded-full text-xl", style: { backgroundColor: "rgba(255,255,255,0.15)", color: "#fff" } }, "\u00D7")
+      ), document.body)
     );
   }
 
@@ -12375,6 +12627,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
         if (data) {
           setPseudo(data.pseudo || "");
           setWhatsapp(data.whatsapp || "");
+          definirPhotoProfil(data.photoUrl || "");
           setMatriculeState(data.matricule || "");
           setPoints(data.points || 0);
           setPointsTotal(data.pointsTotal || 0);
@@ -12663,12 +12916,14 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
         envoyerNotification({ diffusion: true, titre: "Nouvelle \xE9preuve : " + matiere, corps: pseudo + " a ajout\xE9 une \xE9preuve pour " + filiere + " " + annee });
       });
     }, [pseudo, addPoints]);
-    const handleAddResume = useCallback(({ matiere, annee, semestre, filiere, contenu, pdfUrl }) => {
+    const handleAddResume = useCallback(({ matiere, annee, semestre, filiere, contenu, pdfUrl, imageUrl, imagesUrls }) => {
       if (!isAdminEffectif) return Promise.reject(new Error("Acc\xE8s non autoris\xE9."));
       const id = "r-" + Date.now();
       const data = { matiere, annee, filiere, contenu, auteur: pseudo, date: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10) };
       if (semestre) data.semestre = semestre;
       if (pdfUrl) data.pdfUrl = pdfUrl;
+      if (imageUrl) data.imageUrl = imageUrl;
+      if (imagesUrls && imagesUrls.length > 1) data.imagesUrls = imagesUrls;
       return resumesRef.child(id).set(data).then(() => {
         envoyerNotification({ diffusion: true, titre: "Nouveau r\xE9sum\xE9 : " + matiere, corps: "Disponible pour " + filiere + " " + annee });
       });
@@ -12679,7 +12934,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
     }, [isOwner]);
     const handleGenererResumeIA = useCallback((r) => {
       if (r.resumeIA) return Promise.resolve(r.resumeIA);
-      return genererResumeIA(r.contenu, r.matiere, r.pdfUrl).then((texte) => {
+      return genererResumeIA(r.contenu, r.matiere, r.pdfUrl, r.imagesUrls || r.imageUrl).then((texte) => {
         resumesRef.child(r.id).child("resumeIA").set(texte);
         return texte;
       });
@@ -12897,6 +13152,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       pointsLogRef.push({ uid, pseudo: cibleData.pseudo, filiere: cibleData.filiere || "", n: montant, timestamp: Date.now(), offert: true, offertPar: pseudo });
     }, [isOwner, pseudo]);
     const handleLogout = useCallback(() => {
+      definirPhotoProfil("");
       auth.signOut();
     }, []);
     const handleUpdatePseudo = useCallback((newPseudo) => {
@@ -13294,7 +13550,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
                     style: { backgroundColor: "var(--field-bg)", border: "1px solid var(--glass-border)" },
                     "aria-label": "Profil"
                   },
-                  react_shim_default.createElement(Icon, { name: "user", size: 16, color: COLORS.textMuted }),
+                  react_shim_default.createElement(AvatarPhoto, { nom: pseudo, size: 36 }, react_shim_default.createElement(Icon, { name: "user", size: 16, color: COLORS.textMuted })),
                   totalPastilleHeader > 0 && react_shim_default.createElement("span", {
                     className: "absolute top-0 right-0 w-2.5 h-2.5 rounded-full",
                     style: { backgroundColor: COLORS.terra, border: `1.5px solid ${COLORS.bg}` }
