@@ -225,10 +225,33 @@ def patcher_manifest(icones_ok=True):
     print("Manifeste : " + str(len(ICONES)) + " alias d'icone declares.")
 
 
+def patcher_micro():
+    """Autorise le micro (assistante vocale Sabi)."""
+    with open(MANIFEST, encoding="utf-8") as f:
+        xml = f.read()
+    ajout = ""
+    for perm in ("android.permission.RECORD_AUDIO", "android.permission.MODIFY_AUDIO_SETTINGS"):
+        if perm not in xml:
+            ajout += '    <uses-permission android:name="' + perm + '" />\n'
+    if not ajout:
+        print("Permissions micro deja presentes.")
+        return
+    if "<application" not in xml:
+        raise RuntimeError("<application introuvable")
+    xml = xml.replace("<application", ajout + "    <application", 1)
+    with open(MANIFEST, "w", encoding="utf-8") as f:
+        f.write(xml)
+    print("Manifeste : permission micro ajoutee.")
+
+
 def main():
     if not os.path.exists(MANIFEST):
         print("AndroidManifest.xml introuvable - icones alternatives ignorees.")
         return
+    try:
+        patcher_micro()
+    except Exception as e:
+        print("ATTENTION : permission micro non ajoutee (" + str(e) + ").")
     icones_ok = True
     try:
         generer_icones()
