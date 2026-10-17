@@ -74,6 +74,25 @@
   <script>
     // Mode léger : sur un téléphone à 2 Go de RAM (ou moins), on retire seulement le flou de verre
     // (le plus gourmand). Réglage manuel : localStorage.setItem("sabi_effets", "on" | "off").
+    // Hors connexion : après un premier lancement en ligne, les bibliothèques (React, Tailwind, Firebase)
+    // sont gardées sur l'appareil et rejouées si le réseau manque.
+    window.__sabiLibSauver = function (el) {
+      setTimeout(function () {
+        try {
+          var k = "sabi_lib:" + el.src;
+          if (localStorage.getItem(k)) return;
+          fetch(el.src).then(function (r) { return r.ok ? r.text() : null; }).then(function (t) {
+            if (t && t.length > 500) { try { localStorage.setItem(k, t); } catch (e) {} }
+          }).catch(function () {});
+        } catch (e) {}
+      }, 4000);
+    };
+    window.__sabiLibSecours = function (el) {
+      try {
+        var t = localStorage.getItem("sabi_lib:" + el.src);
+        if (t) { var s = document.createElement("script"); s.text = t; document.head.appendChild(s); }
+      } catch (e) {}
+    };
     (function () {
       try {
         var pref = localStorage.getItem("sabi_effets");
@@ -87,11 +106,11 @@
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <!-- React 18 (chargé depuis Internet, avec une source de secours) -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js" onload="__sabiLibSauver(this)" onerror="__sabiLibSecours(this)"></script>
   <script>window.React||document.write('<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"><\/script>');</script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" onload="__sabiLibSauver(this)" onerror="__sabiLibSecours(this)"></script>
   <script>window.ReactDOM||document.write('<script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"><\/script>');</script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com" onload="__sabiLibSauver(this)" onerror="__sabiLibSecours(this)"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <script>
     // Câble les polices importées dans les utilitaires Tailwind (font-sans / font-mono)
@@ -109,15 +128,15 @@
     };
   </script>
   <!-- Firebase (version compat = plus simple, pas besoin de "import") -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onload="__sabiLibSauver(this)" onerror="__sabiLibSecours(this)"></script>
   <script>window.firebase||document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/firebase-app-compat.js"><\/script>');</script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js" onload="__sabiLibSauver(this)" onerror="__sabiLibSecours(this)"></script>
   <script>(window.firebase&&firebase.database)||document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/firebase-database-compat.js"><\/script>');</script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" onload="__sabiLibSauver(this)" onerror="__sabiLibSecours(this)"></script>
   <script>(window.firebase&&firebase.auth)||document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/firebase-auth-compat.js"><\/script>');</script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js" onload="__sabiLibSauver(this)" onerror="__sabiLibSecours(this)"></script>
   <script>(window.firebase&&firebase.messaging)||document.write('<script src="https://cdn.jsdelivr.net/npm/firebase@10.7.1/firebase-messaging-compat.js"><\/script>');</script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" onload="__sabiLibSauver(this)" onerror="__sabiLibSecours(this)"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/marked@11/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
@@ -1029,6 +1048,9 @@ html.sabi-lite .rounded-lg.border {
 html.sabi-lite .sabi-skeleton::after {
   animation: none;
 }
+button, [role="button"], a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+button:not(:disabled):active, [role="button"]:active { transform: scale(0.97); transition: transform .08s ease; }
+button, [role="button"] { transition: transform .18s cubic-bezier(.2,.8,.3,1), opacity .2s ease, background-color .2s ease, border-color .2s ease; }
 @media (prefers-reduced-motion: reduce) {
   body::before,
   .sabi-nav-orb::before,
@@ -1731,7 +1753,10 @@ html.sabi-lite .hm-shoot {
   }
 }
 
-  </style>
+  @keyframes sabi-orbe{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+.sabi-orbe-actif{animation:sabi-orbe 1s ease-in-out infinite}
+html.sabi-lite .sabi-orbe-actif{animation:none!important}
+</style>
 </head>
 <body>
   <div id="root"></div>
@@ -1873,7 +1898,7 @@ html.sabi-lite .hm-shoot {
           "\xC9preuves. Sujets d'examens et corrig\xE9s",
           "Accueil. Tableau de bord personnel",
           "Carte. Plan interactif du campus",
-          "Chat. Discussion et entraide"
+          "Messages. Discussions priv\xE9es et communaut\xE9s"
         ] },
         { type: "p", texte: "Tu peux glisser le doigt horizontalement pour passer d'un onglet \xE0 l'autre, comme pour tourner une page. Sur un \xE9cran secondaire (Profil, Boussole, Boutique...), un glissement depuis le bord gauche fait office de bouton retour." }
       ]
@@ -1890,7 +1915,14 @@ html.sabi-lite .hm-shoot {
       icone: "book",
       titre: "4. \xC9preuves",
       blocs: [
-        { type: "p", texte: "Retrouve les anciens sujets d'examen et leurs corrig\xE9s, filtrables par ann\xE9e, fili\xE8re, semestre et mati\xE8re. Le contenu correspondant \xE0 ta promo appara\xEEt en priorit\xE9. L'acc\xE8s complet aux \xE9preuves et \xE0 leurs corrections est r\xE9serv\xE9 aux abonn\xE9s Sabi Pro." }
+        { type: "p", texte: "Retrouve les anciens sujets d'examen et leurs corrig\xE9s, filtrables par ann\xE9e, fili\xE8re, semestre et mati\xE8re. Le contenu correspondant \xE0 ta promo appara\xEEt en priorit\xE9. L'acc\xE8s complet aux \xE9preuves et \xE0 leurs corrections est r\xE9serv\xE9 aux abonn\xE9s Sabi Pro." },
+        { type: "sous-titre", texte: "Il me manque une \xE9preuve" },
+        { type: "list", items: [
+          "Dans Acc\xE8s rapide, choisis ta mati\xE8re puis touche \u00AB Il me manque une \xE9preuve de cette mati\xE8re \u00BB. Indique le type (examen, devoir\u2026) et, si tu le sais, l'ann\xE9e du sujet.",
+          "Ta demande appara\xEEt dans \u00AB \xC9preuves demand\xE9es \u00BB, visible par les \xE9tudiants de ta fili\xE8re. Touche \u00AB Moi aussi \u00BB pour soutenir la demande d'un camarade.",
+          "Tu as l'\xE9preuve ? Touche \u00AB J'ai cette \xE9preuve \u00BB et envoie une photo ou un PDF : le demandeur est pr\xE9venu, et tu gagnes 3 points. Les admins peuvent ensuite la publier dans les \xE9preuves.",
+          "Quand l'\xE9preuve est publi\xE9e, la demande passe en \u00AB Comblée \u00BB et les \xE9tudiants concern\xE9s re\xE7oivent une notification."
+        ] }
       ]
     },
     {
@@ -1910,9 +1942,22 @@ html.sabi-lite .hm-shoot {
     },
     {
       icone: "message-circle",
-      titre: "7. Chat",
+      titre: "7. Messages et communaut\xE9s",
       blocs: [
-        { type: "p", texte: "Un espace de discussion pour les astuces, les plans et l'entraide entre \xE9tudiants." }
+        { type: "p", texte: "L'onglet Messages (en bas \xE0 droite) r\xE9unit toutes tes discussions. Un point rouge sur l'ic\xF4ne indique des messages priv\xE9s non lus." },
+        { type: "list", items: [
+          "Communaut\xE9 Sabi. Le salon g\xE9n\xE9ral, ouvert \xE0 tous les \xE9tudiants de l'IUT FV Bandjoun.",
+          "Ta communaut\xE9 de fili\xE8re. Tu y es ajout\xE9 automatiquement d'apr\xE8s ta fili\xE8re ; seuls les \xE9tudiants de ta fili\xE8re y ont acc\xE8s. Les annonces importantes des admins sont \xE9pingl\xE9es en haut.",
+          "Messages priv\xE9s. Touche \u00AB Nouveau \u00BB ou le bouton \u00AB Envoyer un message \u00BB sur le profil d'un membre (liste des Membres). Tu re\xE7ois une notification quand quelqu'un t'\xE9crit."
+        ] },
+        { type: "sous-titre", texte: "Dans une conversation" },
+        { type: "list", items: [
+          "Touche \u22EF sur un message pour r\xE9pondre, copier, supprimer le tien, le signaler ou bloquer son auteur.",
+          "Touche \uD83D\uDCF7 pour envoyer une photo et \uD83D\uDCCE pour partager une \xE9preuve de l'application.",
+          "Seuls les 50 derniers messages sont charg\xE9s ; touche \u00AB Charger les messages pr\xE9c\xE9dents \u00BB pour remonter.",
+          "Bloquer un membre : tu ne vois plus ses messages et il ne peut plus t'\xE9crire. Tu peux le d\xE9bloquer depuis la liste des conversations.",
+          "Les admins peuvent supprimer des messages des communaut\xE9s et traitent les signalements."
+        ] }
       ]
     },
     {
@@ -2009,10 +2054,63 @@ html.sabi-lite .hm-shoot {
       ]
     },
     {
+      icone: "zap",
+      titre: "12. Studio Sabi : s\xE9rie, quiz \xE9clair, examens et cartes",
+      blocs: [
+        { type: "p", texte: "Le Studio (Accueil > Studio Sabi, ou Profil > Acad\xE9mique) r\u00E9unit quatre outils pour r\u00E9viser un peu chaque jour." },
+        { type: "list", items: [
+          "S\xE9rie. Ouvre Sabi et r\u00E9vise chaque jour pour allumer ta flamme : plus tu encha\xEEnes de jours, plus ta s\xE9rie grandit.",
+          "Quiz. Des questions rapides tir\xE9es de tes cours pour tester tes connaissances.",
+          "Examens. Enregistre tes dates d'examen : Sabi te dit combien de jours il te reste.",
+          "Cartes. Des cartes m\xE9moire pour apprendre par c\u0153ur les d\xE9finitions et formules."
+        ] }
+      ]
+    },
+    {
+      icone: "book",
+      titre: "13. Utiliser Sabi hors connexion",
+      blocs: [
+        { type: "p", texte: "Dans la fiche d'une \xE9preuve, appuie sur le bouton de t\xE9l\xE9chargement hors ligne. L'\xE9preuve est enregistr\xE9e, chiffr\xE9e, dans Sabi : elle ne peut \xEAtre ouverte que dans l'application, pas depuis la galerie ni un autre logiciel." },
+        { type: "list", items: [
+          "Les \xE9preuves t\xE9l\xE9charg\xE9es restent disponibles 30 jours, puis elles sont supprim\xE9es automatiquement.",
+          "Retrouve-les dans le panneau des t\xE9l\xE9chargements pour les rouvrir ou les supprimer.",
+          "Sans Internet, Sabi affiche un \xE9cran hors connexion qui donne acc\xE8s \xE0 tes \xE9preuves t\xE9l\xE9charg\xE9es."
+        ] }
+      ]
+    },
+    {
+      icone: "bot",
+      titre: "14. Assistante vocale Sabi (Pro+)",
+      blocs: [
+        { type: "p", texte: "R\xE9serv\xE9e aux abonn\xE9s Sabi Pro+. Touche le bouton micro flottant (ou Accueil > Assistante vocale), puis parle ou \xE9cris ta question." },
+        { type: "list", items: [
+          "Elle r\xE9pond \xE0 partir des \xE9preuves, des r\xE9sum\xE9s et du guide de l'appli, et indique ses sources.",
+          "Commandes vocales : \u00AB ouvre le classement \u00BB, \u00AB quel est mon prochain examen ? \u00BB, \u00AB combien de jours de s\xE9rie ? \u00BB.",
+          "Quiz oral : dis \u00AB interroge-moi sur \u2026 \u00BB et r\xE9ponds \xE0 voix haute ; dis \u00AB stop \u00BB pour arr\xEAter.",
+          "Mode Libre : elle r\xE9\xE9coute automatiquement apr\xE8s chaque r\xE9ponse.",
+          "Hors connexion, elle cherche dans tes \xE9preuves t\xE9l\xE9charg\xE9es (r\xE9ponse locale, sans IA) ; la dict\xE9e vocale demande Internet.",
+          "Pendant une session de focus, elle se met en pause : plus de bouton, plus de voix."
+        ] }
+      ]
+    },
+    {
+      icone: "user",
+      titre: "15. Photo de profil, membres et personnalisation",
+      blocs: [
+        { type: "list", items: [
+          "Photo de profil. Dans Profil, touche ta photo pour la choisir et la recadrer ; tu peux la retirer \xE0 tout moment.",
+          "Membres. La liste affiche les photos, badges et points ; touche un membre pour voir son profil.",
+          "Mode rapide. Dans le menu (trois traits), r\xE9duit les animations pour les t\xE9l\xE9phones modestes.",
+          "Ic\xF4ne de l'application. Dans le menu, choisis une autre couleur d'ic\xF4ne (version Android install\xE9e)."
+        ] }
+      ]
+    },
+    {
       icone: "wrench",
-      titre: "12. Param\xE8tres et assistance",
+      titre: "16. Param\xE8tres et assistance",
       blocs: [
         { type: "p", texte: "Le menu (les trois traits) en haut \xE0 gauche donne acc\xE8s au mode clair/sombre, aux notifications, aux sons, \xE0 l'Assistance (message direct au responsable), au Guide d'utilisation et aux Cr\xE9dits de l'application." },
+        { type: "p", texte: "Pastille sur l'ic\xF4ne : quand Sabi t'envoie une notification (nouveau message, nouvelle \xE9preuve, annonce\u2026) et que l'application est ferm\xE9e, ton t\xE9l\xE9phone affiche un point (ou un chiffre) sur l'ic\xF4ne. Il dispara\xEEt quand tu ouvres Sabi. Pour la recevoir, autorise les notifications de Sabi dans les r\xE9glages Android." },
         { type: "p", texte: "Sabi fonctionne aussi hors connexion : les derni\xE8res informations enregistr\xE9es sur ton appareil restent consultables, un bandeau te pr\xE9vient quand tu es hors ligne. Une banni\xE8re peut te proposer d'installer l'application sur ton t\xE9l\xE9phone pour un acc\xE8s plus rapide." }
       ]
     }
@@ -2961,6 +3059,10 @@ html.sabi-lite .hm-shoot {
   function definirSourdineFocus(active) {
     if (focusSourdine === active) return;
     focusSourdine = active;
+    try {
+      window.dispatchEvent(new CustomEvent("sabi-focus", { detail: active }));
+    } catch (e) {
+    }
     if (active) return;
     const aRejouer = bullesEnAttente.splice(0, bullesEnAttente.length).slice(-5);
     aRejouer.forEach((detail, i) => setTimeout(() => window.dispatchEvent(new CustomEvent("sabi-notif", { detail })), 700 + i * 900));
@@ -6137,6 +6239,8 @@ html.sabi-lite .hm-shoot {
     { id: "boussole", label: "Boussole", icon: "compass" }
   ];
   var PHARES = [
+    { id: "assistante", label: "Assistante vocale", desc: "Exclusivit\xE9 Sabi Pro+ \xB7 questions \xE0 la voix", icon: "\u{1F3A4}" },
+    { id: "studio", label: "Studio Sabi", desc: "S\xE9rie de jours, quiz \xE9clair, cartes m\xE9moire", icon: "zap" },
     { id: "myscore", label: "MyScore", desc: "Consulte tes notes d\xE8s qu'elles tombent", icon: "award" },
     { id: "simulateur", label: "Simulateur de moyenne", desc: "La note qu'il te faut pour valider ton semestre", icon: "calendar" },
     { id: "resumes", label: "R\xE9sum\xE9s de cours", desc: "Exclusivit\xE9 Sabi Pro+", icon: "file-text" }
@@ -6403,6 +6507,8 @@ html.sabi-lite .hm-shoot {
 
   // src/tabs/accueil/ExploreGrid.jsx
   var LIENS = [
+    { id: "assistante", label: "Assistante vocale", icon: "\u{1F3A4}", desc: "Exclusivit\xE9 Sabi Pro+" },
+    { id: "studio", label: "Studio Sabi", icon: "zap", desc: "S\xE9rie, quiz \xE9clair, examens, cartes" },
     { id: "mentor", label: "Coach R\xE9ussite", icon: "target", desc: "Exclusivit\xE9 Sabi Pro+" },
     { id: "epreuves", label: "\xC9preuves", icon: "book", desc: "Anciens sujets et corrig\xE9s" },
     { id: "resumes", label: "R\xE9sum\xE9s de cours", icon: "file-text", desc: "Exclusivit\xE9 Sabi Pro+" },
@@ -7645,6 +7751,730 @@ html.sabi-lite .hm-shoot {
     );
   }
 
+  // Pastille sur l'icône de l'application (Android : point/chiffre du lanceur ; PWA installée : badge)
+  function pluginsNatifs() {
+    try {
+      return window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() ? window.Capacitor.Plugins || {} : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function majPastille(n) {
+    n = Math.max(0, n | 0);
+    try {
+      if (navigator.setAppBadge) {
+        if (n > 0) navigator.setAppBadge(n).catch(() => {
+        });
+        else navigator.clearAppBadge && navigator.clearAppBadge().catch(() => {
+        });
+      }
+    } catch (e) {
+    }
+    const P = pluginsNatifs();
+    if (!P) return;
+    try {
+      const B = P.Badge;
+      if (B) {
+        if (n > 0) B.set({ count: n });
+        else B.clear();
+      }
+    } catch (e) {
+    }
+  }
+  function effacerNotifsLivrees() {
+    const P = pluginsNatifs();
+    try {
+      if (P && P.PushNotifications && P.PushNotifications.removeAllDeliveredNotifications) P.PushNotifications.removeAllDeliveredNotifications();
+    } catch (e) {
+    }
+  }
+  // src/tabs/MessagerieTab.js — messages privés, communauté de filière, communauté générale
+  var msH = react_shim_default.createElement;
+  var msPhotos = {};
+  function msCleFiliere(f) {
+    return String(f || "").replace(/[.$#\[\]\/]/g, "-");
+  }
+  function msConvId(a, b) {
+    return [a, b].sort().join("_");
+  }
+  function msChemin(room) {
+    if (room.type === "general") return "chat";
+    if (room.type === "filiere") return "salonsFiliere/" + room.cle + "/messages";
+    return "dm/" + room.conv + "/messages";
+  }
+  function msHeure(ts) {
+    if (!ts) return "";
+    const d = new Date(ts), n = new Date();
+    if (d.toDateString() === n.toDateString()) return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+  }
+  function useDmIndex(uid) {
+    const R = react_shim_default;
+    const [idx, setIdx] = R.useState({});
+    R.useEffect(() => {
+      if (!uid) {
+        setIdx({});
+        return;
+      }
+      const r = db.ref("dmIndex/" + uid);
+      const l = r.on("value", (s) => setIdx(s.val() || {}), () => {
+      });
+      return () => r.off("value", l);
+    }, [uid]);
+    return idx;
+  }
+  function msNonLus(idx, uid) {
+    return Object.keys(idx || {}).filter((k) => {
+      const e = idx[k];
+      return e && e.dernierDe && e.dernierDe !== uid && (e.dernierTs || 0) > (e.luLe || 0);
+    }).length;
+  }
+  function MsAvatar({ uid, nom, size }) {
+    const R = react_shim_default;
+    const [url, setUrl] = R.useState(uid && msPhotos[uid] !== void 0 ? msPhotos[uid] : "");
+    R.useEffect(() => {
+      if (!uid || msPhotos[uid] !== void 0) return;
+      let vivant = true;
+      usersRef.child(uid).child("photoUrl").once("value").then((s) => {
+        msPhotos[uid] = s.val() || "";
+        if (vivant) setUrl(msPhotos[uid]);
+      }).catch(() => {
+      });
+      return () => {
+        vivant = false;
+      };
+    }, [uid]);
+    return msH(AvatarPhoto, { nom: nom || "?", size: size || 40, rond: true, url });
+  }
+  function MsFeuille({ titre, onFermer, children }) {
+    return dom_shim_default.createPortal(msH(
+      "div",
+      { className: "fixed inset-0 z-[210] flex items-end sm:items-center justify-center", style: { backgroundColor: "rgba(0,0,0,0.6)" }, onClick: onFermer },
+      msH(
+        "div",
+        { className: "w-full max-w-md rounded-t-3xl sm:rounded-3xl border p-4 flex flex-col gap-2", style: { backgroundColor: COLORS.surface, borderColor: COLORS.border, maxHeight: "80dvh", overflowY: "auto", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }, onClick: (e) => e.stopPropagation() },
+        titre && msH("p", { className: "text-sm font-bold text-center mb-1", style: { color: COLORS.text } }, titre),
+        children
+      )
+    ), document.body);
+  }
+  function msBouton(label, onClick, danger) {
+    return msH("button", { key: label, type: "button", onClick, className: "w-full rounded-xl py-3 text-sm font-semibold border", style: { borderColor: COLORS.border, color: danger ? COLORS.terraText : COLORS.text, backgroundColor: COLORS.surface2 } }, label);
+  }
+  function MsLigne({ gauche, titre, sous, droite, onClick, pastille }) {
+    return msH(
+      "button",
+      { type: "button", onClick, className: "w-full flex items-center gap-3 rounded-2xl border p-3 text-left", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+      gauche,
+      msH(
+        "div",
+        { className: "flex-1 min-w-0" },
+        msH("p", { className: "text-sm font-semibold truncate", style: { color: COLORS.text } }, titre),
+        sous && msH("p", { className: "text-xs truncate", style: { color: pastille ? COLORS.text : COLORS.textMuted, fontWeight: pastille ? 600 : 400 } }, sous)
+      ),
+      droite && msH("span", { className: "text-[10px] font-mono flex-shrink-0", style: { color: COLORS.textFaint } }, droite),
+      pastille && msH("span", { className: "w-2.5 h-2.5 rounded-full flex-shrink-0", style: { backgroundColor: COLORS.gold } })
+    );
+  }
+  function MsNouveau({ authUid, onChoisir, onFermer }) {
+    const R = react_shim_default;
+    const [membres, setMembres] = R.useState(null);
+    const [q, setQ] = R.useState("");
+    R.useEffect(() => {
+      usersRef.once("value").then((s) => {
+        const d = s.val() || {};
+        setMembres(Object.keys(d).filter((u) => u !== authUid && d[u] && d[u].pseudo).map((u) => ({ uid: u, pseudo: d[u].pseudo, filiere: d[u].filiere || "", annee: d[u].annee || "" })).sort((a, b) => a.pseudo.localeCompare(b.pseudo, "fr")));
+      }).catch(() => setMembres([]));
+    }, []);
+    const n = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const liste = (membres || []).filter((m) => !q.trim() || n(m.pseudo).includes(n(q))).slice(0, 60);
+    return msH(
+      MsFeuille,
+      { titre: "Nouveau message", onFermer },
+      msH("input", { value: q, onChange: (e) => setQ(e.target.value), placeholder: "Chercher un membre…", autoFocus: true, className: "rounded-full px-4 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface2, borderColor: COLORS.border, color: COLORS.text } }),
+      membres === null && msH("p", { className: "text-xs text-center py-4", style: { color: COLORS.textMuted } }, "Chargement…"),
+      membres && liste.length === 0 && msH("p", { className: "text-xs text-center py-4", style: { color: COLORS.textMuted } }, "Aucun membre trouvé."),
+      liste.map((m) => msH(MsLigne, { key: m.uid, gauche: msH(MsAvatar, { uid: m.uid, nom: m.pseudo, size: 38 }), titre: m.pseudo, sous: (m.filiere || "-") + (m.annee ? " · " + m.annee : ""), onClick: () => onChoisir(m) }))
+    );
+  }
+  function MsSignalements() {
+    const R = react_shim_default;
+    const [liste, setListe] = R.useState([]);
+    const [ouvert, setOuvert] = R.useState(false);
+    R.useEffect(() => {
+      const r = db.ref("signalements").limitToLast(30);
+      const l = r.on("value", (s) => {
+        const d = s.val() || {};
+        setListe(Object.keys(d).map((id) => ({ id, ...d[id] })).sort((a, b) => b.timestamp - a.timestamp));
+      }, () => {
+      });
+      return () => r.off("value", l);
+    }, []);
+    if (!liste.length) return null;
+    return msH(
+      "div",
+      { className: "flex flex-col gap-2" },
+      msH("button", { type: "button", onClick: () => setOuvert(!ouvert), className: "text-xs font-mono uppercase tracking-wider text-left", style: { color: COLORS.terraText } }, "⚠ Signalements (" + liste.length + ") " + (ouvert ? "▲" : "▼")),
+      ouvert && liste.map((s) => msH(
+        "div",
+        { key: s.id, className: "rounded-2xl border p-3 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        msH("p", { className: "text-xs", style: { color: COLORS.textMuted } }, (s.dePseudo || "?") + " a signalé " + (s.auteurPseudo || "?") + " (" + (s.salon || "") + ")"),
+        msH("p", { className: "text-sm", style: { color: COLORS.text } }, "« " + (s.extrait || "") + " »"),
+        msH(
+          "div",
+          { className: "flex gap-2" },
+          s.chemin && String(s.chemin).indexOf("dm/") !== 0 && s.msgId && msH("button", { type: "button", onClick: () => db.ref(s.chemin).child(s.msgId).remove().then(() => db.ref("signalements/" + s.id).remove()), className: "flex-1 rounded-lg py-2 text-xs font-semibold", style: { backgroundColor: COLORS.terra, color: COLORS.bg } }, "Supprimer le message"),
+          msH("button", { type: "button", onClick: () => db.ref("signalements/" + s.id).remove(), className: "flex-1 rounded-lg py-2 text-xs font-semibold border", style: { borderColor: COLORS.border, color: COLORS.text } }, "Classer")
+        )
+      ))
+    );
+  }
+  function MsListe({ authUid, profil, isAdmin, dmIndex, blocages, onOuvrir, onDebloquer }) {
+    const R = react_shim_default;
+    const [nouveau, setNouveau] = R.useState(false);
+    const convs = Object.keys(dmIndex || {}).map((k) => ({ conv: k, ...dmIndex[k] })).filter((e) => e.dernierTs && e.autre && !(blocages && blocages[e.autre])).sort((a, b) => b.dernierTs - a.dernierTs);
+    const maFiliere = profil && profil.filiere;
+    const bloques = Object.keys(blocages || {});
+    const titreSection = (t) => msH("p", { className: "text-xs font-mono uppercase tracking-wider mt-1", style: { color: COLORS.textMuted } }, t);
+    const emoji = (e, c) => msH("div", { className: "w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0", style: { backgroundColor: c || "rgba(var(--accent-rgb),0.15)" } }, e);
+    return msH(
+      "div",
+      { className: "flex flex-col gap-2.5 pb-4" },
+      titreSection("Communautés"),
+      msH(MsLigne, { gauche: emoji("🌍"), titre: "Communauté Sabi", sous: "Tous les étudiants de l'IUT FV Bandjoun", onClick: () => onOuvrir({ type: "general", titre: "Communauté Sabi" }) }),
+      maFiliere ? msH(MsLigne, { gauche: emoji("🎓"), titre: maFiliere, sous: "Ta communauté de filière", onClick: () => onOuvrir({ type: "filiere", cle: msCleFiliere(maFiliere), titre: maFiliere }) }) : msH("p", { className: "text-xs", style: { color: COLORS.textFaint } }, "Renseigne ta filière dans ton profil pour rejoindre sa communauté."),
+      isAdmin && FILIERES.filter((f) => f !== maFiliere).map((f) => msH(MsLigne, { key: f, gauche: emoji("🛡️"), titre: f, sous: "Modération (admin)", onClick: () => onOuvrir({ type: "filiere", cle: msCleFiliere(f), titre: f }) })),
+      msH(
+        "div",
+        { className: "flex items-center justify-between mt-2" },
+        titreSection("Messages privés"),
+        msH("button", { type: "button", onClick: () => setNouveau(true), className: "text-xs font-semibold px-3 py-1.5 rounded-full", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "✏ Nouveau")
+      ),
+      convs.length === 0 && msH("p", { className: "text-xs py-3 text-center", style: { color: COLORS.textFaint } }, "Aucune conversation. Touche « Nouveau » ou le bouton Message sur le profil d'un membre."),
+      convs.map((e) => msH(MsLigne, { key: e.conv, gauche: msH(MsAvatar, { uid: e.autre, nom: e.autrePseudo, size: 40 }), titre: e.autrePseudo || "Membre", sous: (e.dernierDe === authUid ? "Toi : " : "") + (e.dernier || ""), droite: msHeure(e.dernierTs), pastille: e.dernierDe !== authUid && (e.dernierTs || 0) > (e.luLe || 0), onClick: () => onOuvrir({ type: "dm", conv: e.conv, titre: e.autrePseudo || "Membre", autre: { uid: e.autre, pseudo: e.autrePseudo } }) })),
+      isAdmin && msH(MsSignalements, null),
+      bloques.length > 0 && msH(
+        "div",
+        { className: "flex flex-col gap-1.5 mt-2" },
+        titreSection("Membres bloqués"),
+        bloques.map((u) => msH(
+          "div",
+          { key: u, className: "flex items-center justify-between rounded-xl border px-3 py-2", style: { borderColor: COLORS.border } },
+          msH("span", { className: "text-sm", style: { color: COLORS.text } }, typeof blocages[u] === "string" ? blocages[u] : "Membre"),
+          msH("button", { type: "button", onClick: () => onDebloquer(u), className: "text-xs font-semibold", style: { color: COLORS.gold } }, "Débloquer")
+        ))
+      ),
+      nouveau && msH(MsNouveau, { authUid, onFermer: () => setNouveau(false), onChoisir: (m) => {
+        setNouveau(false);
+        onOuvrir({ type: "dm", conv: msConvId(authUid, m.uid), titre: m.pseudo, autre: { uid: m.uid, pseudo: m.pseudo } });
+      } })
+    );
+  }
+  function MsSalon({ room, authUid, pseudo, badgeActif, isAdmin, epreuves, blocages, setTab, onRetour, onBloquer, onDebloquer }) {
+    const R = react_shim_default;
+    const ref = db.ref(msChemin(room));
+    const estDm = room.type === "dm";
+    const [msgs, setMsgs] = R.useState([]);
+    const [limite, setLimite] = R.useState(50);
+    const [erreurLecture, setErreurLecture] = R.useState("");
+    const [texte, setTexte] = R.useState("");
+    const [reponse, setReponse] = R.useState(null);
+    const [envoi, setEnvoi] = R.useState("");
+    const [erreur, setErreur] = R.useState("");
+    const [actions, setActions] = R.useState(null);
+    const [signal, setSignal] = R.useState(null);
+    const [photo, setPhoto] = R.useState(null);
+    const [choixEp, setChoixEp] = R.useState(false);
+    const [qEp, setQEp] = R.useState("");
+    const [epingle, setEpingle] = R.useState(null);
+    const finRef = R.useRef(null);
+    const listeRef = R.useRef(null);
+    const procheBas = R.useRef(true);
+    const sautRef = R.useRef(false);
+    const dejaVu = R.useRef(0);
+    const cleEp = room.type === "general" ? "general" : room.cle;
+    const bloqueDm = estDm && blocages && blocages[room.autre.uid];
+    R.useEffect(() => {
+      setErreurLecture("");
+      const cible = ref.limitToLast(limite);
+      const l = cible.on("value", (s) => {
+        const d = s.val() || {};
+        setMsgs(Object.keys(d).map((id) => ({ id, ...d[id] })).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)));
+      }, (e) => setErreurLecture(e && /permission/i.test(e.message || "") ? "Accès refusé à cette conversation." : "Impossible de charger les messages."));
+      return () => cible.off("value", l);
+    }, [limite, room.type, room.conv, room.cle]);
+    R.useEffect(() => {
+      if (estDm) return;
+      const r = db.ref("epingles/" + cleEp);
+      const l = r.on("value", (s) => setEpingle(s.val()), () => {
+      });
+      return () => r.off("value", l);
+    }, [cleEp, estDm]);
+    const visibles = R.useMemo(() => msgs.filter((m) => !(m.uid && blocages && blocages[m.uid])), [msgs, blocages]);
+    R.useEffect(() => {
+      const fin = finRef.current;
+      if (!fin) return;
+      const dernier = visibles[visibles.length - 1];
+      if (sautRef.current) {
+        sautRef.current = false;
+        dejaVu.current = visibles.length;
+        return;
+      }
+      if (dejaVu.current === 0 || procheBas.current || dernier && dernier.uid === authUid) fin.scrollIntoView({ block: "end", behavior: dejaVu.current === 0 ? "auto" : "smooth" });
+      dejaVu.current = visibles.length;
+    }, [visibles.length]);
+    R.useEffect(() => {
+      if (!estDm || msgs.length === 0) return;
+      db.ref("dmIndex/" + authUid + "/" + room.conv + "/luLe").set(Date.now()).catch(() => {
+      });
+    }, [estDm, msgs.length, room.conv]);
+    const surDefilement = () => {
+      const el = listeRef.current;
+      if (el) procheBas.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    };
+    const messageErreur = (e) => /permission/i.test(e && e.message || "") ? estDm ? "Message refusé : ce membre t'a peut-être bloqué." : "Message refusé : tu n'as pas accès à cette communauté." : "Envoi impossible. Vérifie ta connexion.";
+    const envoyer = async (extra) => {
+      const t = texte.trim();
+      if (!t && !extra || envoi) return;
+      if (navigator.onLine === false) {
+        setErreur("Pas de connexion : réessaie quand tu es en ligne.");
+        return;
+      }
+      setEnvoi("send");
+      setErreur("");
+      const msg = { uid: authUid, pseudo: pseudo || "Étudiant", timestamp: Date.now() };
+      if (t) msg.texte = t.slice(0, 500);
+      if (badgeActif) msg.badge = badgeActif;
+      if (reponse) msg.reponse = reponse;
+      if (extra && extra.imageUrl) msg.imageUrl = extra.imageUrl;
+      if (extra && extra.epreuve) msg.epreuve = extra.epreuve;
+      const id = "m-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
+      try {
+        await ref.child(id).set(msg);
+        const apercu = (t || (extra && extra.imageUrl ? "📷 Photo" : "📎 Épreuve")).slice(0, 100);
+        if (estDm) {
+          const autre = room.autre.uid, up = {};
+          const base1 = "dmIndex/" + authUid + "/" + room.conv + "/", base2 = "dmIndex/" + autre + "/" + room.conv + "/";
+          up[base1 + "autre"] = autre;
+          up[base1 + "autrePseudo"] = room.autre.pseudo || "Membre";
+          up[base1 + "dernier"] = apercu;
+          up[base1 + "dernierTs"] = msg.timestamp;
+          up[base1 + "dernierDe"] = authUid;
+          up[base1 + "luLe"] = msg.timestamp;
+          up[base2 + "autre"] = authUid;
+          up[base2 + "autrePseudo"] = pseudo || "Membre";
+          up[base2 + "dernier"] = apercu;
+          up[base2 + "dernierTs"] = msg.timestamp;
+          up[base2 + "dernierDe"] = authUid;
+          await db.ref().update(up);
+          envoyerNotification({ cibleUid: autre, titre: pseudo || "Nouveau message", corps: apercu });
+        } else if (room.type === "general") {
+          envoyerNotification({ diffusion: true, titre: (pseudo || "") + " (Communauté Sabi)", corps: apercu });
+        }
+        setTexte("");
+        setReponse(null);
+        procheBas.current = true;
+      } catch (e) {
+        setErreur(messageErreur(e));
+      }
+      setEnvoi("");
+    };
+    const choisirPhoto = async (e) => {
+      const f = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!f) return;
+      const pb = validerTailleImageActu(f);
+      if (pb) {
+        setErreur(pb);
+        return;
+      }
+      setEnvoi("photo");
+      setErreur("");
+      try {
+        const url = await uploaderImageCloudinary(f, (p) => setPhoto(p));
+        setPhoto(null);
+        setEnvoi("");
+        await envoyer({ imageUrl: url });
+      } catch (x) {
+        setPhoto(null);
+        setEnvoi("");
+        setErreur(x && x.message ? x.message : "Envoi de la photo impossible.");
+      }
+    };
+    const supprimer = (m) => {
+      ref.child(m.id).remove().catch(() => setErreur("Suppression refusée."));
+      setActions(null);
+    };
+    const signaler = (m) => {
+      db.ref("signalements").push({ deUid: authUid, dePseudo: pseudo || "", auteurUid: m.uid || "", auteurPseudo: m.pseudo || "", salon: estDm ? "message privé" : room.type === "general" ? "communauté générale" : room.titre, chemin: msChemin(room), msgId: m.id, extrait: String(m.texte || (m.imageUrl ? "[photo]" : "[épreuve]")).slice(0, 150), timestamp: Date.now() }).then(() => setErreur("Merci, signalement envoyé aux admins.")).catch(() => setErreur("Signalement impossible."));
+      setSignal(null);
+      setActions(null);
+    };
+    const epingler = (m) => {
+      db.ref("epingles/" + cleEp).set({ texte: String(m.texte || "").slice(0, 300), auteur: m.pseudo || "", timestamp: Date.now() }).catch(() => setErreur("Épinglage refusé."));
+      setActions(null);
+    };
+    const eps = (epreuves || []).map((e) => ({ id: e.id, titre: [e.matiere, e.type, e.annee].filter(Boolean).join(" · ") || "Épreuve" })).filter((e) => !qEp.trim() || e.titre.toLowerCase().includes(qEp.trim().toLowerCase())).slice(0, 40);
+    const bulle = (m) => {
+      const moi = m.uid ? m.uid === authUid : m.pseudo === pseudo;
+      return msH(
+        "div",
+        { key: m.id, className: "flex flex-col " + (moi ? "items-end" : "items-start") },
+        msH(
+          "div",
+          { className: "max-w-[85%] rounded-2xl px-3 py-2", style: { backgroundColor: moi ? "rgba(var(--accent-rgb),0.18)" : COLORS.surface, border: "1px solid " + COLORS.border } },
+          !moi && !estDm && msH("p", { className: "text-[11px] font-semibold mb-0.5", style: { color: COLORS.gold } }, m.pseudo || "?"),
+          m.reponse && msH("div", { className: "rounded-lg px-2 py-1 mb-1.5 text-[11px]", style: { borderLeft: "3px solid " + COLORS.gold, backgroundColor: "rgba(0,0,0,0.2)", color: COLORS.textMuted } }, msH("b", null, m.reponse.pseudo || ""), " ", m.reponse.extrait || ""),
+          m.imageUrl && msH("img", { src: m.imageUrl, alt: "Photo", loading: "lazy", onClick: () => setActions({ image: m.imageUrl }), className: "rounded-lg mb-1.5", style: { maxWidth: "100%", maxHeight: 260, objectFit: "cover" } }),
+          m.epreuve && msH("button", { type: "button", onClick: () => setTab("epreuves"), className: "w-full text-left rounded-lg px-2.5 py-2 mb-1.5 text-xs font-semibold", style: { backgroundColor: "rgba(var(--accent-rgb),0.15)", color: COLORS.gold } }, "📎 Épreuve : " + (m.epreuve.titre || "") + " ›"),
+          m.texte && msH("p", { className: "text-sm", style: { color: COLORS.text, wordBreak: "break-word", whiteSpace: "pre-wrap" } }, m.texte),
+          msH(
+            "div",
+            { className: "flex items-center justify-end gap-3 mt-1" },
+            msH("span", { className: "text-[10px] font-mono", style: { color: COLORS.textFaint } }, msHeure(m.timestamp)),
+            msH("button", { type: "button", onClick: () => setActions({ m, moi }), "aria-label": "Actions", className: "text-sm px-1", style: { color: COLORS.textMuted } }, "⋯")
+          )
+        )
+      );
+    };
+    return msH(
+      "div",
+      { className: "flex flex-col h-full min-h-0" },
+      msH(
+        "div",
+        { className: "flex items-center gap-2 pb-2 flex-shrink-0" },
+        msH("button", { type: "button", onClick: onRetour, "aria-label": "Retour", className: "w-9 h-9 rounded-full flex items-center justify-center text-lg", style: { color: COLORS.text, backgroundColor: COLORS.surface } }, "‹"),
+        estDm && msH(MsAvatar, { uid: room.autre.uid, nom: room.autre.pseudo, size: 34 }),
+        msH("div", { className: "flex-1 min-w-0" }, msH("p", { className: "text-sm font-bold truncate", style: { color: COLORS.text } }, room.titre), msH("p", { className: "text-[10px] font-mono", style: { color: COLORS.textFaint } }, estDm ? "Message privé" : room.type === "general" ? "Communauté générale" : "Communauté de filière")),
+        estDm && msH("button", { type: "button", onClick: () => bloqueDm ? onDebloquer(room.autre.uid) : setActions({ bloquer: true }), className: "text-[11px] font-mono px-2.5 py-1 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, bloqueDm ? "Débloquer" : "Bloquer")
+      ),
+      epingle && epingle.texte && msH(
+        "div",
+        { className: "flex-shrink-0 rounded-xl px-3 py-2 mb-2 text-xs flex items-start gap-2", style: { backgroundColor: "rgba(var(--accent-rgb),0.12)", border: "1px solid " + COLORS.border, color: COLORS.text } },
+        msH("span", null, "📌"),
+        msH("span", { className: "flex-1", style: { wordBreak: "break-word" } }, epingle.texte),
+        isAdmin && msH("button", { type: "button", onClick: () => db.ref("epingles/" + cleEp).remove(), "aria-label": "Désépingler", style: { color: COLORS.textMuted } }, "✕")
+      ),
+      msH(
+        "div",
+        { ref: listeRef, onScroll: surDefilement, className: "flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1" },
+        msgs.length >= limite && msH("button", { type: "button", onClick: () => {
+          sautRef.current = true;
+          setLimite(limite + 50);
+        }, className: "self-center text-xs font-mono px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, "Charger les messages précédents"),
+        erreurLecture ? msH("p", { className: "text-xs text-center py-6", style: { color: COLORS.terraText } }, erreurLecture) : visibles.length === 0 ? msH(EmptyState, { icon: "message-circle", text: "Aucun message pour l'instant. Lance la discussion." }) : visibles.map(bulle),
+        msH("div", { ref: finRef })
+      ),
+      erreur && msH("p", { className: "text-[11px] flex-shrink-0 pt-1", style: { color: COLORS.terraText } }, erreur),
+      bloqueDm ? msH("p", { className: "text-xs text-center py-3 flex-shrink-0", style: { color: COLORS.textMuted } }, "Tu as bloqué ce membre.") : msH(
+        "div",
+        { className: "flex-shrink-0 pt-2 mt-1", style: { backgroundColor: COLORS.bg, borderTop: "1px solid " + COLORS.border } },
+        reponse && msH("div", { className: "flex items-center gap-2 rounded-lg px-2.5 py-1.5 mb-2 text-[11px]", style: { borderLeft: "3px solid " + COLORS.gold, backgroundColor: COLORS.surface, color: COLORS.textMuted } }, msH("span", { className: "flex-1 truncate" }, "Réponse à " + (reponse.pseudo || "") + " : " + (reponse.extrait || "")), msH("button", { type: "button", onClick: () => setReponse(null), "aria-label": "Annuler la réponse" }, "✕")),
+        photo !== null && msH("p", { className: "text-[11px] mb-1", style: { color: COLORS.textMuted } }, "Envoi de la photo : " + photo + " %"),
+        msH(
+          "div",
+          { className: "flex items-center gap-2" },
+          msH("label", { className: "w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0 cursor-pointer", style: { backgroundColor: COLORS.surface, border: "1px solid " + COLORS.border }, "aria-label": "Envoyer une photo" }, "📷", msH("input", { type: "file", accept: "image/*", className: "hidden", onChange: choisirPhoto })),
+          msH("button", { type: "button", onClick: () => setChoixEp(true), "aria-label": "Partager une épreuve", className: "w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0", style: { backgroundColor: COLORS.surface, border: "1px solid " + COLORS.border } }, "📎"),
+          msH("input", { value: texte, maxLength: 500, onChange: (e) => setTexte(e.target.value), onKeyDown: (e) => {
+            if (e.key === "Enter") envoyer();
+          }, placeholder: "Écris un message…", className: "flex-1 min-w-0 rounded-full px-4 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text } }),
+          msH("button", { type: "button", onClick: () => envoyer(), disabled: !texte.trim() || !!envoi, "aria-label": "Envoyer", className: "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-40", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "➤")
+        )
+      ),
+      actions && actions.image && dom_shim_default.createPortal(msH("div", { className: "fixed inset-0 z-[220] flex items-center justify-center", style: { backgroundColor: "rgba(0,0,0,0.92)" }, onClick: () => setActions(null) }, msH("img", { src: actions.image, alt: "Photo", style: { maxWidth: "100%", maxHeight: "100%", objectFit: "contain" } })), document.body),
+      actions && actions.m && msH(
+        MsFeuille,
+        { titre: "Message", onFermer: () => setActions(null) },
+        msBouton("↩ Répondre", () => {
+          setReponse({ id: actions.m.id, pseudo: actions.m.pseudo || "", extrait: String(actions.m.texte || (actions.m.imageUrl ? "📷 Photo" : "📎 Épreuve")).slice(0, 80) });
+          setActions(null);
+        }),
+        actions.m.texte && msBouton("⎘ Copier", () => {
+          try {
+            navigator.clipboard && navigator.clipboard.writeText(actions.m.texte);
+          } catch (e) {
+          }
+          setActions(null);
+        }),
+        isAdmin && !estDm && actions.m.texte && msBouton("📌 Épingler en haut", () => epingler(actions.m)),
+        (actions.moi || isAdmin && !estDm) && msBouton("🗑 Supprimer", () => supprimer(actions.m), true),
+        !actions.moi && msBouton("⚠ Signaler", () => setSignal(actions.m), true),
+        !actions.moi && actions.m.uid && msBouton("⛔ Bloquer " + (actions.m.pseudo || "ce membre"), () => setActions({ bloquer: true, uid: actions.m.uid, pseudo: actions.m.pseudo }), true)
+      ),
+      signal && msH(
+        MsFeuille,
+        { titre: "Signaler ce message ?", onFermer: () => setSignal(null) },
+        msH("p", { className: "text-xs text-center", style: { color: COLORS.textMuted } }, "Les admins verront ce message et décideront de la suite."),
+        msBouton("Envoyer le signalement", () => signaler(signal), true),
+        msBouton("Annuler", () => setSignal(null))
+      ),
+      actions && actions.bloquer && msH(
+        MsFeuille,
+        { titre: "Bloquer ce membre ?", onFermer: () => setActions(null) },
+        msH("p", { className: "text-xs text-center", style: { color: COLORS.textMuted } }, "Tu ne verras plus ses messages et il ne pourra plus t'écrire en privé. Tu peux le débloquer depuis la liste des conversations."),
+        msBouton("Bloquer", () => {
+          const u = actions.uid || room.autre && room.autre.uid;
+          const p = actions.pseudo || room.autre && room.autre.pseudo || "Membre";
+          onBloquer(u, p);
+          setActions(null);
+          if (estDm) onRetour();
+        }, true),
+        msBouton("Annuler", () => setActions(null))
+      ),
+      choixEp && msH(
+        MsFeuille,
+        { titre: "Partager une épreuve", onFermer: () => setChoixEp(false) },
+        msH("input", { value: qEp, onChange: (e) => setQEp(e.target.value), placeholder: "Chercher une matière…", className: "rounded-full px-4 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface2, borderColor: COLORS.border, color: COLORS.text } }),
+        eps.length === 0 && msH("p", { className: "text-xs text-center py-3", style: { color: COLORS.textMuted } }, "Aucune épreuve trouvée."),
+        eps.map((e) => msBouton(e.titre, () => {
+          setChoixEp(false);
+          envoyer({ epreuve: { id: String(e.id), titre: e.titre.slice(0, 120) } });
+        }))
+      )
+    );
+  }
+  function MessagerieTab({ authUid, pseudo, profil, badgeActif, isAdmin, epreuves, setTab, dmIndex, dmCible, onDmCibleConsommee }) {
+    const R = react_shim_default;
+    const [room, setRoom] = R.useState(null);
+    const [blocages, setBlocages] = R.useState({});
+    R.useEffect(() => {
+      const r = db.ref("blocages/" + authUid);
+      const l = r.on("value", (s) => setBlocages(s.val() || {}), () => {
+      });
+      return () => r.off("value", l);
+    }, [authUid]);
+    R.useEffect(() => {
+      if (dmCible && dmCible.uid && dmCible.uid !== authUid) setRoom({ type: "dm", conv: msConvId(authUid, dmCible.uid), titre: dmCible.pseudo || "Membre", autre: { uid: dmCible.uid, pseudo: dmCible.pseudo || "Membre" } });
+      if (dmCible && onDmCibleConsommee) onDmCibleConsommee();
+    }, [dmCible && dmCible.uid]);
+    const bloquer = (uid, p) => db.ref("blocages/" + authUid + "/" + uid).set(String(p || "Membre").slice(0, 60));
+    const debloquer = (uid) => db.ref("blocages/" + authUid + "/" + uid).remove();
+    if (room) return msH(MsSalon, { key: room.type + (room.conv || room.cle || ""), room, authUid, pseudo, badgeActif, isAdmin, epreuves, blocages, setTab, onRetour: () => setRoom(null), onBloquer: bloquer, onDebloquer: debloquer });
+    return msH(MsListe, { authUid, profil, isAdmin, dmIndex, blocages, onOuvrir: setRoom, onDebloquer: debloquer });
+  }
+
+  // src/tabs/DemandesEpreuves.js — « Il me manque cette épreuve » : demandes des étudiants et réponses de la communauté
+  var deRef = db.ref("demandesEpreuves");
+  function useDemandes(actif) {
+    const R = react_shim_default;
+    const [liste, setListe] = R.useState([]);
+    R.useEffect(() => {
+      if (!actif) {
+        setListe([]);
+        return;
+      }
+      const cible = deRef.limitToLast(150);
+      const l = cible.on("value", (s) => {
+        const d = s.val() || {};
+        setListe(Object.keys(d).map((id) => ({ id, ...d[id] })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)));
+      }, () => {
+      });
+      return () => cible.off("value", l);
+    }, [actif]);
+    return liste;
+  }
+  function deReponses(d) {
+    const r = d.reponses || {};
+    return Object.keys(r).map((id) => ({ id, ...r[id] })).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+  }
+  function deNb(o) {
+    return Object.keys(o || {}).length;
+  }
+  function deComblee(d, par) {
+    deRef.child(d.id).update({ statut: "comblee", comblePar: String(par || "").slice(0, 60) }).catch(() => {
+    });
+    const cibles = [d.uid].concat(Object.keys(d.soutiens || {})).filter((u, i, a) => u && a.indexOf(u) === i).slice(0, 15);
+    cibles.forEach((u) => envoyerNotification({ cibleUid: u, titre: "Épreuve disponible", corps: (d.matiere || "Une épreuve") + " : l'épreuve demandée est maintenant publiée." }));
+  }
+  function BoutonManque({ matiereObj, filiere, annee, semestre, authUid, pseudo, demandes, nbExistantes }) {
+    const R = react_shim_default;
+    const [ouvert, setOuvert] = R.useState(false);
+    const [type, setType] = R.useState(TYPES_EPREUVE[1]);
+    const [anneeSujet, setAnneeSujet] = R.useState("");
+    const [note, setNote] = R.useState("");
+    const [msg, setMsg] = R.useState("");
+    const [envoi, setEnvoi] = R.useState(false);
+    const envoyer = () => {
+      if (envoi) return;
+      const a = anneeSujet.trim().slice(0, 20);
+      const doublon = demandes.find((d) => d.statut !== "comblee" && d.filiere === filiere && d.code === matiereObj.code && d.type === type && (d.anneeSujet || "") === a);
+      setEnvoi(true);
+      if (doublon) {
+        deRef.child(doublon.id).child("soutiens").child(authUid).set(true).then(() => {
+          setMsg("Une demande identique existe déjà : on l'a soutenue pour toi.");
+          setOuvert(false);
+          setEnvoi(false);
+        }).catch(() => {
+          setMsg("Action impossible pour le moment.");
+          setEnvoi(false);
+        });
+        return;
+      }
+      const id = "d-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
+      const d = { uid: authUid, pseudo: pseudo || "Étudiant", filiere, annee, semestre, code: matiereObj.code, matiere: matiereObj.nom, type, statut: "ouverte", timestamp: Date.now() };
+      if (a) d.anneeSujet = a;
+      if (note.trim()) d.note = note.trim().slice(0, 300);
+      deRef.child(id).set(d).then(() => {
+        setMsg("Demande publiée. Les autres étudiants peuvent maintenant te répondre.");
+        setOuvert(false);
+        setNote("");
+        setAnneeSujet("");
+        setEnvoi(false);
+      }).catch(() => {
+        setMsg("Demande refusée. Vérifie ta connexion.");
+        setEnvoi(false);
+      });
+    };
+    return msH(
+      "div",
+      { className: "flex flex-col gap-1.5" },
+      msH("button", { type: "button", onClick: () => {
+        setMsg("");
+        setOuvert(true);
+      }, className: "w-full rounded-lg py-2.5 text-sm font-semibold border", style: { borderColor: COLORS.gold, color: COLORS.gold } }, "📣 Il me manque une épreuve de cette matière"),
+      msg && msH("p", { className: "text-[11px]", style: { color: COLORS.forestText } }, msg),
+      ouvert && msH(
+        MsFeuille,
+        { titre: "Demander une épreuve", onFermer: () => setOuvert(false) },
+        msH("p", { className: "text-xs text-center", style: { color: COLORS.textMuted } }, matiereObj.nom),
+        nbExistantes > 0 && msH("p", { className: "text-[11px] text-center", style: { color: COLORS.textFaint } }, nbExistantes + " épreuve(s) déjà disponible(s) pour cette matière : demande seulement celle qui te manque."),
+        msH("select", { value: type, onChange: (e) => setType(e.target.value), className: "w-full rounded-lg px-3 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface2, borderColor: COLORS.border, color: COLORS.text } }, TYPES_EPREUVE.map((t) => msH("option", { key: t }, t))),
+        msH("input", { value: anneeSujet, onChange: (e) => setAnneeSujet(e.target.value), maxLength: 20, placeholder: "Année du sujet (ex. 2023, facultatif)", className: "rounded-lg px-3 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface2, borderColor: COLORS.border, color: COLORS.text } }),
+        msH("input", { value: note, onChange: (e) => setNote(e.target.value), maxLength: 300, placeholder: "Précision (facultatif)", className: "rounded-lg px-3 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface2, borderColor: COLORS.border, color: COLORS.text } }),
+        msH("button", { type: "button", onClick: envoyer, disabled: envoi, className: "w-full rounded-xl py-3 text-sm font-bold disabled:opacity-50", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, envoi ? "Envoi…" : "Publier ma demande")
+      )
+    );
+  }
+  function DemandeCarte({ d, authUid, pseudo, isAdmin, onPublier, onGagnerPoints }) {
+    const R = react_shim_default;
+    const [ouvert, setOuvert] = R.useState(false);
+    const [repondre, setRepondre] = R.useState(false);
+    const [texte, setTexte] = R.useState("");
+    const [fichier, setFichier] = R.useState(null);
+    const [pct, setPct] = R.useState(null);
+    const [err, setErr] = R.useState("");
+    const reps = deReponses(d);
+    const moi = d.uid === authUid;
+    const soutenue = !!(d.soutiens && d.soutiens[authUid]);
+    const comblee = d.statut === "comblee";
+    const choisir = (e) => {
+      const f = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!f) return;
+      const pdf = /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name);
+      if (pdf && f.size > 25 * 1024 * 1024) {
+        setErr("PDF trop lourd (25 Mo maximum ici).");
+        return;
+      }
+      if (!pdf) {
+        const pb = validerTailleImageActu(f);
+        if (pb) {
+          setErr(pb);
+          return;
+        }
+      }
+      setErr("");
+      setFichier({ f, pdf });
+    };
+    const envoyer = async () => {
+      if (!texte.trim() && !fichier || pct !== null) return;
+      setErr("");
+      try {
+        setPct(0);
+        const rep = { uid: authUid, pseudo: pseudo || "Étudiant", timestamp: Date.now() };
+        if (texte.trim()) rep.texte = texte.trim().slice(0, 300);
+        if (fichier) {
+          const url = fichier.pdf ? await uploaderPdfCloudinary(fichier.f, setPct) : await uploaderImageCloudinary(fichier.f, setPct);
+          if (fichier.pdf) rep.pdfUrl = url;
+          else rep.imageUrl = url;
+        }
+        await deRef.child(d.id).child("reponses").child("r-" + Date.now() + "-" + Math.random().toString(36).slice(2, 5)).set(rep);
+        envoyerNotification({ cibleUid: d.uid, titre: "Quelqu'un a répondu à ta demande", corps: (d.matiere || "") + " · " + (pseudo || "un étudiant") });
+        if (fichier && onGagnerPoints) onGagnerPoints(3);
+        setTexte("");
+        setFichier(null);
+        setRepondre(false);
+        setOuvert(true);
+      } catch (e) {
+        setErr(e && e.message ? e.message : "Envoi impossible.");
+      }
+      setPct(null);
+    };
+    const basculerSoutien = () => {
+      const r = deRef.child(d.id).child("soutiens").child(authUid);
+      (soutenue ? r.remove() : r.set(true)).catch(() => {
+      });
+    };
+    const lien = (url, label) => msH("a", { href: url, target: "_blank", rel: "noopener noreferrer", className: "text-xs font-semibold underline", style: { color: COLORS.gold } }, label);
+    return msH(
+      "div",
+      { className: "rounded-xl border p-3 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface, opacity: comblee ? 0.65 : 1 } },
+      msH(
+        "div",
+        { className: "flex items-start justify-between gap-2" },
+        msH("div", { className: "min-w-0" }, msH("p", { className: "text-sm font-semibold", style: { color: COLORS.text } }, d.matiere + " · " + (d.type || "")), msH("p", { className: "text-[11px] font-mono", style: { color: COLORS.textMuted } }, [d.anneeSujet && "Sujet " + d.anneeSujet, d.annee, d.semestre].filter(Boolean).join(" · ") + " · par " + (moi ? "toi" : d.pseudo || "?"))),
+        comblee && msH("span", { className: "text-[10px] font-mono px-2 py-0.5 rounded-full flex-shrink-0", style: { backgroundColor: COLORS.forest, color: COLORS.bg } }, "Comblée")
+      ),
+      d.note && msH("p", { className: "text-xs", style: { color: COLORS.textMuted } }, "« " + d.note + " »"),
+      msH(
+        "div",
+        { className: "flex flex-wrap gap-2" },
+        !comblee && !moi && msH("button", { type: "button", onClick: basculerSoutien, className: "text-xs font-semibold px-3 py-1.5 rounded-full border", style: { borderColor: soutenue ? COLORS.gold : COLORS.border, color: soutenue ? COLORS.gold : COLORS.textMuted } }, (soutenue ? "✓ " : "") + "Moi aussi (" + deNb(d.soutiens) + ")"),
+        !comblee && moi && msH("span", { className: "text-xs px-1 py-1.5", style: { color: COLORS.textMuted } }, deNb(d.soutiens) + " étudiant(s) aussi"),
+        !comblee && !moi && msH("button", { type: "button", onClick: () => setRepondre(!repondre), className: "text-xs font-semibold px-3 py-1.5 rounded-full", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "J'ai cette épreuve"),
+        reps.length > 0 && msH("button", { type: "button", onClick: () => setOuvert(!ouvert), className: "text-xs font-mono px-2 py-1.5", style: { color: COLORS.textMuted } }, "Réponses (" + reps.length + ") " + (ouvert ? "▲" : "▼")),
+        isAdmin && !comblee && msH("button", { type: "button", onClick: () => onPublier(d), className: "text-xs font-semibold px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.gold, color: COLORS.gold } }, "Publier"),
+        (moi || isAdmin) && !comblee && msH("button", { type: "button", onClick: () => deComblee(d, pseudo), className: "text-xs font-semibold px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.forestText } }, "Marquer comblée"),
+        (moi || isAdmin) && msH("button", { type: "button", onClick: () => {
+          if (confirm("Supprimer cette demande ?")) deRef.child(d.id).remove();
+        }, className: "text-xs px-2 py-1.5", style: { color: COLORS.terraText } }, "Supprimer")
+      ),
+      repondre && msH(
+        "div",
+        { className: "flex flex-col gap-2 rounded-lg border p-2.5", style: { borderColor: COLORS.border } },
+        msH("input", { value: texte, onChange: (e) => setTexte(e.target.value), maxLength: 300, placeholder: "Message (facultatif)", className: "rounded-lg px-3 py-2 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface2, borderColor: COLORS.border, color: COLORS.text } }),
+        msH("label", { className: "text-xs font-semibold px-3 py-2 rounded-lg border text-center cursor-pointer", style: { borderColor: COLORS.border, color: COLORS.text } }, fichier ? "📎 " + fichier.f.name.slice(0, 30) : "📎 Joindre une photo ou un PDF", msH("input", { type: "file", accept: "image/*,application/pdf", className: "hidden", onChange: choisir })),
+        err && msH("p", { className: "text-[11px]", style: { color: COLORS.terraText } }, err),
+        msH("button", { type: "button", onClick: envoyer, disabled: pct !== null || !texte.trim() && !fichier, className: "rounded-lg py-2 text-sm font-semibold disabled:opacity-40", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, pct !== null ? "Envoi " + pct + " %" : "Envoyer ma réponse")
+      ),
+      ouvert && reps.map((r) => msH(
+        "div",
+        { key: r.id, className: "rounded-lg px-3 py-2 flex flex-col gap-1", style: { backgroundColor: COLORS.surface2 } },
+        msH("p", { className: "text-[11px] font-semibold", style: { color: COLORS.gold } }, r.pseudo || "?"),
+        r.texte && msH("p", { className: "text-xs", style: { color: COLORS.text, wordBreak: "break-word" } }, r.texte),
+        r.imageUrl && lien(r.imageUrl, "🖼 Voir la photo"),
+        r.pdfUrl && lien(r.pdfUrl, "📄 Ouvrir le PDF"),
+        (r.uid === authUid || isAdmin) && msH("button", { type: "button", onClick: () => deRef.child(d.id).child("reponses").child(r.id).remove(), className: "self-start text-[10px]", style: { color: COLORS.terraText } }, "Supprimer")
+      ))
+    );
+  }
+  function DemandesEpreuves({ authUid, pseudo, profil, isAdmin, demandes, onPublier, onGagnerPoints }) {
+    const R = react_shim_default;
+    const [ouvert, setOuvert] = R.useState(false);
+    const [combles, setCombles] = R.useState(false);
+    const visibles = demandes.filter((d) => (isAdmin || d.filiere === profil.filiere) && (combles ? d.statut === "comblee" : d.statut !== "comblee"));
+    const nbOuvertes = demandes.filter((d) => (isAdmin || d.filiere === profil.filiere) && d.statut !== "comblee").length;
+    return msH(
+      "div",
+      { className: "flex flex-col gap-2" },
+      msH(
+        "button",
+        { type: "button", onClick: () => setOuvert(!ouvert), className: "w-full flex items-center justify-between rounded-lg border px-4 py-3 text-left", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        msH("span", { className: "text-sm font-semibold", style: { color: COLORS.text } }, "📣 Épreuves demandées" + (nbOuvertes ? " (" + nbOuvertes + ")" : "")),
+        msH("span", { style: { color: COLORS.gold } }, ouvert ? "▲" : "▼")
+      ),
+      ouvert && msH(
+        "div",
+        { className: "flex flex-col gap-2" },
+        msH("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Des étudiants de ta filière cherchent ces épreuves. Si tu en as une, réponds : ça aide toute la promo (+3 points avec un fichier)."),
+        msH("button", { type: "button", onClick: () => setCombles(!combles), className: "self-start text-[10px] font-mono uppercase", style: { color: COLORS.gold } }, combles ? "Voir les demandes ouvertes" : "Voir les demandes comblées"),
+        visibles.length === 0 && msH("p", { className: "text-xs text-center py-3", style: { color: COLORS.textFaint } }, combles ? "Aucune demande comblée." : "Aucune demande pour l'instant. Choisis une matière ci-dessous pour en publier une."),
+        visibles.map((d) => msH(DemandeCarte, { key: d.id, d, authUid, pseudo, isAdmin, onPublier, onGagnerPoints }))
+      )
+    );
+  }
+
   // src/tabs/ClassementTab.js
   function ClassementContributions({ logs }) {
     const uneSemaine = 7 * 24 * 60 * 60 * 1e3;
@@ -7918,7 +8748,16 @@ html.sabi-lite .hm-shoot {
       let i = 0;
       const essayer = () => {
         if (i >= PDFJS_SOURCES.length) {
-          reject(new Error("PDF.js indisponible"));
+          hlPdfJsLocal().then((local) => {
+            const sc2 = document.createElement("script");
+            sc2.src = local.lib;
+            sc2.onload = () => {
+              window.pdfjsLib.GlobalWorkerOptions.workerSrc = local.worker;
+              resolve(window.pdfjsLib);
+            };
+            sc2.onerror = () => reject(new Error("PDF.js indisponible"));
+            document.head.appendChild(sc2);
+          }).catch(() => reject(new Error("PDF.js indisponible")));
           return;
         }
         const src = PDFJS_SOURCES[i];
@@ -8451,9 +9290,291 @@ html.sabi-lite .hm-shoot {
     return null;
   }
 
+  // src/services/horsligne.js — épreuves téléchargées, chiffrées (AES-GCM) et lisibles seulement dans Sabi
+  var HL_DB = "sabi-offline";
+  var HL_DUREE = 30 * 864e5;
+  function hlOuvrir() {
+    return new Promise((resolve, reject) => {
+      if (!window.indexedDB || !window.crypto || !window.crypto.subtle) {
+        reject(new Error("Stockage sécurisé indisponible sur cet appareil."));
+        return;
+      }
+      const r = indexedDB.open(HL_DB, 1);
+      r.onupgradeneeded = () => {
+        const db = r.result;
+        if (!db.objectStoreNames.contains("cle")) db.createObjectStore("cle");
+        if (!db.objectStoreNames.contains("epreuves")) db.createObjectStore("epreuves", { keyPath: "id" });
+        if (!db.objectStoreNames.contains("libs")) db.createObjectStore("libs");
+      };
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error || new Error("Stockage indisponible."));
+    });
+  }
+  function hlTx(db, store, mode, fn) {
+    return new Promise((resolve, reject) => {
+      const t = db.transaction(store, mode);
+      const rq = fn(t.objectStore(store));
+      t.oncomplete = () => resolve(rq ? rq.result : void 0);
+      t.onerror = () => reject(t.error);
+      t.onabort = () => reject(t.error);
+    });
+  }
+  async function hlCle(db) {
+    let k = await hlTx(db, "cle", "readonly", (s) => s.get("main"));
+    if (k) return k;
+    k = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+    await hlTx(db, "cle", "readwrite", (s) => s.put(k, "main"));
+    return k;
+  }
+  async function hlChiffrer(cle, octets) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, cle, octets);
+    return { iv, data };
+  }
+  async function hlDechiffrer(cle, bloc) {
+    return crypto.subtle.decrypt({ name: "AES-GCM", iv: bloc.iv }, cle, bloc.data);
+  }
+  async function hlPrechargerPdfJs(db) {
+    const deja = await hlTx(db, "libs", "readonly", (s) => s.get("pdfjs"));
+    if (deja) return;
+    for (const src of PDFJS_SOURCES) {
+      try {
+        const [lib, worker] = await Promise.all([fetch(src.lib).then((r) => r.text()), fetch(src.worker).then((r) => r.text())]);
+        if (lib.length > 1e4 && worker.length > 1e4) {
+          await hlTx(db, "libs", "readwrite", (s) => s.put({ lib, worker }, "pdfjs"));
+          return;
+        }
+      } catch (e) {
+      }
+    }
+  }
+  async function hlPdfJsLocal() {
+    const db = await hlOuvrir();
+    const v = await hlTx(db, "libs", "readonly", (s) => s.get("pdfjs"));
+    if (!v) throw new Error("PDF.js hors ligne absent");
+    return {
+      lib: URL.createObjectURL(new Blob([v.lib], { type: "text/javascript" })),
+      worker: URL.createObjectURL(new Blob([v.worker], { type: "text/javascript" }))
+    };
+  }
+  async function hlTelecharger(ep, uid, onEtape) {
+    const db = await hlOuvrir();
+    const cle = await hlCle(db);
+    const aTelecharger = [];
+    if (ep.pdfUrl) aTelecharger.push({ kind: "pdf", url: ep.pdfUrl });
+    (ep.imagesUrls && ep.imagesUrls.length ? ep.imagesUrls : ep.imageUrl ? [ep.imageUrl] : []).forEach((u) => aTelecharger.push({ kind: "img", url: u }));
+    const files = [];
+    for (let i = 0; i < aTelecharger.length; i++) {
+      const f = aTelecharger[i];
+      if (onEtape) onEtape(i, aTelecharger.length);
+      const res = await fetch(f.url);
+      if (!res.ok) throw new Error("Téléchargement impossible (HTTP " + res.status + ").");
+      const type = res.headers.get("content-type") || (f.kind === "pdf" ? "application/pdf" : "image/jpeg");
+      const enc = await hlChiffrer(cle, new Uint8Array(await res.arrayBuffer()));
+      files.push({ kind: f.kind, type, iv: enc.iv, data: enc.data });
+    }
+    if (ep.pdfUrl) await hlPrechargerPdfJs(db);
+    const meta = { matiere: ep.matiere, code: ep.code, annee: ep.annee, anneeSujet: ep.anneeSujet, semestre: ep.semestre, type: ep.type, filiere: ep.filiere, contenu: ep.contenu, corrige: ep.corrige, corrigeIA: ep.corrigeIA, auteur: ep.auteur };
+    const encMeta = await hlChiffrer(cle, new TextEncoder().encode(JSON.stringify(meta)));
+    const rec = { id: uid + "|" + ep.id, uid, savedAt: Date.now(), expireLe: Date.now() + HL_DUREE, meta: encMeta, files };
+    await hlTx(db, "epreuves", "readwrite", (s) => s.put(rec));
+    try {
+      localStorage.setItem("sabi_hl_uid", uid);
+    } catch (e) {
+    }
+  }
+  async function hlExiste(uid, epId) {
+    try {
+      const db = await hlOuvrir();
+      const r = await hlTx(db, "epreuves", "readonly", (s) => s.get(uid + "|" + epId));
+      return !!r && r.expireLe > Date.now();
+    } catch (e) {
+      return false;
+    }
+  }
+  async function hlLister(uid) {
+    const db = await hlOuvrir();
+    const cle = await hlCle(db);
+    const tous = await hlTx(db, "epreuves", "readonly", (s) => s.getAll());
+    const liste = [];
+    for (const r of tous || []) {
+      if (r.uid !== uid) continue;
+      if (r.expireLe <= Date.now()) {
+        await hlTx(db, "epreuves", "readwrite", (s) => s.delete(r.id));
+        continue;
+      }
+      try {
+        const meta = JSON.parse(new TextDecoder().decode(await hlDechiffrer(cle, r.meta)));
+        liste.push({ id: r.id, savedAt: r.savedAt, expireLe: r.expireLe, meta });
+      } catch (e) {
+      }
+    }
+    return liste.sort((a, b) => b.savedAt - a.savedAt);
+  }
+  async function hlLire(id) {
+    const db = await hlOuvrir();
+    const cle = await hlCle(db);
+    const r = await hlTx(db, "epreuves", "readonly", (s) => s.get(id));
+    if (!r) throw new Error("Épreuve introuvable.");
+    const meta = JSON.parse(new TextDecoder().decode(await hlDechiffrer(cle, r.meta)));
+    let pdf = null;
+    const images = [];
+    for (const f of r.files) {
+      const blob = new Blob([await hlDechiffrer(cle, f)], { type: f.type });
+      if (f.kind === "pdf") pdf = blob;
+      else images.push(blob);
+    }
+    return { meta, pdf, images };
+  }
+  async function hlSupprimer(id) {
+    const db = await hlOuvrir();
+    await hlTx(db, "epreuves", "readwrite", (s) => s.delete(id));
+  }
+  function BoutonHorsLigne({ ep }) {
+    const [etat, setEtat] = react_shim_default.useState("inconnu");
+    const [pct, setPct] = react_shim_default.useState("");
+    const [erreur, setErreur] = react_shim_default.useState("");
+    const uid = auth.currentUser && auth.currentUser.uid;
+    react_shim_default.useEffect(() => {
+      let ok = true;
+      if (uid) hlExiste(uid, ep.id).then((v) => ok && setEtat(v ? "fait" : "non"));
+      return () => {
+        ok = false;
+      };
+    }, [ep.id, uid]);
+    if (!uid || etat === "inconnu") return null;
+    const telecharger = async () => {
+      setErreur("");
+      setEtat("charge");
+      try {
+        await hlTelecharger(ep, uid, (i, n) => setPct(i + 1 + "/" + n));
+        setEtat("fait");
+      } catch (e) {
+        setEtat("non");
+        setErreur(e && e.message ? e.message : "Échec du téléchargement.");
+      }
+    };
+    const retirer = async () => {
+      await hlSupprimer(uid + "|" + ep.id);
+      setEtat("non");
+    };
+    return react_shim_default.createElement(
+      "div",
+      { className: "px-4 pb-3 flex flex-col gap-1" },
+      react_shim_default.createElement("button", {
+        type: "button",
+        onClick: etat === "fait" ? retirer : telecharger,
+        disabled: etat === "charge",
+        className: "flex items-center justify-center gap-1.5 text-xs font-mono py-2 rounded-lg border disabled:opacity-60",
+        style: { borderColor: etat === "fait" ? COLORS.forest : COLORS.border, color: etat === "fait" ? COLORS.forestText : COLORS.textMuted }
+      }, etat === "charge" ? "Téléchargement " + pct + "…" : etat === "fait" ? "✓ Disponible hors connexion (toucher pour retirer)" : "⬇ Télécharger pour lire hors connexion"),
+      erreur && react_shim_default.createElement("p", { className: "text-[11px]", style: { color: COLORS.terraText } }, erreur)
+    );
+  }
+  function PanneauTelechargements({ uid, onFermer }) {
+    const [liste, setListe] = react_shim_default.useState(null);
+    const [ouvert, setOuvert] = react_shim_default.useState(null);
+    const [lecture, setLecture] = react_shim_default.useState(null);
+    const [pdfUrl, setPdfUrl] = react_shim_default.useState(null);
+    const [erreur, setErreur] = react_shim_default.useState("");
+    const charger = () => hlLister(uid).then(setListe).catch((e) => {
+      setListe([]);
+      setErreur(e.message || "Lecture impossible.");
+    });
+    react_shim_default.useEffect(() => {
+      charger();
+    }, [uid]);
+    react_shim_default.useEffect(() => () => {
+      if (lecture) lecture.urls.forEach((u) => URL.revokeObjectURL(u));
+    }, [lecture]);
+    const ouvrir = async (item) => {
+      setErreur("");
+      try {
+        const d = await hlLire(item.id);
+        setLecture({ ...d, urls: d.images.map((b) => URL.createObjectURL(b)) });
+        setOuvert(item);
+      } catch (e) {
+        setErreur(e.message || "Lecture impossible.");
+      }
+    };
+    const fermerLecture = () => {
+      if (lecture) lecture.urls.forEach((u) => URL.revokeObjectURL(u));
+      setLecture(null);
+      setOuvert(null);
+    };
+    const ouvrirPdf = () => {
+      if (lecture && lecture.pdf) setPdfUrl(URL.createObjectURL(lecture.pdf));
+    };
+    if (ouvert && lecture) {
+      const m = lecture.meta;
+      return react_shim_default.createElement(
+        "div",
+        { className: "flex flex-col gap-3" },
+        react_shim_default.createElement("button", { type: "button", onClick: fermerLecture, className: "text-xs font-mono self-start", style: { color: COLORS.textMuted } }, "← Mes téléchargements"),
+        react_shim_default.createElement("p", { className: "text-base font-bold", style: { color: COLORS.text } }, m.matiere),
+        react_shim_default.createElement("p", { className: "text-[11px] font-mono", style: { color: COLORS.textMuted } }, [m.annee, m.semestre, m.type, m.filiere].filter(Boolean).join(" · ")),
+        lecture.pdf && react_shim_default.createElement("button", { type: "button", onClick: ouvrirPdf, className: "rounded-xl py-2.5 text-sm font-semibold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Ouvrir le sujet PDF"),
+        m.contenu && react_shim_default.createElement("p", { className: "text-sm whitespace-pre-wrap", style: { color: COLORS.text } }, m.contenu),
+        lecture.urls.map((u, i) => react_shim_default.createElement("img", { key: i, src: u, alt: "Photo du sujet " + (i + 1), className: "w-full rounded-lg", style: { objectFit: "contain", backgroundColor: COLORS.bg } })),
+        (m.corrige || m.corrigeIA) && react_shim_default.createElement("div", null, react_shim_default.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider mb-1", style: { color: COLORS.forestText } }, "Corrigé"), react_shim_default.createElement(CorrigeRendu, { texte: m.corrige || m.corrigeIA })),
+        pdfUrl && react_shim_default.createElement(PdfPreviewModal, { rawUrl: pdfUrl, onClose: () => {
+          URL.revokeObjectURL(pdfUrl);
+          setPdfUrl(null);
+        } })
+      );
+    }
+    return react_shim_default.createElement(
+      "div",
+      { className: "flex flex-col gap-3" },
+      onFermer && react_shim_default.createElement("button", { type: "button", onClick: onFermer, className: "text-xs font-mono self-start", style: { color: COLORS.textMuted } }, "← Retour"),
+      react_shim_default.createElement("p", { className: "text-xs", style: { color: COLORS.textFaint } }, "🔒 Ces épreuves sont chiffrées et lisibles uniquement dans Sabi. Elles restent 30 jours puis il faut les retélécharger en ligne."),
+      erreur && react_shim_default.createElement("p", { className: "text-[11px]", style: { color: COLORS.terraText } }, erreur),
+      liste === null ? react_shim_default.createElement("p", { className: "text-sm text-center py-8", style: { color: COLORS.textFaint } }, "Chargement…") : liste.length === 0 ? react_shim_default.createElement(EmptyState, { icon: "book", text: "Aucune épreuve téléchargée. Dans l'onglet Épreuves, touche « Télécharger pour lire hors connexion » sur un sujet." }) : liste.map((it) => react_shim_default.createElement(
+        "div",
+        { key: it.id, className: "rounded-xl border p-3 flex items-center gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        react_shim_default.createElement("button", { type: "button", onClick: () => ouvrir(it), className: "flex-1 min-w-0 text-left" }, react_shim_default.createElement("p", { className: "text-sm font-semibold truncate", style: { color: COLORS.text } }, it.meta.matiere), react_shim_default.createElement("p", { className: "text-[11px] font-mono truncate", style: { color: COLORS.textMuted } }, [it.meta.annee, it.meta.type, it.meta.filiere].filter(Boolean).join(" · ") + " · " + Math.max(1, Math.ceil((it.expireLe - Date.now()) / 864e5)) + " j restants")),
+        react_shim_default.createElement("button", { type: "button", "aria-label": "Supprimer", onClick: async () => {
+          await hlSupprimer(it.id);
+          charger();
+        }, className: "text-xs px-2 py-1", style: { color: COLORS.textMuted } }, "✕")
+      ))
+    );
+  }
+  function BoutonTelechargements() {
+    const [ouvert, setOuvert] = react_shim_default.useState(false);
+    const uid = auth.currentUser && auth.currentUser.uid;
+    if (!uid) return null;
+    return react_shim_default.createElement(
+      react_shim_default.Fragment,
+      null,
+      react_shim_default.createElement("button", { type: "button", onClick: () => setOuvert(true), className: "flex items-center justify-center gap-2 text-xs font-mono py-2.5 rounded-lg border", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, "📥 Mes épreuves hors connexion"),
+      ouvert && dom_shim_default.createPortal(react_shim_default.createElement(
+        "div",
+        { className: "fixed inset-0 z-[180] overflow-y-auto p-4", style: { backgroundColor: COLORS.bg } },
+        react_shim_default.createElement("div", { className: "max-w-md mx-auto" }, react_shim_default.createElement(PanneauTelechargements, { uid, onFermer: () => setOuvert(false) }))
+      ), document.body)
+    );
+  }
+  function EcranHorsLigne({ uid }) {
+    return react_shim_default.createElement(
+      "div",
+      { className: "min-h-screen w-full p-4", style: { backgroundColor: COLORS.bg } },
+      react_shim_default.createElement(
+        "div",
+        { className: "max-w-md mx-auto flex flex-col gap-3" },
+        react_shim_default.createElement("h1", { className: "text-lg font-bold mt-4", style: { color: COLORS.text } }, "Mode hors connexion"),
+        react_shim_default.createElement("p", { className: "text-xs", style: { color: COLORS.textMuted } }, "Pas de réseau : tu peux relire les épreuves déjà téléchargées. Sabi se rouvrira normalement dès que la connexion revient."),
+        uid ? react_shim_default.createElement(PanneauTelechargements, { uid }) : react_shim_default.createElement(EmptyState, { icon: "book", text: "Aucune épreuve téléchargée sur cet appareil." })
+      )
+    );
+  }
+
+
   // src/tabs/EpreuvesTab.js
-  function EpreuvesTab({ epreuves, profil, setProfil, onAddEpreuve, onGenerateCorrigeIA, onClearCorrigeIA, isAdmin, isOwner, onDeleteEpreuve, onReplacePdf, onReplaceImage, abonnement, setTab }) {
+  function EpreuvesTab({ epreuves, profil, setProfil, onAddEpreuve, onGenerateCorrigeIA, onClearCorrigeIA, isAdmin, isOwner, onDeleteEpreuve, onReplacePdf, onReplaceImage, abonnement, setTab, pseudo, authUid, onGagnerPoints }) {
     const acces = isOwner || isAdmin || abonnement === "pro" || abonnement === "proplus";
+    const demandes = useDemandes(acces);
+    const [demandeLiee, setDemandeLiee] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [expanded, setExpanded] = useState(null);
     const [matiere, setMatiere] = useState("");
@@ -8505,7 +9626,23 @@ html.sabi-lite .hm-shoot {
       setFiltreSemestreEp(s);
       setMatiereRapide("");
     };
+    const preparerPublication = (d) => {
+      setShowForm(true);
+      setMatiere(d.matiere || "");
+      setCode(d.code || "");
+      if (d.annee) setAnnee(d.annee);
+      if (d.semestre) setSemestre(d.semestre);
+      if (d.type) setType(d.type);
+      setAnneeSujet(d.anneeSujet || "");
+      if (d.filiere) setFiliereEpreuve(d.filiere);
+      setDemandeLiee(d);
+      try {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (e) {
+      }
+    };
     const resetForm = () => {
+      setDemandeLiee(null);
       setMatiere("");
       setCode("");
       setContenu("");
@@ -8566,7 +9703,11 @@ html.sabi-lite .hm-shoot {
       const publier = (pdfUrl, imageUrls) => {
         const anneeAPublier = annee;
         const filiereAPublier = filiereVerrouillee ? profil.filiere || filiereEpreuve : filiereEpreuve;
-        Promise.resolve(onAddEpreuve({ matiere: matiere.trim(), code: code.trim(), annee: anneeAPublier, anneeSujet: anneeSujet.trim(), semestre, type, filiere: filiereAPublier, contenu: contenu.trim(), corrige: corrige.trim(), pdfUrl: pdfUrl || null, imageUrl: imageUrls && imageUrls[0] || null, imagesUrls: imageUrls && imageUrls.length > 1 ? imageUrls : null })).then(() => resetForm()).catch((err) => {
+        Promise.resolve(onAddEpreuve({ matiere: matiere.trim(), code: code.trim(), annee: anneeAPublier, anneeSujet: anneeSujet.trim(), semestre, type, filiere: filiereAPublier, contenu: contenu.trim(), corrige: corrige.trim(), pdfUrl: pdfUrl || null, imageUrl: imageUrls && imageUrls[0] || null, imagesUrls: imageUrls && imageUrls.length > 1 ? imageUrls : null })).then(() => {
+          const dl = demandeLiee;
+          resetForm();
+          if (dl) deComblee(dl, pseudo);
+        }).catch((err) => {
           setUploadPct(null);
           setUploadErreur("\xC9chec de la publication (les donn\xE9es ne sont pas enregistr\xE9es) : " + (err && err.message ? err.message : "v\xE9rifie ta connexion."));
         });
@@ -8652,6 +9793,8 @@ html.sabi-lite .hm-shoot {
       react_shim_default.createElement(
         "div",
         { className: "flex flex-col gap-4" },
+        react_shim_default.createElement(BoutonTelechargements),
+        react_shim_default.createElement(DemandesEpreuves, { authUid, pseudo, profil, isAdmin, demandes, onPublier: preparerPublication, onGagnerPoints }),
         !isAdmin ? react_shim_default.createElement("p", { className: "text-xs text-center py-3", style: { color: COLORS.textFaint } }, "Seuls les administrateurs d\xE9sign\xE9s peuvent publier des \xE9preuves.") : !showForm ? react_shim_default.createElement("button", { onClick: () => setShowForm(true), className: "flex items-center justify-center gap-2 text-sm font-mono py-2.5 rounded-lg border border-dashed", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, "+ Publier une ancienne \xE9preuve") : react_shim_default.createElement(
           "div",
           { className: "rounded-lg border p-4 flex flex-col gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
@@ -8861,6 +10004,10 @@ html.sabi-lite .hm-shoot {
           ),
           filantes.length === 0 && react_shim_default.createElement("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Aucune mati\xE8re renseign\xE9e pour ce semestre pour le moment."),
           matiereRapide && filteredParMatiere.length === 0 && react_shim_default.createElement("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Aucune \xE9preuve n'est disponible pour le moment."),
+          matiereRapide && (() => {
+            const mo = filantes.find((f) => f.code === matiereRapide);
+            return mo ? react_shim_default.createElement(BoutonManque, { matiereObj: mo, filiere: filiereActive, annee: anneeActive, semestre: filtreSemestreEp, authUid, pseudo, demandes, nbExistantes: filteredParMatiere.length }) : null;
+          })(),
           matiereRapide && react_shim_default.createElement("button", { onClick: () => allerVersMatiere(""), className: "self-start text-[10px] font-mono uppercase", style: { color: COLORS.gold } }, "R\xE9initialiser")
         ),
         react_shim_default.createElement(
@@ -8934,6 +10081,7 @@ html.sabi-lite .hm-shoot {
                 }, iaLoading === ep.id ? "G\xE9n\xE9ration\u2026" : react_shim_default.createElement(react_shim_default.Fragment, null, react_shim_default.createElement(Icon, { name: "sparkles", size: 13 }), "G\xE9n\xE9rer IA"))
               ),
               react_shim_default.createElement(BoutonRevision, { ep }),
+              react_shim_default.createElement(BoutonHorsLigne, { ep }),
               iaLoading === ep.id && react_shim_default.createElement("p", { className: "text-[11px] px-4 pb-3 flex items-center gap-1.5", style: { color: COLORS.textFaint } }, react_shim_default.createElement(Icon, { name: "clock", size: 11 }), "\xC7a peut prendre 1 \xE0 2 minutes pour un sujet complet \xE0 plusieurs exercices, reste sur la page."),
               iaErreur && iaErreur.id === ep.id && react_shim_default.createElement("p", { className: "text-[11px] px-4 pb-3", style: { color: COLORS.terraText } }, iaErreur.message),
               isOpen && react_shim_default.createElement(
@@ -9255,8 +10403,916 @@ html.sabi-lite .hm-shoot {
     );
   }
 
+  // src/tabs/StudioTab.js
+  var stH = react_shim_default.createElement;
+  function stGet(k, def) {
+    try {
+      const v = localStorage.getItem("sabi_studio_" + k);
+      return v ? JSON.parse(v) : def;
+    } catch (e) {
+      return def;
+    }
+  }
+  function stSet(k, v) {
+    try {
+      localStorage.setItem("sabi_studio_" + k, JSON.stringify(v));
+    } catch (e) {
+    }
+  }
+  function stJour(d) {
+    const x = d ? new Date(d) : new Date();
+    return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0");
+  }
+  function stDecaler(jour, n) {
+    const [a, m, j] = jour.split("-").map(Number);
+    return stJour(new Date(a, m - 1, j + n));
+  }
+  function stVibrer(ms) {
+    try {
+      if (navigator.vibrate && !document.documentElement.classList.contains("sabi-lite")) navigator.vibrate(ms || 12);
+    } catch (e) {
+    }
+  }
+  function lancerConfettis() {
+    try {
+      if (document.documentElement.classList.contains("sabi-lite")) return;
+      if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const couleurs = ["#FFD24A", "#7C6BD6", "#3FB8B0", "#FF7A59", "#6EE7A8", "#F472B6"];
+      const conteneur = document.createElement("div");
+      conteneur.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:400;overflow:hidden";
+      document.body.appendChild(conteneur);
+      for (let i = 0; i < 36; i++) {
+        const p = document.createElement("span");
+        const t = 6 + Math.random() * 6;
+        p.style.cssText = "position:absolute;left:50%;top:40%;width:" + t + "px;height:" + t * 1.6 + "px;border-radius:2px;background:" + couleurs[i % couleurs.length] + ";will-change:transform,opacity";
+        conteneur.appendChild(p);
+        const dx = (Math.random() - 0.5) * window.innerWidth * 0.9;
+        const dy = window.innerHeight * (0.25 + Math.random() * 0.5);
+        p.animate([
+          { transform: "translate(-50%,0) rotate(0deg)", opacity: 1 },
+          { transform: "translate(" + dx + "px," + dy + "px) rotate(" + (Math.random() * 720 - 360) + "deg)", opacity: 0 }
+        ], { duration: 1100 + Math.random() * 700, easing: "cubic-bezier(.15,.7,.3,1)", fill: "forwards" });
+      }
+      setTimeout(() => conteneur.remove(), 2100);
+    } catch (e) {
+    }
+  }
+  var STUDIO_DEFIS = [
+    "Relis un cours pendant 25 minutes",
+    "Fais un quiz éclair",
+    "Crée 3 cartes mémoire",
+    "Refais un exercice d'une ancienne épreuve",
+    "Explique un chapitre à un camarade",
+    "Résume un cours en 5 lignes",
+    "Prépare tes affaires pour demain",
+    "Dors avant minuit pour bien retenir",
+    "Pose une question dans le chat",
+    "Planifie ta semaine de révision"
+  ];
+  function SerieSection({ onGagnerPoints }) {
+    const [serie, setSerie] = react_shim_default.useState(() => stGet("serie", { count: 0, best: 0, dernier: "", jours: [] }));
+    const [coches, setCoches] = react_shim_default.useState(() => {
+      const d = stGet("defis", { jour: "", faits: [] });
+      return d.jour === stJour() ? d.faits : [];
+    });
+    const aujourdhui = stJour();
+    const dejaValide = serie.dernier === aujourdhui;
+    const graine = Number(aujourdhui.replace(/-/g, "")) % STUDIO_DEFIS.length;
+    const defis = [0, 3, 7].map((d) => STUDIO_DEFIS[(graine + d) % STUDIO_DEFIS.length]);
+    const valider = () => {
+      if (dejaValide) return;
+      const hier = stDecaler(aujourdhui, -1);
+      const count = serie.dernier === hier ? serie.count + 1 : 1;
+      const jours = [...(serie.jours || []), aujourdhui].slice(-60);
+      const nv = { count, best: Math.max(serie.best || 0, count), dernier: aujourdhui, jours };
+      setSerie(nv);
+      stSet("serie", nv);
+      stVibrer(25);
+      lancerConfettis();
+      const paliers = stGet("paliers", []);
+      if ((count === 7 || count === 30) && !paliers.includes(count)) {
+        stSet("paliers", [...paliers, count]);
+        if (onGagnerPoints) onGagnerPoints(count === 7 ? 5 : 15);
+      }
+    };
+    const basculer = (i) => {
+      const nv = coches.includes(i) ? coches.filter((x) => x !== i) : [...coches, i];
+      setCoches(nv);
+      stSet("defis", { jour: aujourdhui, faits: nv });
+      stVibrer(10);
+      if (nv.length === defis.length && !coches.includes(i)) lancerConfettis();
+    };
+    const sept = [6, 5, 4, 3, 2, 1, 0].map((n) => stDecaler(aujourdhui, -n));
+    const palierSuivant = [3, 7, 14, 30, 60, 100].find((p) => p > serie.count) || 100;
+    const serieActive = serie.dernier === aujourdhui || serie.dernier === stDecaler(aujourdhui, -1);
+    const compte = serieActive ? serie.count : 0;
+    return stH(
+      "div",
+      { className: "flex flex-col gap-4" },
+      stH(
+        "div",
+        { className: "rounded-2xl border p-5 flex flex-col items-center gap-2 text-center", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        stH("div", { className: "text-5xl", style: { filter: compte > 0 ? "none" : "grayscale(1) opacity(.5)" } }, "🔥"),
+        stH("p", { className: "text-4xl font-extrabold font-mono", style: { color: COLORS.gold } }, compte),
+        stH("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "jour" + (compte > 1 ? "s" : "") + " d'affilée"),
+        stH(
+          "div",
+          { className: "flex gap-1.5 mt-2" },
+          sept.map((j) => {
+            const fait = (serie.jours || []).includes(j);
+            return stH("span", { key: j, className: "w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-mono", style: { backgroundColor: fait ? COLORS.gold : "transparent", color: fait ? COLORS.bg : COLORS.textFaint, border: "1px solid " + (fait ? COLORS.gold : COLORS.border) } }, fait ? "✓" : j.slice(8));
+          })
+        ),
+        stH("p", { className: "text-[11px] mt-1", style: { color: COLORS.textFaint } }, "Record : " + (serie.best || 0) + " j · prochain palier : " + palierSuivant + " j"),
+        stH("button", { type: "button", onClick: valider, disabled: dejaValide, className: "mt-2 w-full rounded-xl py-3 text-sm font-semibold disabled:opacity-60", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, dejaValide ? "Journée validée ✓ reviens demain" : "Valider ma journée")
+      ),
+      stH(
+        "div",
+        { className: "rounded-2xl border p-4 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        stH("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Défis du jour (" + coches.length + "/" + defis.length + ")"),
+        defis.map((d, i) => {
+          const on = coches.includes(i);
+          return stH("button", { key: i, type: "button", onClick: () => basculer(i), className: "flex items-center gap-3 text-left rounded-xl p-3 border", style: { borderColor: on ? COLORS.gold : COLORS.border, backgroundColor: on ? "rgba(var(--accent-rgb),0.12)" : "transparent" } }, stH("span", { className: "w-5 h-5 rounded-full flex items-center justify-center text-[11px] flex-shrink-0", style: { border: "1.5px solid " + COLORS.gold, backgroundColor: on ? COLORS.gold : "transparent", color: COLORS.bg } }, on ? "✓" : ""), stH("span", { className: "text-sm", style: { color: COLORS.text, textDecoration: on ? "line-through" : "none", opacity: on ? 0.7 : 1 } }, d));
+        })
+      )
+    );
+  }
+  function QuizEclairSection({ profil, onGagnerPoints }) {
+    const [matiere, setMatiere] = react_shim_default.useState("");
+    const [questions, setQuestions] = react_shim_default.useState(null);
+    const [i, setI] = react_shim_default.useState(0);
+    const [choix, setChoix] = react_shim_default.useState(null);
+    const [score, setScore] = react_shim_default.useState(0);
+    const [fini, setFini] = react_shim_default.useState(false);
+    const [charge, setCharge] = react_shim_default.useState(false);
+    const [erreur, setErreur] = react_shim_default.useState("");
+    const [gain, setGain] = react_shim_default.useState(0);
+    const generer = async () => {
+      const m = matiere.trim();
+      if (m.length < 3) {
+        setErreur("Indique une matière ou un chapitre (3 lettres minimum).");
+        return;
+      }
+      setErreur("");
+      setCharge(true);
+      try {
+        const prompt = "Tu es un professeur d'IUT au Cameroun" + (profil && profil.filiere ? " (filière " + profil.filiere + ")" : "") + ". Crée un quiz éclair de 5 questions à choix multiples sur : " + m + ". Réponds STRICTEMENT avec un tableau JSON, sans texte autour : [{\"question\": \"...\", \"options\": [\"...\", \"...\", \"...\", \"...\"], \"correctIndex\": 0, \"explication\": \"une phrase courte\"}]. 4 options par question, correctIndex entre 0 et 3, questions courtes et variées.";
+        const brut = await genererViaGeminiParts([{ text: prompt }], "quiz");
+        const m2 = brut.match(/\[[\s\S]*\]/);
+        const liste = JSON.parse(m2 ? m2[0] : brut).filter((q) => q && q.question && Array.isArray(q.options) && q.options.length >= 2 && Number.isInteger(q.correctIndex)).slice(0, 5);
+        if (!liste.length) throw new Error("Quiz illisible, réessaie.");
+        setQuestions(liste);
+        setI(0);
+        setChoix(null);
+        setScore(0);
+        setFini(false);
+        setGain(0);
+      } catch (e) {
+        setErreur("Impossible de créer le quiz : " + (typeof messageErreurIAConvivial === "function" ? messageErreurIAConvivial(e) : e.message));
+      } finally {
+        setCharge(false);
+      }
+    };
+    const repondre = (j) => {
+      if (choix !== null) return;
+      setChoix(j);
+      const bon = j === questions[i].correctIndex;
+      if (bon) setScore((s) => s + 1);
+      stVibrer(bon ? 15 : [20, 40, 20]);
+    };
+    const suivant = () => {
+      if (i + 1 >= questions.length) {
+        setFini(true);
+        const final = score;
+        let g = 0;
+        if (final >= 4 && stGet("quizPts", "") !== stJour()) {
+          g = 3;
+          stSet("quizPts", stJour());
+          if (onGagnerPoints) onGagnerPoints(3);
+        }
+        setGain(g);
+        if (final >= 4) lancerConfettis();
+        return;
+      }
+      setI(i + 1);
+      setChoix(null);
+    };
+    if (!questions) {
+      return stH(
+        "div",
+        { className: "rounded-2xl border p-5 flex flex-col gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        stH("p", { className: "text-sm font-semibold", style: { color: COLORS.text } }, "⚡ Quiz éclair"),
+        stH("p", { className: "text-xs", style: { color: COLORS.textMuted } }, "5 questions créées par l'IA sur la matière de ton choix. 4/5 ou plus = confettis + 3 points (une fois par jour)."),
+        stH("input", { value: matiere, onChange: (e) => setMatiere(e.target.value), placeholder: "Ex : Thermodynamique, Algèbre linéaire…", className: "w-full rounded-lg px-3 py-2.5 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
+        erreur && stH("p", { className: "text-[11px]", style: { color: COLORS.terraText } }, erreur),
+        stH("button", { type: "button", onClick: generer, disabled: charge, className: "rounded-xl py-3 text-sm font-semibold disabled:opacity-60", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, charge ? "Création du quiz…" : "Lancer le quiz")
+      );
+    }
+    if (fini) {
+      return stH(
+        "div",
+        { className: "rounded-2xl border p-6 flex flex-col items-center gap-2 text-center", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        stH("div", { className: "text-5xl" }, score >= 4 ? "🏆" : score >= 2 ? "💪" : "📚"),
+        stH("p", { className: "text-3xl font-extrabold font-mono", style: { color: COLORS.gold } }, score + " / " + questions.length),
+        stH("p", { className: "text-sm", style: { color: COLORS.text } }, score >= 4 ? "Excellent, tu maîtrises !" : score >= 2 ? "Pas mal, encore un petit effort." : "Reprends le cours puis réessaie."),
+        gain > 0 && stH("p", { className: "text-xs font-mono", style: { color: COLORS.forestText } }, "+" + gain + " points gagnés"),
+        stH("button", { type: "button", onClick: () => setQuestions(null), className: "mt-2 w-full rounded-xl py-3 text-sm font-semibold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Nouveau quiz")
+      );
+    }
+    const q = questions[i];
+    return stH(
+      "div",
+      { className: "rounded-2xl border p-5 flex flex-col gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+      stH("div", { className: "flex items-center justify-between" }, stH("span", { className: "text-[10px] font-mono uppercase", style: { color: COLORS.textMuted } }, "Question " + (i + 1) + "/" + questions.length), stH("span", { className: "text-[10px] font-mono", style: { color: COLORS.gold } }, "Score " + score)),
+      stH("div", { className: "h-1.5 rounded-full overflow-hidden", style: { backgroundColor: COLORS.border } }, stH("div", { className: "h-full rounded-full", style: { width: (i + (choix !== null ? 1 : 0)) / questions.length * 100 + "%", backgroundColor: COLORS.gold, transition: "width .4s ease" } })),
+      stH("p", { className: "text-sm font-semibold", style: { color: COLORS.text } }, q.question),
+      q.options.map((o, j) => {
+        let st = { borderColor: COLORS.border, color: COLORS.text };
+        if (choix !== null) {
+          if (j === q.correctIndex) st = { borderColor: COLORS.forest, backgroundColor: "rgba(74,222,128,0.14)", color: COLORS.forestText };
+          else if (j === choix) st = { borderColor: COLORS.terra, backgroundColor: "rgba(255,120,100,0.12)", color: COLORS.terraText };
+        }
+        return stH("button", { key: j, type: "button", onClick: () => repondre(j), className: "text-left text-sm rounded-xl border p-3", style: st }, o);
+      }),
+      choix !== null && stH("p", { className: "text-xs", style: { color: COLORS.textMuted } }, q.explication || ""),
+      choix !== null && stH("button", { type: "button", onClick: suivant, className: "rounded-xl py-2.5 text-sm font-semibold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, i + 1 >= questions.length ? "Voir mon score" : "Suivant")
+    );
+  }
+  function ExamensSection() {
+    const [examens, setExamens] = react_shim_default.useState(() => stGet("examens", []));
+    const [matiere, setMatiere] = react_shim_default.useState("");
+    const [date, setDate] = react_shim_default.useState("");
+    const maj = (liste) => {
+      setExamens(liste);
+      stSet("examens", liste);
+    };
+    const ajouter = () => {
+      if (matiere.trim().length < 2 || !date) return;
+      maj([...examens, { id: Date.now(), matiere: matiere.trim(), date }]);
+      setMatiere("");
+      setDate("");
+      stVibrer(15);
+    };
+    const auj = stJour();
+    const jours = (d) => Math.round((new Date(d + "T00:00:00") - new Date(auj + "T00:00:00")) / 864e5);
+    const tries = [...examens].sort((a, b) => a.date.localeCompare(b.date));
+    const prochains = tries.filter((e) => jours(e.date) >= 0);
+    const urgent = prochains[0];
+    return stH(
+      "div",
+      { className: "flex flex-col gap-4" },
+      urgent && stH(
+        "div",
+        { className: "rounded-2xl border p-5 text-center flex flex-col gap-1", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        stH("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Prochain examen"),
+        stH("p", { className: "text-4xl font-extrabold font-mono", style: { color: jours(urgent.date) <= 3 ? COLORS.terraText : COLORS.gold } }, jours(urgent.date) === 0 ? "Aujourd'hui" : "J-" + jours(urgent.date)),
+        stH("p", { className: "text-sm font-semibold", style: { color: COLORS.text } }, urgent.matiere),
+        stH("p", { className: "text-xs", style: { color: COLORS.textMuted } }, jours(urgent.date) > 1 ? "Plan conseillé : " + Math.min(120, 30 + Math.round(180 / Math.max(jours(urgent.date), 2))) + " min de révision par jour, avec un quiz éclair tous les 2 jours." : "Dernier effort : relis tes fiches et dors bien.")
+      ),
+      stH(
+        "div",
+        { className: "rounded-2xl border p-4 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        stH("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Ajouter un examen"),
+        stH("input", { value: matiere, onChange: (e) => setMatiere(e.target.value), placeholder: "Matière", className: "w-full rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
+        stH("input", { type: "date", value: date, onChange: (e) => setDate(e.target.value), className: "w-full rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
+        stH("button", { type: "button", onClick: ajouter, className: "rounded-xl py-2.5 text-sm font-semibold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Ajouter")
+      ),
+      tries.length === 0 ? stH(EmptyState, { icon: "calendar", text: "Ajoute tes dates d'examens pour suivre le compte à rebours." }) : tries.map((e) => {
+        const j = jours(e.date);
+        return stH(
+          "div",
+          { key: e.id, className: "rounded-xl border p-3 flex items-center gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface, opacity: j < 0 ? 0.5 : 1 } },
+          stH("span", { className: "text-xs font-mono font-bold w-14 text-center", style: { color: j < 0 ? COLORS.textFaint : j <= 3 ? COLORS.terraText : COLORS.gold } }, j < 0 ? "passé" : j === 0 ? "Auj." : "J-" + j),
+          stH("div", { className: "flex-1 min-w-0" }, stH("p", { className: "text-sm font-medium truncate", style: { color: COLORS.text } }, e.matiere), stH("p", { className: "text-[11px] font-mono", style: { color: COLORS.textMuted } }, e.date.split("-").reverse().join("/"))),
+          stH("button", { type: "button", "aria-label": "Supprimer", onClick: () => maj(examens.filter((x) => x.id !== e.id)), className: "text-xs px-2 py-1", style: { color: COLORS.textMuted } }, "✕")
+        );
+      })
+    );
+  }
+  function CartesSection({ profil }) {
+    const [cartes, setCartes] = react_shim_default.useState(() => stGet("cartes", []));
+    const [q, setQ] = react_shim_default.useState("");
+    const [r, setR] = react_shim_default.useState("");
+    const [matiere, setMatiere] = react_shim_default.useState("");
+    const [mode, setMode] = react_shim_default.useState("liste");
+    const [retourne, setRetourne] = react_shim_default.useState(false);
+    const [cours, setCours] = react_shim_default.useState("");
+    const [charge, setCharge] = react_shim_default.useState(false);
+    const [erreur, setErreur] = react_shim_default.useState("");
+    const maj = (l) => {
+      setCartes(l);
+      stSet("cartes", l);
+    };
+    const auj = stJour();
+    const aRevoir = cartes.filter((c) => !c.prochain || c.prochain <= auj);
+    const ajouter = () => {
+      if (q.trim().length < 2 || r.trim().length < 1) return;
+      maj([{ id: Date.now() + Math.random(), q: q.trim(), r: r.trim(), matiere: matiere.trim(), boite: 1, prochain: "" }, ...cartes]);
+      setQ("");
+      setR("");
+      stVibrer(12);
+    };
+    const noter = (sais) => {
+      const c = aRevoir[0];
+      const boite = sais ? Math.min(4, c.boite + 1) : 1;
+      const delai = [0, 0, 1, 3, 7][boite];
+      if (sais) maj(cartes.map((x) => x.id === c.id ? { ...x, boite, prochain: stDecaler(auj, delai) } : x));
+      else maj([...cartes.filter((x) => x.id !== c.id), { ...c, boite: 1, prochain: auj }]);
+      setRetourne(false);
+      stVibrer(sais ? 12 : 25);
+      if (aRevoir.length === 1 && sais) lancerConfettis();
+    };
+    const genererIA = async () => {
+      if (cours.trim().length < 60) {
+        setErreur("Colle au moins quelques lignes de cours (60 caractères).");
+        return;
+      }
+      setErreur("");
+      setCharge(true);
+      try {
+        const prompt = "Tu es un professeur d'IUT au Cameroun" + (profil && profil.filiere ? " (" + profil.filiere + ")" : "") + ". À partir de ce cours, crée 8 cartes mémoire (question courte, réponse courte et précise). Réponds STRICTEMENT avec un tableau JSON, sans texte autour : [{\"q\": \"...\", \"r\": \"...\"}].\n\nCours :\n" + cours.slice(0, 6e3);
+        const brut = await genererViaGeminiParts([{ text: prompt }], "cartes");
+        const m2 = brut.match(/\[[\s\S]*\]/);
+        const liste = JSON.parse(m2 ? m2[0] : brut).filter((c) => c && c.q && c.r).slice(0, 12);
+        if (!liste.length) throw new Error("Aucune carte lisible, réessaie.");
+        maj([...liste.map((c) => ({ id: Date.now() + Math.random(), q: String(c.q), r: String(c.r), matiere: matiere.trim(), boite: 1, prochain: "" })), ...cartes]);
+        setCours("");
+        lancerConfettis();
+      } catch (e) {
+        setErreur("Impossible de créer les cartes : " + (typeof messageErreurIAConvivial === "function" ? messageErreurIAConvivial(e) : e.message));
+      } finally {
+        setCharge(false);
+      }
+    };
+    if (mode === "revision") {
+      const c = aRevoir[0];
+      return stH(
+        "div",
+        { className: "flex flex-col gap-3" },
+        stH("button", { type: "button", onClick: () => {
+          setMode("liste");
+          setRetourne(false);
+        }, className: "text-xs font-mono self-start", style: { color: COLORS.textMuted } }, "← Mes cartes"),
+        !c ? stH("div", { className: "rounded-2xl border p-6 text-center", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, stH("div", { className: "text-4xl" }, "🎉"), stH("p", { className: "text-sm mt-2", style: { color: COLORS.text } }, "Tout est révisé pour aujourd'hui !")) : stH(
+          react_shim_default.Fragment,
+          null,
+          stH("p", { className: "text-[11px] font-mono text-center", style: { color: COLORS.textMuted } }, aRevoir.length + " carte" + (aRevoir.length > 1 ? "s" : "") + " à revoir"),
+          stH("button", { type: "button", onClick: () => setRetourne(!retourne), className: "rounded-2xl border p-6 min-h-[180px] flex flex-col items-center justify-center text-center gap-2", style: { borderColor: retourne ? COLORS.gold : COLORS.border, backgroundColor: COLORS.surface } }, stH("span", { className: "text-[10px] font-mono uppercase", style: { color: COLORS.textMuted } }, retourne ? "Réponse" : "Question" + (c.matiere ? " · " + c.matiere : "")), stH("span", { className: "text-base font-semibold", style: { color: retourne ? COLORS.gold : COLORS.text } }, retourne ? c.r : c.q), !retourne && stH("span", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Touche pour retourner")),
+          retourne && stH("div", { className: "grid grid-cols-2 gap-3" }, stH("button", { type: "button", onClick: () => noter(false), className: "rounded-xl py-3 text-sm font-semibold border", style: { borderColor: COLORS.terra, color: COLORS.terraText } }, "À revoir"), stH("button", { type: "button", onClick: () => noter(true), className: "rounded-xl py-3 text-sm font-semibold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Je savais"))
+        )
+      );
+    }
+    return stH(
+      "div",
+      { className: "flex flex-col gap-4" },
+      stH("button", { type: "button", onClick: () => setMode("revision"), disabled: !aRevoir.length, className: "rounded-xl py-3 text-sm font-semibold disabled:opacity-50", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, aRevoir.length ? "Réviser maintenant (" + aRevoir.length + ")" : cartes.length ? "Rien à revoir aujourd'hui ✓" : "Crée ta première carte"),
+      stH(
+        "div",
+        { className: "rounded-2xl border p-4 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        stH("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Nouvelle carte"),
+        stH("input", { value: matiere, onChange: (e) => setMatiere(e.target.value), placeholder: "Matière (facultatif)", className: "w-full rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
+        stH("input", { value: q, onChange: (e) => setQ(e.target.value), placeholder: "Question", className: "w-full rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
+        stH("input", { value: r, onChange: (e) => setR(e.target.value), placeholder: "Réponse", className: "w-full rounded-lg px-3 py-2 text-sm outline-none border", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
+        stH("button", { type: "button", onClick: ajouter, className: "rounded-xl py-2.5 text-sm font-semibold border", style: { borderColor: COLORS.gold, color: COLORS.gold } }, "Ajouter la carte")
+      ),
+      stH(
+        "div",
+        { className: "rounded-2xl border p-4 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        stH("p", { className: "text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5", style: { color: COLORS.textMuted } }, "✨ Cartes automatiques par IA"),
+        stH("textarea", { value: cours, onChange: (e) => setCours(e.target.value), rows: 4, placeholder: "Colle ici un extrait de cours…", className: "w-full rounded-lg px-3 py-2 text-sm outline-none border resize-none", style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text } }),
+        erreur && stH("p", { className: "text-[11px]", style: { color: COLORS.terraText } }, erreur),
+        stH("button", { type: "button", onClick: genererIA, disabled: charge, className: "rounded-xl py-2.5 text-sm font-semibold disabled:opacity-60", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, charge ? "Création…" : "Générer 8 cartes")
+      ),
+      cartes.length > 0 && stH("p", { className: "text-[11px] font-mono", style: { color: COLORS.textMuted } }, cartes.length + " carte" + (cartes.length > 1 ? "s" : "") + " enregistrée" + (cartes.length > 1 ? "s" : "")),
+      cartes.slice(0, 30).map((c) => stH(
+        "div",
+        { key: c.id, className: "rounded-xl border p-3 flex items-start gap-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+        stH("div", { className: "flex-1 min-w-0" }, stH("p", { className: "text-sm font-medium", style: { color: COLORS.text } }, c.q), stH("p", { className: "text-xs mt-0.5", style: { color: COLORS.textMuted } }, c.r), stH("p", { className: "text-[10px] font-mono mt-1", style: { color: COLORS.gold } }, "Niveau " + c.boite + "/4" + (c.matiere ? " · " + c.matiere : ""))),
+        stH("button", { type: "button", "aria-label": "Supprimer la carte", onClick: () => maj(cartes.filter((x) => x.id !== c.id)), className: "text-xs px-2 py-1", style: { color: COLORS.textMuted } }, "✕")
+      ))
+    );
+  }
+  function StudioTab({ pseudo, profil, onGagnerPoints }) {
+    const [section, setSection] = react_shim_default.useState(() => stGet("section", "serie"));
+    const onglets = [
+      { id: "serie", label: "Série", icone: "🔥" },
+      { id: "quiz", label: "Quiz", icone: "⚡" },
+      { id: "examens", label: "Examens", icone: "📅" },
+      { id: "cartes", label: "Cartes", icone: "🃏" }
+    ];
+    const choisir = (id) => {
+      setSection(id);
+      stSet("section", id);
+      stVibrer(8);
+    };
+    return stH(
+      "div",
+      { className: "flex flex-col gap-4" },
+      stH("h2", { className: "text-lg font-bold", style: { color: COLORS.text, fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif", fontWeight: 700, letterSpacing: "-0.02em" } }, "Studio Sabi"),
+      stH("p", { className: "text-xs", style: { color: COLORS.textFaint } }, "Salut " + (pseudo || "") + " ! Tes outils pour réviser plus malin, rester régulier et réussir tes examens."),
+      stH("div", { className: "grid grid-cols-4 gap-2", role: "tablist" }, onglets.map((o) => stH("button", { key: o.id, type: "button", role: "tab", "aria-selected": section === o.id, onClick: () => choisir(o.id), className: "rounded-xl py-2 flex flex-col items-center gap-0.5 border text-[11px] font-mono", style: { borderColor: section === o.id ? COLORS.gold : COLORS.border, backgroundColor: section === o.id ? "rgba(var(--accent-rgb),0.15)" : "transparent", color: section === o.id ? COLORS.gold : COLORS.textMuted } }, stH("span", { className: "text-lg leading-none" }, o.icone), o.label))),
+      stH("div", { key: section, className: "sabi-tab-fade" }, section === "serie" ? stH(SerieSection, { onGagnerPoints }) : section === "quiz" ? stH(QuizEclairSection, { profil, onGagnerPoints }) : section === "examens" ? stH(ExamensSection) : stH(CartesSection, { profil }))
+    );
+  }
+
+
+  // src/tabs/AssistanteTab.js — assistante vocale : cherche dans les épreuves, cours et guide ; marche aussi hors connexion
+  var AS_STOP = new Set("le la les un une des de du d l et ou en au aux a est sont que qui quoi quel quelle quels quelles comment pourquoi pour par sur dans avec sans ce cet cette ces se sa son ses mon ma mes ton ta tes je tu il elle on nous vous ils elles me te ne pas plus moins si car mais donc ni etre avoir faire dit peux peut veux voudrais svp stp sabi dis moi explique parle".split(" "));
+  function asNorm(t) {
+    return String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9\s]/g, " ");
+  }
+  function asTokens(t) {
+    return asNorm(t).split(/\s+/).filter((w) => w.length > 2 && !AS_STOP.has(w));
+  }
+  function asDecouper(texte, taille) {
+    const out = [];
+    const paras = String(texte || "").split(/\n{1,}/).map((p) => p.trim()).filter(Boolean);
+    let cur = "";
+    for (const p of paras) {
+      if ((cur + " " + p).length > (taille || 650) && cur) {
+        out.push(cur);
+        cur = p;
+      } else cur = cur ? cur + " " + p : p;
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+  function asConstruireCorpus({ epreuves, resumes, hors }) {
+    const docs = [];
+    const ajouter = (titre, source, tab, texte) => {
+      asDecouper(texte).forEach((c) => docs.push({ titre, source, tab, texte: c, tokens: asTokens(titre + " " + c) }));
+    };
+    (epreuves || []).forEach((e) => ajouter("Épreuve " + [e.matiere, e.annee, e.type].filter(Boolean).join(" "), "epreuve", "epreuves", [e.contenu, e.corrige, e.corrigeIA].filter(Boolean).join("\n")));
+    (resumes || []).forEach((r) => ajouter("Résumé " + [r.matiere, r.annee].filter(Boolean).join(" "), "resume", "resumes", [r.contenu, r.resumeIA].filter(Boolean).join("\n")));
+    (hors || []).forEach((h) => ajouter("Téléchargé : " + [h.matiere, h.annee, h.type].filter(Boolean).join(" "), "telecharge", "epreuves", [h.contenu, h.corrige, h.corrigeIA].filter(Boolean).join("\n")));
+    try {
+      GUIDE_SECTIONS.forEach((s) => ajouter("Guide Sabi : " + s.titre, "guide", "assistance", (s.blocs || []).map((b) => b.texte || (b.items || []).join("\n")).join("\n")));
+    } catch (e) {
+    }
+    return docs;
+  }
+  function asChercher(docs, question, n) {
+    const q = asTokens(question);
+    if (!q.length) return [];
+    const df = {};
+    q.forEach((w) => {
+      df[w] = docs.filter((d) => d.tokens.includes(w)).length;
+    });
+    const N = Math.max(docs.length, 1);
+    return docs.map((d) => {
+      let s = 0;
+      q.forEach((w) => {
+        const tf = d.tokens.filter((x) => x === w || x.startsWith(w) && w.length > 4).length;
+        if (tf) s += (1 + Math.log(tf)) * Math.log(1 + N / (1 + df[w]));
+      });
+      return { d, s };
+    }).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, n || 4).map((x) => x.d);
+  }
+  var AS_COMMANDES = [
+    { mots: ["classement", "podium"], tab: "classement", nom: "le classement" },
+    { mots: ["epreuve"], tab: "epreuves", nom: "les épreuves" },
+    { mots: ["resume"], tab: "resumes", nom: "les résumés de cours" },
+    { mots: ["membre"], tab: "membres", nom: "les membres" },
+    { mots: ["chat", "discussion"], tab: "chat", nom: "le chat" },
+    { mots: ["carte", "campus"], tab: "carte", nom: "la carte du campus" },
+    { mots: ["boussole"], tab: "boussole", nom: "la boussole" },
+    { mots: ["boutique", "bounty"], tab: "boutique", nom: "la boutique" },
+    { mots: ["profil"], tab: "profil", nom: "ton profil" },
+    { mots: ["simulateur", "moyenne"], tab: "simulateur", nom: "le simulateur de moyenne" },
+    { mots: ["studio", "flashcard", "carte memoire", "serie"], tab: "studio", nom: "le Studio" },
+    { mots: ["coach", "mentor"], tab: "mentor", nom: "le Coach Réussite" },
+    { mots: ["myscore", "mes notes"], tab: "myscore", nom: "MyScore" },
+    { mots: ["accueil"], tab: "accueil", nom: "l'accueil" },
+    { mots: ["actualite", "actu"], tab: "actualites", nom: "les actualités" },
+    { mots: ["assistance", "support"], tab: "assistance", nom: "l'assistance" }
+  ];
+  function asCommande(q) {
+    const n = asNorm(q);
+    if (!/\b(ouvre|ouvrir|va|aller|affiche|afficher|montre|montrer|emmene|direction)\b/.test(n)) return null;
+    return AS_COMMANDES.find((c) => c.mots.some((m) => n.includes(m))) || null;
+  }
+  function asLocalPerso(q) {
+    const n = asNorm(q);
+    try {
+      if (/examen/.test(n) && /(prochain|quand|reste|date)/.test(n)) {
+        const liste = stGet("examens", []).filter((e) => e.date >= stJour()).sort((a, b) => a.date.localeCompare(b.date));
+        if (!liste.length) return "Tu n'as pas encore enregistré d'examen. Ajoute tes dates dans le Studio, onglet Examens.";
+        const e = liste[0];
+        const j = Math.round((/* @__PURE__ */ new Date(e.date + "T00:00:00") - /* @__PURE__ */ new Date(stJour() + "T00:00:00")) / 864e5);
+        return "Ton prochain examen est " + e.matiere + ", " + (j === 0 ? "aujourd'hui" : j === 1 ? "demain" : "dans " + j + " jours") + ".";
+      }
+      if (/(serie|flamme|streak)/.test(n)) {
+        const s = stGet("serie", { count: 0, best: 0 });
+        return "Tu es à " + (s.count || 0) + " jour" + (s.count > 1 ? "s" : "") + " d'affilée, ton record est de " + (s.best || 0) + ".";
+      }
+    } catch (e) {
+    }
+    return null;
+  }
+  function asPourLaVoix(t) {
+    return String(t || "").replace(/[*_`#>|]/g, "").replace(/\n+/g, ". ").replace(/\s+/g, " ").trim();
+  }
+  function asParler(texte, actif, onFin) {
+    try {
+      if (!actif || !window.speechSynthesis) {
+        if (onFin) onFin();
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(asPourLaVoix(texte).slice(0, 900));
+      u.lang = "fr-FR";
+      u.rate = 1;
+      u.onend = onFin || null;
+      u.onerror = onFin || null;
+      window.speechSynthesis.speak(u);
+    } catch (e) {
+      if (onFin) onFin();
+    }
+  }
+  function asEncoderWav(buffer) {
+    const cible = 16e3;
+    const donnees = buffer.getChannelData(0);
+    const ratio = buffer.sampleRate / cible;
+    const n = Math.floor(donnees.length / ratio);
+    const pcm = new Int16Array(n);
+    for (let i = 0; i < n; i++) pcm[i] = Math.max(-1, Math.min(1, donnees[Math.floor(i * ratio)])) * 32767;
+    const wav = new DataView(new ArrayBuffer(44 + pcm.length * 2));
+    const ecrire = (o, s) => {
+      for (let i = 0; i < s.length; i++) wav.setUint8(o + i, s.charCodeAt(i));
+    };
+    ecrire(0, "RIFF");
+    wav.setUint32(4, 36 + pcm.length * 2, true);
+    ecrire(8, "WAVEfmt ");
+    wav.setUint32(16, 16, true);
+    wav.setUint16(20, 1, true);
+    wav.setUint16(22, 1, true);
+    wav.setUint32(24, cible, true);
+    wav.setUint32(28, cible * 2, true);
+    wav.setUint16(32, 2, true);
+    wav.setUint16(34, 16, true);
+    ecrire(36, "data");
+    wav.setUint32(40, pcm.length * 2, true);
+    new Int16Array(wav.buffer, 44).set(pcm);
+    return new Uint8Array(wav.buffer);
+  }
+  async function asTranscrire(blob) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const audio = await ctx.decodeAudioData(await blob.arrayBuffer());
+    ctx.close && ctx.close();
+    const wav = asEncoderWav(audio);
+    let bin = "";
+    for (let i = 0; i < wav.length; i += 8192) bin += String.fromCharCode.apply(null, wav.subarray(i, i + 8192));
+    const texte = await genererViaGeminiParts([{ text: "Transcris exactement cette note vocale d'un étudiant camerounais (français, parfois anglais). Réponds uniquement avec la transcription, sans commentaire. Si rien d'audible, réponds : (vide)" }, { inline_data: { mime_type: "audio/wav", data: btoa(bin) } }], "transcription");
+    return texte.replace(/^\(vide\)$/i, "").trim();
+  }
+  function asReponseLocale(docs, question) {
+    const hits = asChercher(docs, question, 3);
+    if (!hits.length) return { texte: "Je n'ai rien trouvé sur ce sujet dans les épreuves et cours disponibles hors connexion. Reconnecte-toi pour que je cherche plus largement.", sources: [] };
+    const q = asTokens(question);
+    const phrases = [];
+    hits.forEach((h) => h.texte.split(/(?<=[.!?])\s+/).forEach((p) => {
+      const t = asTokens(p);
+      const sc = q.filter((w) => t.some((x) => x.startsWith(w))).length;
+      if (sc) phrases.push({ p, sc, h });
+    }));
+    phrases.sort((a, b) => b.sc - a.sc);
+    const choisies = phrases.slice(0, 3).map((x) => x.p.trim());
+    const texte = (choisies.length ? choisies.join(" ") : hits[0].texte.slice(0, 350)) + " (Réponse locale, sans IA : reconnecte-toi pour une explication détaillée.)";
+    return { texte, sources: hits.map((h) => ({ titre: h.titre, tab: h.tab })) };
+  }
+  async function asReponseIA({ docs, question, historique, profil, pseudo }) {
+    const hits = asChercher(docs, question, 4);
+    const extraits = hits.map((h, i) => "[" + (i + 1) + "] " + h.titre + " :\n" + h.texte).join("\n\n") || "(aucun extrait trouvé)";
+    const hist = (historique || []).slice(-4).map((m) => (m.role === "moi" ? "Étudiant : " : "Sabi : ") + m.texte).join("\n");
+    const prompt = "Tu es « Sabi », l'assistante vocale des étudiants de l'IUT FV Bandjoun (Cameroun). Tu parles français, de façon chaleureuse et claire. Réponds en 2 à 5 phrases courtes, faites pour être lues à voix haute : pas de markdown, pas de tableau, pas de liste numérotée. Appuie-toi d'abord sur les EXTRAITS ci-dessous (épreuves, cours, guide de l'appli). Si l'information n'y figure pas, dis-le franchement puis donne une aide générale brève. Pour expliquer comment utiliser l'appli, appuie-toi sur le guide. Étudiant : " + (pseudo || "") + (profil && profil.filiere ? ", " + profil.filiere + " " + (profil.annee || "") : "") + ".\n\n" + (hist ? "Conversation :\n" + hist + "\n\n" : "") + "EXTRAITS :\n" + extraits + "\n\nQuestion de l'étudiant : " + question;
+    const texte = await genererViaGeminiParts([{ text: prompt }], "réponse");
+    return { texte: texte.trim(), sources: hits.map((h) => ({ titre: h.titre, tab: h.tab })) };
+  }
+  async function asQuestionOrale(docs, sujet, deja) {
+    const hits = sujet ? asChercher(docs, sujet, 3) : docs.filter((d) => d.source !== "guide").slice(0, 60).sort(() => Math.random() - 0.5).slice(0, 3);
+    if (!hits.length) throw new Error("Aucun cours ou épreuve pour t'interroger sur ce sujet.");
+    const extraits = hits.map((h, i) => "[" + (i + 1) + "] " + h.titre + " :\n" + h.texte).join("\n\n");
+    const prompt = "Tu es un professeur d'IUT qui interroge un étudiant à l'oral. À partir des extraits, pose UNE question courte et précise (pas déjà posée : " + (deja || []).slice(-5).join(" / ") + "). Réponds STRICTEMENT en JSON : {\"question\": \"...\", \"reference\": \"la réponse attendue en 1 à 3 phrases\"}\n\nEXTRAITS :\n" + extraits;
+    const brut = await genererViaGeminiParts([{ text: prompt }], "question");
+    const m = brut.match(/\{[\s\S]*\}/);
+    const o = JSON.parse(m ? m[0] : brut);
+    if (!o.question) throw new Error("Question illisible.");
+    return o;
+  }
+  async function asCorriger(q, ref, rep) {
+    const prompt = "Question posée : " + q + "\nRéponse attendue : " + ref + "\nRéponse de l'étudiant : " + rep + "\n\nDis en 2 phrases courtes, sans markdown, à voix haute : si c'est juste, partiellement juste ou faux, et la bonne réponse si besoin. Termine par un encouragement bref.";
+    return (await genererViaGeminiParts([{ text: prompt }], "correction")).trim();
+  }
+  function AssistanteTab(props) {
+    if (!props.acces) return react_shim_default.createElement(PaywallSabiPro, { setTab: props.setTab, palierRequis: "proplus" });
+    return react_shim_default.createElement(AssistanteCoeur, props);
+  }
+  function asLeger() {
+    try {
+      return document.documentElement.classList.contains("sabi-lite");
+    } catch (e) {
+      return false;
+    }
+  }
+  function AsTexte({ texte, anime }) {
+    const mots = react_shim_default.useMemo(() => String(texte).split(/(\s+)/), [texte]);
+    const [n, setN] = react_shim_default.useState(() => anime && !asLeger() ? 0 : mots.length);
+    react_shim_default.useEffect(() => {
+      if (n >= mots.length) return;
+      const t = setTimeout(() => setN((v) => Math.min(mots.length, v + 4)), 24);
+      return () => clearTimeout(t);
+    }, [n, mots]);
+    return mots.slice(0, n).join("");
+  }
+  function AssistanteCoeur({ epreuves, resumes, setTab, pseudo, profil }) {
+    const [msgs, setMsgs] = react_shim_default.useState(() => [{ role: "sabi", texte: "Salut " + (pseudo || "") + " ! Je suis Sabi. Pose-moi une question sur tes épreuves, tes cours ou l'appli, ou dis « interroge-moi sur … » pour un quiz oral." }]);
+    const [texte, setTexte] = react_shim_default.useState("");
+    const [etat, setEtat] = react_shim_default.useState("repos");
+    const [voixOn, setVoixOn] = react_shim_default.useState(() => stGet("voix", true));
+    const [hors, setHors] = react_shim_default.useState([]);
+    const [enLigne, setEnLigne] = react_shim_default.useState(() => navigator.onLine !== false);
+    const [quiz, setQuiz] = react_shim_default.useState(null);
+    const [info, setInfo] = react_shim_default.useState("");
+    const [focus, setFocus] = react_shim_default.useState(() => focusSourdine);
+    const [libre, setLibre] = react_shim_default.useState(false);
+    const refCache = react_shim_default.useRef(/* @__PURE__ */ new Map());
+    const refEcouter = react_shim_default.useRef(null);
+    const refLibre = react_shim_default.useRef(false);
+    refLibre.current = libre;
+    const refReco = react_shim_default.useRef(null);
+    const refRec = react_shim_default.useRef(null);
+    const finRef = react_shim_default.useRef(null);
+    react_shim_default.useEffect(() => {
+      const on = () => setEnLigne(true), off = () => setEnLigne(false);
+      window.addEventListener("online", on);
+      window.addEventListener("offline", off);
+      const surFocus = (e) => {
+        setFocus(!!e.detail);
+        if (e.detail) {
+          try {
+            window.speechSynthesis && window.speechSynthesis.cancel();
+          } catch (x) {
+          }
+          setEtat("repos");
+          setLibre(false);
+        }
+      };
+      window.addEventListener("sabi-focus", surFocus);
+      const uid = auth.currentUser && auth.currentUser.uid;
+      if (uid) hlLister(uid).then((l) => setHors(l.map((x) => x.meta))).catch(() => {
+      });
+      return () => {
+        window.removeEventListener("online", on);
+        window.removeEventListener("offline", off);
+        window.removeEventListener("sabi-focus", surFocus);
+        try {
+          window.speechSynthesis && window.speechSynthesis.cancel();
+        } catch (e) {
+        }
+      };
+    }, []);
+    react_shim_default.useEffect(() => {
+      if (finRef.current && finRef.current.scrollIntoView) finRef.current.scrollIntoView({ block: "end" });
+    }, [msgs, etat]);
+    const docs = react_shim_default.useMemo(() => asConstruireCorpus({ epreuves, resumes, hors }), [epreuves, resumes, hors]);
+    const ajouter = (m) => setMsgs((l) => [...l, m]);
+    const dire = (rep, sources) => {
+      ajouter({ role: "sabi", texte: rep, sources: sources || [], neuf: true });
+      if (!voixOn || focusSourdine) {
+        setEtat("repos");
+        return;
+      }
+      setEtat("parle");
+      asParler(rep, true, () => {
+        setEtat("repos");
+        if (refLibre.current && refEcouter.current && !focusSourdine) setTimeout(() => refEcouter.current && refEcouter.current(), 350);
+      });
+    };
+    const traiter = async (q) => {
+      q = (q || "").trim();
+      if (!q) return;
+      setInfo("");
+      ajouter({ role: "moi", texte: q });
+      setTexte("");
+      const n = asNorm(q);
+      if (quiz && !/\b(stop|arrete|arreter|termine|fini)\b/.test(n)) {
+        setEtat("reflechit");
+        try {
+          const verdict = await asCorriger(quiz.question, quiz.reference, q);
+          const suite = await asQuestionOrale(docs, quiz.sujet, quiz.deja);
+          setQuiz({ ...quiz, question: suite.question, reference: suite.reference, deja: [...quiz.deja, suite.question] });
+          dire(verdict + " Question suivante : " + suite.question);
+        } catch (e) {
+          setQuiz(null);
+          dire("Je n'arrive pas à continuer le quiz : " + (typeof messageErreurIAConvivial === "function" ? messageErreurIAConvivial(e) : e.message));
+        }
+        return;
+      }
+      if (quiz) {
+        setQuiz(null);
+        dire("D'accord, on arrête le quiz. Bravo pour l'effort !");
+        return;
+      }
+      if (/(interroge|quiz|pose moi des questions|questionne|teste moi)/.test(n)) {
+        if (!enLigne) {
+          dire("Le quiz oral a besoin de la connexion. Reconnecte-toi et redemande-moi.");
+          return;
+        }
+        setEtat("reflechit");
+        try {
+          const sujet = q.replace(/.*\b(sur|de|en)\b/i, "").trim();
+          const sujetUtile = asTokens(sujet).length ? sujet : "";
+          const o = await asQuestionOrale(docs, sujetUtile, []);
+          setQuiz({ question: o.question, reference: o.reference, sujet: sujetUtile, deja: [o.question] });
+          dire("C'est parti ! Réponds à voix haute ou au clavier, dis stop pour arrêter. Première question : " + o.question);
+        } catch (e) {
+          dire("Je ne peux pas lancer le quiz : " + (typeof messageErreurIAConvivial === "function" ? messageErreurIAConvivial(e) : e.message));
+        }
+        return;
+      }
+      const cmd = asCommande(q);
+      if (cmd) {
+        dire("J'ouvre " + cmd.nom + ".");
+        setTimeout(() => setTab(cmd.tab), 700);
+        return;
+      }
+      const perso = asLocalPerso(q);
+      if (perso) {
+        dire(perso);
+        return;
+      }
+      setEtat("reflechit");
+      if (!enLigne) {
+        const r = asReponseLocale(docs, q);
+        dire(r.texte, r.sources);
+        return;
+      }
+      const cle = n.trim();
+      if (refCache.current.has(cle)) {
+        const c = refCache.current.get(cle);
+        dire(c.texte, c.sources);
+        return;
+      }
+      try {
+        const r = await Promise.race([asReponseIA({ docs, question: q, historique: msgs, profil, pseudo }), new Promise((_, no) => setTimeout(() => no(new Error("delai")), 14e3))]);
+        if (refCache.current.size > 40) refCache.current.clear();
+        refCache.current.set(cle, r);
+        dire(r.texte, r.sources);
+      } catch (e) {
+        const r = asReponseLocale(docs, q);
+        dire(r.texte, r.sources);
+      }
+    };
+    const arreterEcoute = () => {
+      try {
+        if (refReco.current) refReco.current.stop();
+        if (refRec.current && refRec.current.state !== "inactive") refRec.current.stop();
+      } catch (e) {
+      }
+    };
+    const enregistrer = async () => {
+      try {
+        const flux = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const morceaux = [];
+        const rec = new MediaRecorder(flux);
+        refRec.current = rec;
+        rec.ondataavailable = (e) => e.data && e.data.size && morceaux.push(e.data);
+        rec.onstop = async () => {
+          flux.getTracks().forEach((t) => t.stop());
+          setEtat("reflechit");
+          try {
+            const t = await asTranscrire(new Blob(morceaux, { type: rec.mimeType || "audio/webm" }));
+            if (t) await traiter(t);
+            else {
+              setEtat("repos");
+              setInfo("Je n'ai rien entendu, réessaie plus près du micro.");
+            }
+          } catch (e) {
+            setEtat("repos");
+            setInfo("Transcription impossible : " + (e && e.message ? e.message : "réessaie."));
+          }
+        };
+        rec.start();
+        setEtat("ecoute");
+        setTimeout(() => rec.state === "recording" && rec.stop(), 25e3);
+      } catch (e) {
+        setEtat("repos");
+        setInfo("Micro indisponible : autorise le micro pour Sabi dans les réglages du téléphone, ou écris ta question.");
+      }
+    };
+    const ecouter = () => {
+      if (focusSourdine) {
+        setInfo("Focus actif : l'assistante est en pause pour ne pas te d\u00E9ranger.");
+        return;
+      }
+      if (etat === "ecoute") {
+        arreterEcoute();
+        return;
+      }
+      if (!enLigne) {
+        setInfo("La dictée vocale demande Internet. Hors connexion, écris ta question : je cherche dans tes épreuves téléchargées.");
+        return;
+      }
+      try {
+        window.speechSynthesis && window.speechSynthesis.cancel();
+      } catch (e) {
+      }
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const natif = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      if (SR && !natif) {
+        const r = new SR();
+        refReco.current = r;
+        r.lang = "fr-FR";
+        r.interimResults = false;
+        r.onresult = (e) => {
+          const t = e.results[0] && e.results[0][0] && e.results[0][0].transcript;
+          if (t) traiter(t);
+        };
+        r.onerror = (e) => {
+          setEtat("repos");
+          if (e.error === "not-allowed" || e.error === "service-not-allowed") enregistrer();
+          else setInfo("Je n'ai pas compris, réessaie.");
+        };
+        r.onend = () => setEtat((s) => s === "ecoute" ? "repos" : s);
+        try {
+          r.start();
+          setEtat("ecoute");
+        } catch (e) {
+          enregistrer();
+        }
+        return;
+      }
+      enregistrer();
+    };
+    refEcouter.current = ecouter;
+    const basculerVoix = () => {
+      const v = !voixOn;
+      setVoixOn(v);
+      stSet("voix", v);
+      if (!v) {
+        try {
+          window.speechSynthesis && window.speechSynthesis.cancel();
+        } catch (e) {
+        }
+        setEtat("repos");
+      }
+    };
+    const suggestions = ["Comment télécharger une épreuve ?", "Interroge-moi sur ma matière", "Quel est mon prochain examen ?", "Ouvre le classement"];
+    const orbe = etat === "ecoute" ? COLORS.terra : etat === "parle" ? COLORS.forest : COLORS.gold;
+    return stH(
+      "div",
+      { className: "flex flex-col gap-3", style: { minHeight: "calc(100dvh - 190px)" } },
+      stH(
+        "div",
+        { className: "flex items-center gap-3" },
+        stH("div", { className: "rounded-full flex-shrink-0 " + (etat !== "repos" ? "sabi-orbe-actif" : ""), style: { width: 46, height: 46, background: "radial-gradient(circle at 35% 30%, #fff8, " + orbe + " 60%)", boxShadow: "0 0 22px " + orbe + "66" } }),
+        stH("div", { className: "flex-1 min-w-0" }, stH("h2", { className: "text-lg font-bold", style: { color: COLORS.text } }, "Assistante Sabi"), stH("p", { className: "text-[11px] font-mono", style: { color: enLigne ? COLORS.forestText : COLORS.textMuted } }, (enLigne ? "● En ligne · IA complète" : "○ Hors connexion · recherche locale") + " · " + docs.filter((d) => d.source !== "guide").length + " extraits")),
+        stH("button", { type: "button", onClick: () => {
+          if (focusSourdine) return;
+          setLibre(!libre);
+          if (!libre) ecouter();
+        }, "aria-label": "Conversation mains libres", className: "text-xs font-mono px-3 py-1.5 rounded-full border", style: { borderColor: libre ? COLORS.gold : COLORS.border, color: libre ? COLORS.gold : COLORS.textFaint } }, libre ? "\uD83D\uDDE3 Libre" : "\u270B Libre"),
+        stH("button", { type: "button", onClick: basculerVoix, "aria-label": "Voix de r\u00E9ponse", className: "text-xs font-mono px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: voixOn ? COLORS.gold : COLORS.textFaint } }, voixOn ? "🔊 Voix" : "🔇 Muet")
+      ),
+      stH(
+        "div",
+        { className: "flex-1 flex flex-col gap-2" },
+        msgs.map((m, i) => stH(
+          "div",
+          { key: i, className: "max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm " + (m.role === "moi" ? "self-end" : "self-start"), style: m.role === "moi" ? { backgroundColor: COLORS.gold, color: COLORS.bg } : { backgroundColor: COLORS.surface, border: "1px solid " + COLORS.border, color: COLORS.text } },
+          m.role === "sabi" ? stH(AsTexte, { texte: m.texte, anime: !!m.neuf }) : m.texte,
+          m.sources && m.sources.length > 0 && stH("div", { className: "flex gap-1.5 flex-wrap mt-2" }, [...new Set(m.sources.map((s) => s.titre))].slice(0, 3).map((t) => stH("button", { key: t, type: "button", onClick: () => setTab(m.sources.find((s) => s.titre === t).tab), className: "text-[10px] font-mono px-2 py-0.5 rounded-full", style: { backgroundColor: "rgba(var(--accent-rgb),0.15)", color: COLORS.gold } }, t.slice(0, 38))))
+        )),
+        etat === "reflechit" && stH("div", { className: "self-start text-xs font-mono px-3 py-2 rounded-2xl", style: { color: COLORS.textMuted, border: "1px solid " + COLORS.border } }, "Sabi réfléchit…"),
+        etat === "ecoute" && stH("div", { className: "self-center text-xs font-mono px-3 py-2 rounded-full", style: { color: COLORS.terraText, border: "1px solid " + COLORS.terra } }, "Je t'écoute… touche le micro pour envoyer"),
+        stH("div", { ref: finRef })
+      ),
+      focus && stH("p", { className: "text-xs font-mono px-3 py-2 rounded-xl", style: { border: "1px solid " + COLORS.border, color: COLORS.textMuted } }, "\uD83D\uDD15 Focus actif : r\u00E9ponses silencieuses, notifications en pause. Tu peux \u00E9crire, je reste discr\u00E8te."),
+      info && stH("p", { className: "text-[11px]", style: { color: COLORS.terraText } }, info),
+      msgs.length < 3 && stH("div", { className: "flex gap-2 overflow-x-auto pb-1" }, suggestions.map((s) => stH("button", { key: s, type: "button", onClick: () => traiter(s), className: "flex-shrink-0 text-xs font-mono px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, s))),
+      stH(
+        "div",
+        { className: "flex items-center gap-2 sticky bottom-0 py-2", style: { backgroundColor: COLORS.bg } },
+        stH("input", { value: texte, onChange: (e) => setTexte(e.target.value), onKeyDown: (e) => {
+          if (e.key === "Enter") traiter(texte);
+        }, placeholder: "Écris ta question…", className: "flex-1 min-w-0 rounded-full px-4 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text } }),
+        texte.trim() ? stH("button", { type: "button", onClick: () => traiter(texte), "aria-label": "Envoyer", className: "w-11 h-11 rounded-full flex items-center justify-center", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "➤") : stH("button", { type: "button", onClick: ecouter, "aria-label": "Parler", className: "w-11 h-11 rounded-full flex items-center justify-center text-lg " + (etat === "ecoute" ? "sabi-orbe-actif" : ""), style: { backgroundColor: etat === "ecoute" ? COLORS.terra : COLORS.gold, color: COLORS.bg } }, etat === "ecoute" ? "■" : "🎤")
+      )
+    );
+  }
+  function BoutonAssistante({ tab, setTab, acces }) {
+    const [focus, setFocus] = react_shim_default.useState(() => focusSourdine);
+    react_shim_default.useEffect(() => {
+      const f = (e) => setFocus(!!e.detail);
+      window.addEventListener("sabi-focus", f);
+      return () => window.removeEventListener("sabi-focus", f);
+    }, []);
+    if (focus || ["assistante", "actualites", "chat", "carte", "profil"].includes(tab)) return null;
+    return stH("button", { type: "button", onClick: () => setTab("assistante"), "aria-label": "Assistante vocale Sabi", className: "fixed z-[60] rounded-full flex items-center justify-center text-xl", style: { width: 48, height: 48, right: 16, bottom: "calc(env(safe-area-inset-bottom, 0px) + 96px)", backgroundColor: COLORS.gold, color: COLORS.bg, boxShadow: "0 6px 20px rgba(0,0,0,.35)", touchAction: "manipulation" } }, acces ? "\uD83C\uDFA4" : "\uD83D\uDD12");
+  }
+
   // src/tabs/MembresTab.js
-  function MembresTab({ membres, isOwner, isAdmin }) {
+  function MembresTab({ membres, isOwner, isAdmin, monUid, onMessage }) {
     const voitCoordonnees = isOwner || isAdmin;
     const [membreOuvert, setMembreOuvert] = useState(null);
     const [filiereFiltre, setFiliereFiltre] = useState("toutes");
@@ -9361,7 +11417,11 @@ html.sabi-lite .hm-shoot {
           react_shim_default.createElement(TierBadge, { points: u.pointsTotal || 0 })
         )
       )),
-      membreOuvert && react_shim_default.createElement(ProfilMembreModal, { u: membreOuvert, voitCoordonnees, onFermer: () => setMembreOuvert(null) })
+      membreOuvert && react_shim_default.createElement(ProfilMembreModal, { u: membreOuvert, voitCoordonnees, onFermer: () => setMembreOuvert(null), onMessage: onMessage && membreOuvert.uid !== monUid ? () => {
+        const u = membreOuvert;
+        setMembreOuvert(null);
+        onMessage(u);
+      } : null })
     );
   }
   function AvatarMembre({ u, size }) {
@@ -9371,7 +11431,7 @@ html.sabi-lite .hm-shoot {
       react_shim_default.createElement(AvatarPhoto, { nom: u.pseudo, size: size - 3, url: u.photoUrl || "" }, react_shim_default.createElement("span", { className: "font-bold", style: { color: COLORS.gold, fontSize: Math.round(size * 0.42) } }, (u.pseudo || "?").charAt(0).toUpperCase()))
     );
   }
-  function ProfilMembreModal({ u, voitCoordonnees, onFermer }) {
+  function ProfilMembreModal({ u, voitCoordonnees, onFermer, onMessage }) {
     const badges = BADGES.filter((b) => u.badges && u.badges[b.id]);
     const tier = getAbonnementActif(u);
     const pts = u.pointsTotal || 0;
@@ -9417,7 +11477,8 @@ html.sabi-lite .hm-shoot {
           )
         ),
         voitCoordonnees && u.whatsapp && react_shim_default.createElement("p", { className: "text-xs font-mono flex items-center gap-1.5", style: { color: COLORS.forestText } }, react_shim_default.createElement(Icon, { name: "phone", size: 12 }), u.whatsapp),
-        react_shim_default.createElement("button", { type: "button", onClick: onFermer, className: "w-full rounded-lg py-2.5 text-sm font-semibold mt-1", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Fermer")
+        onMessage && react_shim_default.createElement("button", { type: "button", onClick: onMessage, className: "w-full rounded-lg py-2.5 text-sm font-semibold mt-1", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "\u2709 Envoyer un message"),
+        react_shim_default.createElement("button", { type: "button", onClick: onFermer, className: "w-full rounded-lg py-2.5 text-sm font-semibold mt-1 border", style: { borderColor: COLORS.border, color: COLORS.text } }, "Fermer")
       )
     ), document.body);
   }
@@ -11607,6 +13668,8 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
         liens: [
           { id: "myscore", label: "MyScore, mes notes", icon: "award" },
           { id: "resumes", label: "R\xE9sum\xE9s de cours (Pro+)", icon: "file-text" },
+          { id: "assistante", label: "Assistante vocale Sabi", icon: "\u{1F3A4}" },
+          { id: "studio", label: "Studio, s\xE9rie, quiz, examens, cartes", icon: "zap" },
           { id: "simulateur", label: "Simulateur de moyenne", icon: "\u2211" }
         ]
       },
@@ -12683,6 +14746,40 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
     const supportMessages = useFirebaseList(authUser ? supportRef.child(authUser.uid) : null, { actif: !!authUser && !isOwner });
     const chatMessages = react_shim_default.useMemo(() => [...chatMessagesBrut].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)), [chatMessagesBrut]);
     const dernierMsgIdRef = react_shim_default.useRef(null);
+    const dmIndex = useDmIndex(authUser && authUser.uid);
+    const dmNonLus = msNonLus(dmIndex, authUser && authUser.uid);
+    const [dmCible, setDmCible] = useState(null);
+    const dmVusRef = react_shim_default.useRef(null);
+    const dmNonLusRef = react_shim_default.useRef(0);
+    dmNonLusRef.current = dmNonLus;
+    useEffect(() => {
+      majPastille(dmNonLus);
+    }, [dmNonLus]);
+    useEffect(() => {
+      if (!authUser) return;
+      effacerNotifsLivrees();
+      const surVisibilite = () => {
+        if (document.visibilityState === "visible") effacerNotifsLivrees();
+        majPastille(dmNonLusRef.current);
+      };
+      document.addEventListener("visibilitychange", surVisibilite);
+      const P = pluginsNatifs();
+      let ecouteur = null;
+      try {
+        if (P && P.App && P.App.addListener) ecouteur = P.App.addListener("appStateChange", (e) => {
+          if (e && e.isActive) effacerNotifsLivrees();
+          majPastille(dmNonLusRef.current);
+        });
+      } catch (e) {
+      }
+      return () => {
+        document.removeEventListener("visibilitychange", surVisibilite);
+        try {
+          ecouteur && ecouteur.then && ecouteur.then((h) => h && h.remove && h.remove());
+        } catch (e) {
+        }
+      };
+    }, [!!authUser]);
     const [epreuves, setEpreuves] = useState([]);
     const resumes = useFirebaseList(resumesRef, { actif: !!authUser });
     const pointsLogs = useFirebaseList(pointsLogRef, { actif: !!authUser, limit: 500 });
@@ -12717,6 +14814,19 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       }
       dernierMsgIdRef.current = dernier.id;
     }, [chatMessages, tab, pseudo]);
+    useEffect(() => {
+      if (!authUser) return;
+      const vus = dmVusRef.current;
+      const maintenant = {};
+      Object.keys(dmIndex).forEach((k) => {
+        const e = dmIndex[k];
+        maintenant[k] = e.dernierTs || 0;
+        if (vus && e.dernierDe && e.dernierDe !== authUser.uid && (e.dernierTs || 0) > (vus[k] || 0) && tab !== "chat") {
+          notifierBulle(e.dernier || "Nouveau message", { titre: e.autrePseudo || "Message priv\xE9", icone: "message-circle" });
+        }
+      });
+      dmVusRef.current = maintenant;
+    }, [dmIndex, tab]);
     const [whatsapp, setWhatsapp] = useState("");
     const [matricule, setMatriculeState] = useState("");
     const [points, setPoints] = useState(0);
@@ -13363,14 +15473,15 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       { id: "epreuves", label: "\xC9preuves", icon: "book" },
       { id: "accueil", label: "Accueil", icon: "home" },
       { id: "carte", label: "Carte", icon: "map" },
-      { id: "chat", label: "Chat", icon: "message-circle" }
+      { id: "chat", label: "Messages", icon: "message-circle" }
     ];
     const TITRES_ONGLETS = {
+      assistante: "Assistante Sabi",
       actualites: "Actualit\xE9s",
       epreuves: "\xC9preuves",
       accueil: "Accueil",
       carte: "Carte",
-      chat: "Chat",
+      chat: "Messages",
       boussole: "Boussole",
       classement: "Classement",
       boutique: "Boutique & Bounty",
@@ -13475,7 +15586,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       el.addEventListener("touchmove", onSwipeTouchMove, { passive: false });
       return () => el.removeEventListener("touchmove", onSwipeTouchMove);
     }, [tab]);
-    const secondaryIds = ["boussole", "classement", "boutique", "simulateur", "mentor", "membres", "admin", "myscoreAdmin", "promoAdmin", "resumes", "myscore", "assistance", "supportAdmin", "infosperso"];
+    const secondaryIds = ["assistante", "studio", "boussole", "classement", "boutique", "simulateur", "mentor", "membres", "admin", "myscoreAdmin", "promoAdmin", "resumes", "myscore", "assistance", "supportAdmin", "infosperso"];
     const activeBottom = tabs.some((t) => t.id === tab) ? tab : null;
     const afficherRetour = secondaryIds.includes(tab) || tab === "contribuer";
     const demandesAnneeCount = useFirebaseList(demandesAnneeRef, { actif: isOwner }).length;
@@ -13533,6 +15644,33 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
         Promise.resolve(handle).then((x) => x && x.remove && x.remove());
       };
     }, [tab, estProfil, afficherRetour, retourVers, tabAvantProfil, menuOuvert]);
+    const [horsLigne, setHorsLigne] = useState(() => navigator.onLine === false);
+    const [lentSansProfil, setLentSansProfil] = useState(false);
+    useEffect(() => {
+      const on = () => setHorsLigne(false), off = () => setHorsLigne(true);
+      window.addEventListener("online", on);
+      window.addEventListener("offline", off);
+      return () => {
+        window.removeEventListener("online", on);
+        window.removeEventListener("offline", off);
+      };
+    }, []);
+    useEffect(() => {
+      if (!authUser || profilCharge) {
+        setLentSansProfil(false);
+        return;
+      }
+      const t = setTimeout(() => setLentSansProfil(true), 9e3);
+      return () => clearTimeout(t);
+    }, [authUser, profilCharge]);
+    if (horsLigne || authChecked && authUser && lentSansProfil && !profilCharge) {
+      let uidHl = "";
+      try {
+        uidHl = authUser && authUser.uid || localStorage.getItem("sabi_hl_uid") || "";
+      } catch (e) {
+      }
+      return react_shim_default.createElement(EcranHorsLigne, { uid: uidHl });
+    }
     if (!authChecked) {
       return react_shim_default.createElement(
         "div",
@@ -13574,7 +15712,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       profil: () => react_shim_default.createElement(ProfilTab, { pseudo, profil, points, pointsTotal, badgeActif, badges, vip, isOwner, isAdmin: isAdminEffectif, abonnement, whatsapp, matricule, demandesEnAttente, onSetBadgeActif: handleSetBadgeActif, onNavigate: setTab, onLogout: handleLogout, email: authUser.email, onUpdatePseudo: handleUpdatePseudo, onUpdateWhatsapp: handleUpdateWhatsapp, onUpdatePassword: handleUpdatePassword, onSetMatricule: handleSetMatricule, onDemandeDeblocageMatricule: handleDemandeDeblocageMatricule }),
       myscore: () => react_shim_default.createElement(MyScoreTab, { authUid: authUser.uid }),
       boussole: () => react_shim_default.createElement(BoussoleTab, { steps: boussoleSteps, progress: boussoleProgress, onToggle: handleToggleBoussole, onAddStep: handleAddBoussoleStep }),
-      epreuves: () => react_shim_default.createElement(EpreuvesTab, { epreuves, profil, setProfil, onAddEpreuve: handleAddEpreuve, onGenerateCorrigeIA: handleGenererCorrigeIA, onClearCorrigeIA: handleClearCorrigeIA, isAdmin: isAdminEffectif, isOwner, onDeleteEpreuve: handleDeleteEpreuve, onReplacePdf: handleReplacePdf, onReplaceImage: handleReplaceImage, abonnement, setTab }),
+      epreuves: () => react_shim_default.createElement(EpreuvesTab, { epreuves, profil, setProfil, onAddEpreuve: handleAddEpreuve, onGenerateCorrigeIA: handleGenererCorrigeIA, onClearCorrigeIA: handleClearCorrigeIA, isAdmin: isAdminEffectif, isOwner, onDeleteEpreuve: handleDeleteEpreuve, onReplacePdf: handleReplacePdf, onReplaceImage: handleReplaceImage, abonnement, setTab, pseudo, authUid: authUser.uid, onGagnerPoints: addPoints }),
       resumes: () => react_shim_default.createElement(ResumesTab, { resumes, isAdmin: isAdminEffectif, isOwner, abonnement, setTab, onAddResume: handleAddResume, onDeleteResume: handleDeleteResume, onGenerateResumeIA: handleGenererResumeIA, onClearResumeIA: handleClearResumeIA }),
       admin: () => react_shim_default.createElement(AdminTab, { isOwner, onGivePoints: handleGivePoints }),
       myscoreAdmin: () => react_shim_default.createElement(MyScoreAdminTab, { isOwner, fichiersLances }),
@@ -13582,14 +15720,19 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       assistance: () => react_shim_default.createElement(AssistanceTab, { messages: supportMessages, onSend: handleSendSupportMessage, onMarkLu: handleMarkSupportLu }),
       supportAdmin: () => react_shim_default.createElement(SupportAdminTab, { isOwner }),
       classement: () => react_shim_default.createElement(ClassementTab, { logs: pointsLogs, authUid: authUser.uid, pseudo, profil, onGagnerPoints: addPoints }),
-      membres: () => react_shim_default.createElement(MembresTab, { membres: membresList, isOwner, isAdmin: isAdminEffectif }),
+      membres: () => react_shim_default.createElement(MembresTab, { membres: membresList, isOwner, isAdmin: isAdminEffectif, monUid: authUser.uid, onMessage: (u) => {
+        setDmCible({ uid: u.uid, pseudo: u.pseudo });
+        setTab("chat");
+      } }),
       boutique: () => react_shim_default.createElement(BoutiqueTab, { points, badges, badgeActif, vip, bounties, pseudo, authUid: authUser.uid, abonnement, promos, verifPaiementStatut, verifPaiementDetail, onVerifierPaiement: reverifierPaiement, onBuyBadge: handleBuyBadge, onSetBadgeActif: handleSetBadgeActif, onBuyVip: handleBuyVip, onCreateBounty: handleCreateBounty, onRespondBounty: handleRespondBounty, onChooseWinner: handleChooseWinner, onDemandeAbonnement: handleDemandeAbonnement, onPayerAbonnement: handleDemarrerPaiement }),
       carte: () => react_shim_default.createElement(CarteTab, { points: cartePoints, onAddPoint: handleAddCartePoint, onUpdatePoint: handleUpdateCartePoint, onDeletePoint: handleDeleteCartePoint, isOwner }),
       actualites: () => react_shim_default.createElement(FilTab, { cards, onVote: handleVote, myVotes, onPin: handleEpingle, points, pseudo, isOwner, isAdmin: isAdminEffectif, onDelete: handleDeleteCard, onClearAll: handleClearAllCards }),
-      chat: () => react_shim_default.createElement(ChatTab, { messages: chatMessages, pseudo, onSend: handleSendMessage }),
+      chat: () => react_shim_default.createElement(MessagerieTab, { authUid: authUser.uid, pseudo, profil, badgeActif, isAdmin: isAdminEffectif, epreuves, setTab, dmIndex, dmCible, onDmCibleConsommee: () => setDmCible(null) }),
       contribuer: () => react_shim_default.createElement(ContribuerTab, { onSubmit: handleContribute, pseudo, vip, filiere: profil.filiere, points, isOwner, isAdmin: isAdminEffectif, prefill: partagePrefill, prefillImage: partageImagePrefill }),
       infosperso: () => react_shim_default.createElement(InfosPersoSection, { pseudo, profil, isOwner, email: authUser.email, whatsapp, matricule, onUpdatePseudo: handleUpdatePseudo, onUpdateWhatsapp: handleUpdateWhatsapp, onUpdatePassword: handleUpdatePassword, onSetMatricule: handleSetMatricule, onDemandeChangementAnnee: handleDemandeChangementAnnee, onDemandeChangementFiliere: handleDemandeChangementFiliere, onDemandeDeblocageMatricule: handleDemandeDeblocageMatricule }),
       simulateur: () => react_shim_default.createElement(SimulateurTab, { authUid: authUser.uid, profilAnnee: profil.annee, profilFiliere: profil.filiere }),
+      studio: () => react_shim_default.createElement(StudioTab, { pseudo, profil, onGagnerPoints: addPoints }),
+      assistante: () => react_shim_default.createElement(AssistanteTab, { epreuves, resumes, setTab, pseudo, profil, acces: isOwner || isAdminEffectif || abonnement === "proplus" }),
       mentor: () => react_shim_default.createElement(MentorTab, { authUid: authUser.uid, profil, pseudo, abonnement, isOwner, isAdmin: isAdminEffectif, setTab, resumes })
     };
     return react_shim_default.createElement(
@@ -13722,6 +15865,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
         }, react_shim_default.createElement(Icon, { name: "edit-2", size: 22 })),
         // Navigation — ancrée en bas de l'écran (comme la plupart des apps mobiles).
         // Masquée sur l'écran Profil, qui n'a pas de nav (voir bouton retour ci-dessus).
+        !estProfil && react_shim_default.createElement(BoutonAssistante, { tab, setTab, acces: isOwner || isAdminEffectif || abonnement === "proplus" }),
         !estProfil && react_shim_default.createElement(
           "div",
           { className: "sabi-nav-wrap" },
@@ -13747,8 +15891,9 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
                 { key: t.id, onClick: () => setTab(t.id), className: "sabi-nav-item" },
                 react_shim_default.createElement(
                   "div",
-                  { className: "sabi-nav-chip" + (active ? " actif" : "") },
-                  react_shim_default.createElement(Icon, { name: t.icon, size: 19, color: active ? COLORS.gold : COLORS.textFaint })
+                  { className: "sabi-nav-chip" + (active ? " actif" : ""), style: { position: "relative" } },
+                  react_shim_default.createElement(Icon, { name: t.icon, size: 19, color: active ? COLORS.gold : COLORS.textFaint }),
+                  t.id === "chat" && dmNonLus > 0 && react_shim_default.createElement("span", { style: { position: "absolute", top: 0, right: 2, minWidth: 14, height: 14, borderRadius: 7, padding: "0 3px", fontSize: 9, lineHeight: "14px", textAlign: "center", fontWeight: 700, backgroundColor: COLORS.terra, color: COLORS.bg } }, dmNonLus > 9 ? "9+" : dmNonLus)
                 ),
                 react_shim_default.createElement("span", { style: { color: active ? COLORS.gold : COLORS.textFaint } }, t.label)
               );
