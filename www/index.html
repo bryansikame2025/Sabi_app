@@ -2084,9 +2084,9 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     },
     {
       icone: "bot",
-      titre: "14. Assistante vocale Sabi (Pro+)",
+      titre: "14. Assistante vocale Sabi",
       blocs: [
-        { type: "p", texte: "R\xE9serv\xE9e aux abonn\xE9s Sabi Pro+. Touche le bouton micro flottant (ou Accueil > Assistante vocale), puis parle ou \xE9cris ta question." },
+        { type: "p", texte: "Ouverte \xE0 tous les \xE9tudiants, gratuitement. Touche le bouton micro flottant (ou Accueil > Assistante vocale), puis parle ou \xE9cris ta question." },
         { type: "list", items: [
           "Elle r\xE9pond \xE0 partir des \xE9preuves, des r\xE9sum\xE9s et du guide de l'appli, et indique ses sources.",
           "Commandes vocales : \u00AB ouvre le classement \u00BB, \u00AB quel est mon prochain examen ? \u00BB, \u00AB combien de jours de s\xE9rie ? \u00BB.",
@@ -2099,8 +2099,23 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       ]
     },
     {
+      icone: "mic",
+      titre: "15. Notes IA, enregistre tes cours (Pro+)",
+      blocs: [
+        { type: "p", texte: "R\xE9serv\xE9 aux abonn\xE9s Sabi Pro+. Accueil > Notes IA. Pose ton t\xE9l\xE9phone pr\xE8s du professeur, touche Enregistrer : Sabi transcrit le cours au fur et \xE0 mesure, puis le r\xE9sume." },
+        { type: "list", items: [
+          "Pendant l'enregistrement : Pause, Reprendre, \u2605 Rep\xE8re (marque un moment important) et Terminer. Garde l'appli ouverte et l'\xE9cran allum\xE9.",
+          "R\xE9sum\xE9 par mod\xE8les : R\xE9sum\xE9 de cours, Points cl\xE9s, Fiche de r\xE9vision, Questions d'examen, Plan du cours, Devoirs et dates.",
+          "Onglet Demander : pose des questions sur ce cours, Sabi r\xE9pond \xE0 partir de la transcription.",
+          "Importer un audio : transcris un enregistrement d\xE9j\xE0 fait (MP3, M4A, WAV).",
+          "Sans Internet, l'enregistrement continue ; la transcription reprend quand tu es connect\xE9 (touche R\xE9essayer).",
+          "Tu peux copier ou partager les r\xE9sum\xE9s. Les notes restent sur ton t\xE9l\xE9phone. Demande la permission d'enregistrer en classe."
+        ] }
+      ]
+    },
+    {
       icone: "user",
-      titre: "15. Photo de profil, membres et personnalisation",
+      titre: "16. Photo de profil, membres et personnalisation",
       blocs: [
         { type: "list", items: [
           "Photo de profil. Dans Profil, touche ta photo pour la choisir et la recadrer ; tu peux la retirer \xE0 tout moment.",
@@ -2112,7 +2127,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     },
     {
       icone: "wrench",
-      titre: "16. Param\xE8tres et assistance",
+      titre: "17. Param\xE8tres et assistance",
       blocs: [
         { type: "p", texte: "Le menu (les trois traits) en haut \xE0 gauche donne acc\xE8s au mode clair/sombre, aux notifications, aux sons, \xE0 l'Assistance (message direct au responsable), au Guide d'utilisation et aux Cr\xE9dits de l'application." },
         { type: "p", texte: "Pastille sur l'ic\xF4ne : quand Sabi t'envoie une notification (nouveau message, nouvelle \xE9preuve, annonce\u2026) et que l'application est ferm\xE9e, ton t\xE9l\xE9phone affiche un point (ou un chiffre) sur l'ic\xF4ne. Il dispara\xEEt quand tu ouvres Sabi. Pour la recevoir, autorise les notifications de Sabi dans les r\xE9glages Android." },
@@ -2948,7 +2963,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
   var PRIX_PROPLUS_SEMESTRE = 5e3;
   var PRIX_PROPLUS_ANNEE = 8e3;
   var AVANTAGES_PRO = ["Acc\xE8s \xE0 toutes les \xE9preuves et leurs corrections", "Badge Pro dor\xE9 sur ton profil", "Filtres et recherche illimit\xE9s dans les \xE9preuves"];
-  var AVANTAGES_PROPLUS = ["Tous les avantages Sabi Pro", "R\xE9sum\xE9s de cours exclusifs", "Groupe WhatsApp d'entraide Pro+", "Badge Pro+ dor\xE9 sur ton profil"];
+  var AVANTAGES_PROPLUS = ["Tous les avantages Sabi Pro", "Notes IA : enregistre tes cours, transcription et r\xE9sum\xE9s", "R\xE9sum\xE9s de cours exclusifs", "Groupe WhatsApp d'entraide Pro+", "Badge Pro+ dor\xE9 sur ton profil"];
   var WHATSAPP_PROPLUS_LIEN = "https://chat.whatsapp.com/LY3aEZivtZ7Ht6Bl4kPdLz?s=cl&p=a&ilr=4";
   var PAIEMENT_MANUEL_NUMERO = "658 68 25 93";
   var PAIEMENT_MANUEL_WHATSAPP = "https://wa.me/237658682593";
@@ -6269,7 +6284,8 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     { id: "boussole", label: "Boussole", icon: "compass" }
   ];
   var PHARES = [
-    { id: "assistante", label: "Assistante vocale", desc: "Exclusivit\xE9 Sabi Pro+ \xB7 questions \xE0 la voix", icon: "\u{1F3A4}" },
+    { id: "assistante", label: "Assistante vocale", desc: "Pour tous \xB7 questions \xE0 la voix", icon: "\u{1F3A4}" },
+    { id: "notes", label: "Notes IA", desc: "Enregistre ton cours \xB7 Exclusivit\xE9 Sabi Pro+", icon: "\u{1F399}" },
     { id: "studio", label: "Studio Sabi", desc: "S\xE9rie de jours, quiz \xE9clair, cartes m\xE9moire", icon: "zap" },
     { id: "myscore", label: "MyScore", desc: "Consulte tes notes d\xE8s qu'elles tombent", icon: "award" },
     { id: "simulateur", label: "Simulateur de moyenne", desc: "La note qu'il te faut pour valider ton semestre", icon: "calendar" },
@@ -6537,7 +6553,8 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
 
   // src/tabs/accueil/ExploreGrid.jsx
   var LIENS = [
-    { id: "assistante", label: "Assistante vocale", icon: "\u{1F3A4}", desc: "Exclusivit\xE9 Sabi Pro+" },
+    { id: "assistante", label: "Assistante vocale", icon: "\u{1F3A4}", desc: "Pour tous \xB7 pose ta question" },
+    { id: "notes", label: "Notes IA", icon: "\u{1F399}", desc: "Exclusivit\xE9 Sabi Pro+" },
     { id: "studio", label: "Studio Sabi", icon: "zap", desc: "S\xE9rie, quiz \xE9clair, examens, cartes" },
     { id: "mentor", label: "Coach R\xE9ussite", icon: "target", desc: "Exclusivit\xE9 Sabi Pro+" },
     { id: "epreuves", label: "\xC9preuves", icon: "book", desc: "Anciens sujets et corrig\xE9s" },
@@ -11358,7 +11375,6 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     return (await genererViaGeminiParts([{ text: prompt }], "correction")).trim();
   }
   function AssistanteTab(props) {
-    if (!props.acces) return react_shim_default.createElement(PaywallSabiPro, { setTab: props.setTab, palierRequis: "proplus" });
     return react_shim_default.createElement(AssistanteCoeur, props);
   }
   function asLeger() {
@@ -11663,7 +11679,608 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       return () => window.removeEventListener("sabi-focus", f);
     }, []);
     if (focus || ["assistante", "actualites", "chat", "carte", "profil", "assistance", "supportAdmin", "contribuer", "infosperso", "admin", "myscoreAdmin", "promoAdmin"].includes(tab)) return null;
-    return stH("button", { type: "button", onClick: () => setTab("assistante"), "aria-label": "Assistante vocale Sabi", className: "fixed z-[60] rounded-full flex items-center justify-center text-xl", style: { width: 48, height: 48, right: 16, bottom: "calc(env(safe-area-inset-bottom, 0px) + 96px)", backgroundColor: COLORS.gold, color: COLORS.bg, boxShadow: "0 6px 20px rgba(0,0,0,.35)", touchAction: "manipulation" } }, acces ? "\uD83C\uDFA4" : "\uD83D\uDD12");
+    return stH("button", { type: "button", onClick: () => setTab("assistante"), "aria-label": "Assistante vocale Sabi", className: "fixed z-[60] rounded-full flex items-center justify-center text-xl", style: { width: 48, height: 48, right: 16, bottom: "calc(env(safe-area-inset-bottom, 0px) + 96px)", backgroundColor: COLORS.gold, color: COLORS.bg, boxShadow: "0 6px 20px rgba(0,0,0,.35)", touchAction: "manipulation" } }, "\uD83C\uDFA4");
+  }
+
+  // src/tabs/NotesIA.js — enregistreur de cours façon « Plaud Note » : enregistre, transcrit, résume, répond aux questions (Pro+)
+  var ntH = react_shim_default.createElement;
+  var NT_SEG_SEC = 75;
+  var NT_MODELES = [
+    { id: "cours", nom: "Résumé de cours", consigne: "Rédige un résumé de cours structuré : un titre, une courte introduction, puis chaque partie avec les notions importantes, les définitions, les formules et exemples cités, et pour finir une section « À retenir »." },
+    { id: "points", nom: "Points clés", consigne: "Liste les 8 à 12 points clés à retenir sous forme de puces courtes, du plus important au moins important." },
+    { id: "fiche", nom: "Fiche de révision", consigne: "Crée une fiche de révision : définitions, formules, étapes de méthode, pièges fréquents, puis 3 exemples ou mini-exercices tirés du cours." },
+    { id: "questions", nom: "Questions d'examen", consigne: "Propose 8 questions d'examen probables (mélange de QCM et de questions ouvertes), chacune suivie de la réponse attendue." },
+    { id: "plan", nom: "Plan du cours", consigne: "Donne le plan détaillé du cours sous forme de liste hiérarchique (type carte mentale en texte), sur 3 niveaux maximum." },
+    { id: "taches", nom: "Devoirs et dates", consigne: "Extrais tout ce qui a été annoncé : devoirs à faire, dates, exposés, examens, consignes du professeur. Si rien n'a été dit, réponds simplement qu'il n'y a rien à signaler." }
+  ];
+  function ntLire() {
+    const l = stGet("notes", []);
+    return Array.isArray(l) ? l : [];
+  }
+  function ntEcrire(l) {
+    stSet("notes", l);
+    try {
+      window.dispatchEvent(new CustomEvent("sabi-notes"));
+    } catch (e) {
+    }
+  }
+  function ntMaj(id, fn) {
+    const l = ntLire();
+    const i = l.findIndex((n) => n.id === id);
+    if (i < 0) return null;
+    const copie = { ...l[i] };
+    fn(copie);
+    l[i] = copie;
+    ntEcrire(l);
+    return copie;
+  }
+  function ntSupprimer(id) {
+    ntEcrire(ntLire().filter((n) => n.id !== id));
+    ntAudioPurge(id);
+  }
+  function ntCreer(titre) {
+    const n = { id: "n" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), titre: titre || "Cours du " + new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" }), date: Date.now(), duree: 0, segments: [], reperes: [], resumes: {}, discussion: [] };
+    ntEcrire([n, ...ntLire()]);
+    return n;
+  }
+  function useNotes() {
+    const R = react_shim_default;
+    const [liste, setListe] = R.useState(() => ntLire());
+    R.useEffect(() => {
+      const f = () => setListe(ntLire());
+      window.addEventListener("sabi-notes", f);
+      return () => window.removeEventListener("sabi-notes", f);
+    }, []);
+    return liste;
+  }
+  function ntBd() {
+    return new Promise((ok, ko) => {
+      try {
+        const r = indexedDB.open("sabi_notes", 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("seg");
+        r.onsuccess = () => ok(r.result);
+        r.onerror = () => ko(r.error);
+      } catch (e) {
+        ko(e);
+      }
+    });
+  }
+  async function ntAudioPut(cle, blob) {
+    try {
+      const bd = await ntBd();
+      await new Promise((ok, ko) => {
+        const t = bd.transaction("seg", "readwrite");
+        t.objectStore("seg").put(blob, cle);
+        t.oncomplete = ok;
+        t.onerror = () => ko(t.error);
+      });
+    } catch (e) {
+    }
+  }
+  async function ntAudioGet(cle) {
+    try {
+      const bd = await ntBd();
+      return await new Promise((ok) => {
+        const q = bd.transaction("seg").objectStore("seg").get(cle);
+        q.onsuccess = () => ok(q.result || null);
+        q.onerror = () => ok(null);
+      });
+    } catch (e) {
+      return null;
+    }
+  }
+  async function ntAudioDel(cle) {
+    try {
+      const bd = await ntBd();
+      bd.transaction("seg", "readwrite").objectStore("seg").delete(cle);
+    } catch (e) {
+    }
+  }
+  async function ntAudioPurge(id) {
+    try {
+      const bd = await ntBd();
+      const st = bd.transaction("seg", "readwrite").objectStore("seg");
+      const q = st.getAllKeys();
+      q.onsuccess = () => (q.result || []).forEach((k) => {
+        if (String(k).indexOf(id + ":") === 0) st.delete(k);
+      });
+    } catch (e) {
+    }
+  }
+  function ntWavBinaire(wav) {
+    let bin = "";
+    for (let i = 0; i < wav.length; i += 8192) bin += String.fromCharCode.apply(null, wav.subarray(i, i + 8192));
+    return btoa(bin);
+  }
+  async function ntTranscrireWav(wav, indice) {
+    const consigne = "Transcris fidèlement cet extrait d'un enregistrement (cours, TD, réunion ou discussion d'étudiants camerounais, en français, parfois en anglais). C'est le morceau n°" + (indice + 1) + " d'un enregistrement plus long : ne répète pas d'introduction. Ponctue correctement, garde les termes techniques. Réponds uniquement avec la transcription, sans commentaire. Si rien d'audible, réponds : (vide)";
+    const texte = await genererViaGeminiParts([{ text: consigne }, { inline_data: { mime_type: "audio/wav", data: ntWavBinaire(wav) } }], "transcription");
+    return texte.replace(/^\(vide\)$/i, "").trim();
+  }
+  async function ntBlobVersWav(blob) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    try {
+      const audio = await ctx.decodeAudioData(await blob.arrayBuffer());
+      return asEncoderWav(audio);
+    } finally {
+      ctx.close && ctx.close();
+    }
+  }
+  async function ntTranscrireSegment(noteId, idx, blob) {
+    const cle = noteId + ":" + idx;
+    try {
+      if (navigator.onLine === false) throw new Error("hors ligne");
+      let texte = null, erreur = null;
+      for (let essai = 0; essai < 2 && texte === null; essai++) {
+        try {
+          texte = await ntTranscrireWav(await ntBlobVersWav(blob), idx);
+        } catch (e) {
+          erreur = e;
+          await new Promise((r) => setTimeout(r, 1200));
+        }
+      }
+      if (texte === null) throw erreur || new Error("échec");
+      ntMaj(noteId, (n) => {
+        const s = n.segments.find((x) => x.i === idx);
+        if (s) {
+          s.texte = texte;
+          s.statut = "ok";
+        }
+      });
+      ntAudioDel(cle);
+      return true;
+    } catch (e) {
+      ntMaj(noteId, (n) => {
+        const s = n.segments.find((x) => x.i === idx);
+        if (s) s.statut = "attente";
+      });
+      await ntAudioPut(cle, blob);
+      return false;
+    }
+  }
+  async function ntReprendre(noteId) {
+    const n = ntLire().find((x) => x.id === noteId);
+    if (!n) return;
+    for (const s of n.segments.filter((x) => x.statut !== "ok")) {
+      const blob = await ntAudioGet(noteId + ":" + s.i);
+      if (!blob) {
+        ntMaj(noteId, (m) => {
+          const t = m.segments.find((x) => x.i === s.i);
+          if (t) t.statut = "perdu";
+        });
+        continue;
+      }
+      ntMaj(noteId, (m) => {
+        const t = m.segments.find((x) => x.i === s.i);
+        if (t) t.statut = "encours";
+      });
+      await ntTranscrireSegment(noteId, s.i, blob);
+    }
+  }
+  function ntTexte(n) {
+    return (n.segments || []).filter((s) => s.texte).sort((a, b) => a.i - b.i).map((s) => s.texte).join("\n\n");
+  }
+  function ntDuree(sec) {
+    sec = Math.max(0, Math.round(sec || 0));
+    const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+    const p = (x) => String(x).padStart(2, "0");
+    return h ? h + ":" + p(m) + ":" + p(s) : p(m) + ":" + p(s);
+  }
+  async function ntGenerer(note, modele) {
+    const texte = ntTexte(note).slice(0, 60000);
+    if (!texte.trim()) throw new Error("La transcription est vide.");
+    const m = NT_MODELES.find((x) => x.id === modele) || NT_MODELES[0];
+    const prompt = "Tu es « Sabi », l'assistante des étudiants de l'IUT FV Bandjoun (Cameroun). Voici la transcription automatique d'un enregistrement (cours, TD ou réunion) ; elle peut contenir des erreurs de reconnaissance. Base-toi UNIQUEMENT sur elle, n'invente rien. Écris en français clair. Format : texte simple, titres avec « ## », puces avec « - », mots importants en **gras**.\n\nTÂCHE : " + m.consigne + "\n\nTRANSCRIPTION :\n" + texte;
+    return (await genererViaGeminiParts([{ text: prompt }], "résumé")).trim();
+  }
+  async function ntFinaliser(noteId) {
+    try {
+      const n = ntLire().find((x) => x.id === noteId);
+      if (!n || !ntTexte(n).trim()) return;
+      const t = await genererViaGeminiParts([{ text: "Donne un titre court (6 mots maximum, sans guillemets ni ponctuation finale) pour cet enregistrement d'étudiants :\n" + ntTexte(n).slice(0, 6000) }], "titre");
+      const titre = t.replace(/["«»\n]/g, "").trim().slice(0, 60);
+      if (titre) ntMaj(noteId, (m) => {
+        if (/^Cours du /.test(m.titre)) m.titre = titre;
+      });
+      const r = await ntGenerer(n, "cours");
+      ntMaj(noteId, (m) => {
+        m.resumes = { ...m.resumes, cours: r };
+      });
+    } catch (e) {
+    }
+  }
+  function ntRendu(texte) {
+    const gras = (t, k) => String(t).split(/(\*\*[^*]+\*\*)/g).map((p, i) => /^\*\*[^*]+\*\*$/.test(p) ? ntH("b", { key: k + "-" + i, style: { color: COLORS.text } }, p.slice(2, -2)) : p);
+    return String(texte || "").split("\n").map((l, i) => {
+      if (!l.trim()) return ntH("div", { key: i, style: { height: 6 } });
+      if (/^#{1,3}\s/.test(l)) return ntH("p", { key: i, className: "text-[15px] font-bold mt-2", style: { color: COLORS.gold } }, gras(l.replace(/^#{1,3}\s/, ""), i));
+      if (/^\s*[-*•]\s+/.test(l)) return ntH("div", { key: i, className: "flex gap-2 text-sm", style: { color: COLORS.textMuted, paddingLeft: /^\s{2,}/.test(l) ? 14 : 0 } }, ntH("span", { style: { color: COLORS.gold } }, "•"), ntH("span", { className: "flex-1", style: { wordBreak: "break-word" } }, gras(l.replace(/^\s*[-*•]\s+/, ""), i)));
+      return ntH("p", { key: i, className: "text-sm", style: { color: COLORS.textMuted, wordBreak: "break-word" } }, gras(l, i));
+    });
+  }
+  function NotesTab(props) {
+    if (!props.acces) return react_shim_default.createElement(PaywallSabiPro, { setTab: props.setTab, palierRequis: "proplus" });
+    return react_shim_default.createElement(NotesCoeur, props);
+  }
+  function NtEnregistreur({ noteId, onFini }) {
+    const R = react_shim_default;
+    const [sec, setSec] = R.useState(0);
+    const [pause, setPause] = R.useState(false);
+    const [niveau, setNiveau] = R.useState(0);
+    const [erreur, setErreur] = R.useState("");
+    const [fin, setFin] = R.useState(false);
+    const notes = useNotes();
+    const note = notes.find((n) => n.id === noteId);
+    const etat = R.useRef({ suite: null, flux: null, rec: null, i: 0, segSec: 0, total: 0, pause: false, actif: true, file: Promise.resolve(), analyseur: null, ctx: null, verrou: null });
+    const finaliser = () => {
+      const e = etat.current;
+      e.suite = () => {
+        e.file.then(() => ntFinaliser(noteId)).then(() => onFini(noteId));
+      };
+      if (!e.actif) return;
+      e.actif = false;
+      setFin(true);
+      const enMarche = !!(e.rec && e.rec.state !== "inactive");
+      try {
+        if (enMarche) e.rec.stop();
+      } catch (x) {
+      }
+      try {
+        e.flux && e.flux.getTracks().forEach((t) => t.stop());
+      } catch (x) {
+      }
+      try {
+        e.ctx && e.ctx.close();
+      } catch (x) {
+      }
+      try {
+        e.verrou && e.verrou.release();
+      } catch (x) {
+      }
+      ntMaj(noteId, (n) => {
+        n.duree = e.total;
+      });
+      if (!enMarche) e.suite();
+    };
+    const demarrerSegment = () => {
+      const e = etat.current;
+      if (!e.actif) return;
+      const rec = new MediaRecorder(e.flux);
+      const morceaux = [];
+      const idx = e.i++;
+      e.rec = rec;
+      e.segSec = 0;
+      const debut = e.total;
+      ntMaj(noteId, (n) => {
+        n.segments.push({ i: idx, t0: debut, texte: "", statut: "encours" });
+      });
+      rec.ondataavailable = (ev) => ev.data && ev.data.size && morceaux.push(ev.data);
+      rec.onstop = () => {
+        const blob = new Blob(morceaux, { type: rec.mimeType || "audio/webm" });
+        if (blob.size < 1500) {
+          ntMaj(noteId, (n) => {
+            n.segments = n.segments.filter((s) => s.i !== idx);
+          });
+        } else {
+          e.file = e.file.then(() => ntTranscrireSegment(noteId, idx, blob));
+        }
+        if (e.actif) demarrerSegment();
+        else if (e.suite) e.suite();
+      };
+      rec.start();
+    };
+    R.useEffect(() => {
+      const e = etat.current;
+      let vivant = true;
+      (async () => {
+        try {
+          e.flux = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+        } catch (x) {
+          setErreur("Micro indisponible : autorise le micro pour Sabi dans les réglages du téléphone.");
+          return;
+        }
+        if (!vivant) {
+          e.flux.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        try {
+          if (navigator.wakeLock) e.verrou = await navigator.wakeLock.request("screen");
+        } catch (x) {
+        }
+        try {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          e.ctx = new AC();
+          const src = e.ctx.createMediaStreamSource(e.flux);
+          e.analyseur = e.ctx.createAnalyser();
+          e.analyseur.fftSize = 256;
+          src.connect(e.analyseur);
+        } catch (x) {
+        }
+        demarrerSegment();
+      })();
+      const tic = setInterval(() => {
+        if (!e.actif || !e.rec || e.pause || e.rec.state !== "recording") return;
+        e.total++;
+        e.segSec++;
+        setSec(e.total);
+        if (e.segSec >= NT_SEG_SEC) {
+          try {
+            e.rec.stop();
+          } catch (x) {
+          }
+        }
+      }, 1e3);
+      const niv = setInterval(() => {
+        if (!e.analyseur || e.pause) return setNiveau(0);
+        const d = new Uint8Array(e.analyseur.frequencyBinCount);
+        e.analyseur.getByteTimeDomainData(d);
+        let s = 0;
+        for (let i = 0; i < d.length; i++) s += Math.abs(d[i] - 128);
+        setNiveau(Math.min(1, s / d.length / 28));
+      }, 120);
+      return () => {
+        vivant = false;
+        clearInterval(tic);
+        clearInterval(niv);
+        if (e.actif) finaliser();
+      };
+    }, []);
+    const basculerPause = () => {
+      const e = etat.current;
+      if (!e.rec) return;
+      try {
+        if (e.pause) {
+          e.rec.resume();
+          e.pause = false;
+          setPause(false);
+        } else {
+          e.rec.pause();
+          e.pause = true;
+          setPause(true);
+        }
+      } catch (x) {
+      }
+    };
+    const repere = () => {
+      const t = etat.current.total;
+      ntMaj(noteId, (n) => {
+        n.reperes = [...n.reperes || [], t];
+      });
+      try {
+        navigator.vibrate && navigator.vibrate(20);
+      } catch (x) {
+      }
+    };
+    const recents = note ? note.segments.filter((s) => s.texte).slice(-2) : [];
+    const attente = note ? note.segments.filter((s) => s.statut === "attente").length : 0;
+    return ntH(
+      "div",
+      { className: "flex flex-col items-center gap-5 py-6" },
+      ntH("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, fin ? "Finalisation…" : pause ? "En pause" : "Enregistrement en cours"),
+      ntH("div", { className: "flex items-center justify-center rounded-full", style: { width: 168, height: 168, background: "radial-gradient(circle, " + (pause ? COLORS.border : COLORS.terra) + "55, transparent 70%)", transition: "transform 120ms", transform: "scale(" + (1 + niveau * 0.35) + ")" } }, ntH("div", { className: "rounded-full flex items-center justify-center text-4xl", style: { width: 110, height: 110, backgroundColor: pause ? COLORS.surface2 : COLORS.terra, color: COLORS.bg } }, "🎙")),
+      ntH("p", { className: "font-mono font-bold", style: { fontSize: 40, color: COLORS.text, letterSpacing: 1 } }, ntDuree(sec)),
+      erreur && ntH("p", { className: "text-xs text-center px-4", style: { color: COLORS.terraText } }, erreur),
+      ntH(
+        "div",
+        { className: "flex items-center gap-3" },
+        ntH("button", { type: "button", onClick: repere, disabled: fin, className: "rounded-full px-4 py-3 text-sm font-semibold border", style: { borderColor: COLORS.border, color: COLORS.text, backgroundColor: COLORS.surface } }, "★ Repère"),
+        ntH("button", { type: "button", onClick: basculerPause, disabled: fin, className: "rounded-full px-5 py-3 text-sm font-semibold border", style: { borderColor: COLORS.border, color: COLORS.text, backgroundColor: COLORS.surface } }, pause ? "▶ Reprendre" : "⏸ Pause"),
+        ntH("button", { type: "button", onClick: finaliser, disabled: fin, className: "rounded-full px-5 py-3 text-sm font-bold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "■ Terminer")
+      ),
+      ntH("p", { className: "text-[11px] text-center px-6", style: { color: COLORS.textFaint } }, "Garde l'appli ouverte et l'écran allumé. Sabi transcrit au fur et à mesure (toutes les " + NT_SEG_SEC + " secondes)."),
+      attente > 0 && ntH("p", { className: "text-[11px] text-center px-6", style: { color: COLORS.alerte } }, "⏳ " + attente + " morceau" + (attente > 1 ? "x" : "") + " en attente de connexion : la transcription reprendra quand tu auras Internet."),
+      recents.length > 0 && ntH("div", { className: "w-full rounded-2xl border p-3 flex flex-col gap-1.5", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Dernières phrases transcrites"), recents.map((s) => ntH("p", { key: s.i, className: "text-xs", style: { color: COLORS.textMuted } }, s.texte.slice(-220))))
+    );
+  }
+  function NtNote({ noteId, setTab, onRetour }) {
+    const R = react_shim_default;
+    const notes = useNotes();
+    const note = notes.find((n) => n.id === noteId);
+    const [onglet, setOnglet] = R.useState("resume");
+    const [modele, setModele] = R.useState("cours");
+    const [occupe, setOccupe] = R.useState("");
+    const [info, setInfo] = R.useState("");
+    const [question, setQuestion] = R.useState("");
+    const [confirm, setConfirm] = R.useState(false);
+    const [titreEdit, setTitreEdit] = R.useState(null);
+    if (!note) return ntH("div", { className: "py-10 text-center text-sm", style: { color: COLORS.textMuted } }, "Note introuvable.", ntH("div", null, ntH("button", { type: "button", onClick: onRetour, className: "mt-3 text-xs font-semibold", style: { color: COLORS.gold } }, "Retour")));
+    const transcription = ntTexte(note);
+    const enAttente = note.segments.filter((s) => s.statut === "attente" || s.statut === "perdu").length;
+    const generer = async (id) => {
+      setOccupe("resume");
+      setInfo("");
+      try {
+        const r = await ntGenerer(note, id);
+        ntMaj(noteId, (n) => {
+          n.resumes = { ...n.resumes, [id]: r };
+        });
+      } catch (e) {
+        setInfo(e && e.message ? e.message : "Génération impossible, réessaie.");
+      }
+      setOccupe("");
+    };
+    const copier = (t) => {
+      try {
+        navigator.clipboard && navigator.clipboard.writeText(t);
+        setInfo("Copié.");
+      } catch (e) {
+        setInfo("Copie impossible.");
+      }
+    };
+    const partager = async (t) => {
+      try {
+        if (navigator.share) await navigator.share({ title: note.titre, text: t });
+        else copier(t);
+      } catch (e) {
+      }
+    };
+    const demander = async () => {
+      const q = question.trim();
+      if (!q || occupe) return;
+      setQuestion("");
+      setOccupe("q");
+      const hist = [...note.discussion || [], { role: "moi", texte: q }];
+      ntMaj(noteId, (n) => {
+        n.discussion = hist;
+      });
+      try {
+        const prompt = "Tu es « Sabi », l'assistante des étudiants de l'IUT FV Bandjoun. Réponds à la question de l'étudiant UNIQUEMENT à partir de la transcription ci-dessous (qui peut contenir des erreurs de reconnaissance). Si la réponse n'y est pas, dis-le simplement. Réponse claire en français.\n\nTRANSCRIPTION :\n" + transcription.slice(0, 50000) + "\n\nÉCHANGE :\n" + hist.slice(-6).map((m) => (m.role === "moi" ? "Étudiant : " : "Sabi : ") + m.texte).join("\n");
+        const r = (await genererViaGeminiParts([{ text: prompt }], "réponse")).trim();
+        ntMaj(noteId, (n) => {
+          n.discussion = [...hist, { role: "sabi", texte: r }];
+        });
+      } catch (e) {
+        setInfo(e && e.message ? e.message : "Réponse impossible.");
+      }
+      setOccupe("");
+    };
+    const reprise = async () => {
+      setOccupe("reprise");
+      setInfo("");
+      await ntReprendre(noteId);
+      const n2 = ntLire().find((x) => x.id === noteId);
+      if (n2 && ntTexte(n2).trim() && !(n2.resumes && n2.resumes.cours)) await ntFinaliser(noteId);
+      setOccupe("");
+    };
+    const onglets = [["resume", "Résumé"], ["transcription", "Transcription"], ["questions", "Demander"]];
+    const texteActif = onglet === "resume" ? note.resumes && note.resumes[modele] || "" : transcription;
+    return ntH(
+      "div",
+      { className: "flex flex-col gap-3 pb-6" },
+      ntH(
+        "div",
+        { className: "flex items-center gap-2" },
+        ntH("button", { type: "button", onClick: onRetour, "aria-label": "Retour", className: "w-9 h-9 rounded-full flex items-center justify-center text-xl", style: { backgroundColor: COLORS.surface, color: COLORS.text } }, "‹"),
+        titreEdit !== null ? ntH("input", { autoFocus: true, value: titreEdit, maxLength: 60, onChange: (e) => setTitreEdit(e.target.value), onBlur: () => {
+          const t = titreEdit.trim();
+          if (t) ntMaj(noteId, (n) => {
+            n.titre = t;
+          });
+          setTitreEdit(null);
+        }, onKeyDown: (e) => e.key === "Enter" && e.target.blur(), className: "flex-1 min-w-0 rounded-lg px-3 py-1.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text } }) : ntH("button", { type: "button", onClick: () => setTitreEdit(note.titre), className: "flex-1 min-w-0 text-left" }, ntH("p", { className: "text-base font-bold truncate", style: { color: COLORS.text } }, note.titre, " ✎"), ntH("p", { className: "text-[11px] font-mono", style: { color: COLORS.textFaint } }, new Date(note.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) + " · " + ntDuree(note.duree))),
+        ntH("button", { type: "button", onClick: () => setConfirm(true), "aria-label": "Supprimer", className: "w-9 h-9 rounded-full flex items-center justify-center", style: { color: COLORS.terraText, backgroundColor: COLORS.surface } }, "🗑")
+      ),
+      enAttente > 0 && ntH("div", { className: "rounded-xl border p-3 flex items-center gap-3", style: { borderColor: COLORS.alerte, backgroundColor: COLORS.surface } }, ntH("p", { className: "flex-1 text-xs", style: { color: COLORS.textMuted } }, "⏳ " + enAttente + " morceau" + (enAttente > 1 ? "x" : "") + " pas encore transcrit" + (enAttente > 1 ? "s" : "") + " (connexion)."), ntH("button", { type: "button", onClick: reprise, disabled: !!occupe, className: "text-xs font-bold px-3 py-1.5 rounded-full", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, occupe === "reprise" ? "…" : "Réessayer")),
+      ntH("div", { className: "flex gap-1 rounded-full p-1", style: { backgroundColor: COLORS.surface, border: "1px solid " + COLORS.border } }, onglets.map(([id, l]) => ntH("button", { key: id, type: "button", onClick: () => setOnglet(id), className: "flex-1 rounded-full py-1.5 text-xs font-semibold", style: onglet === id ? { backgroundColor: COLORS.gold, color: COLORS.bg } : { color: COLORS.textMuted } }, l))),
+      onglet === "resume" && ntH(
+        "div",
+        { className: "flex flex-col gap-3" },
+        ntH("div", { className: "flex gap-2 overflow-x-auto pb-1", style: { scrollbarWidth: "none" } }, NT_MODELES.map((m) => ntH("button", { key: m.id, type: "button", onClick: () => setModele(m.id), className: "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border", style: modele === m.id ? { backgroundColor: "rgba(var(--accent-rgb),0.18)", borderColor: COLORS.gold, color: COLORS.gold } : { borderColor: COLORS.border, color: COLORS.textMuted } }, (note.resumes && note.resumes[m.id] ? "✓ " : "") + m.nom))),
+        occupe === "resume" ? ntH("p", { className: "text-sm py-8 text-center", style: { color: COLORS.textMuted } }, "Sabi rédige…") : note.resumes && note.resumes[modele] ? ntH("div", { className: "rounded-2xl border p-4 flex flex-col gap-1", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntRendu(note.resumes[modele])) : ntH("div", { className: "rounded-2xl border p-5 text-center", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-sm mb-3", style: { color: COLORS.textMuted } }, transcription.trim() ? "Génère « " + (NT_MODELES.find((m) => m.id === modele) || {}).nom + " » à partir de la transcription." : "Pas encore de transcription à résumer."), transcription.trim() && ntH("button", { type: "button", onClick: () => generer(modele), className: "rounded-full px-5 py-2.5 text-sm font-bold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Générer")),
+        note.resumes && note.resumes[modele] && occupe !== "resume" && ntH("div", { className: "flex gap-2 flex-wrap" }, ntH("button", { type: "button", onClick: () => generer(modele), className: "text-xs font-semibold px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, "↻ Régénérer"))
+      ),
+      onglet === "transcription" && ntH(
+        "div",
+        { className: "flex flex-col gap-2" },
+        note.reperes && note.reperes.length > 0 && ntH("p", { className: "text-xs", style: { color: COLORS.gold } }, "★ Repères : " + note.reperes.map(ntDuree).join(" · ")),
+        note.segments.slice().sort((a, b) => a.i - b.i).map((s) => ntH("div", { key: s.i, className: "rounded-xl border p-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-[10px] font-mono mb-1", style: { color: COLORS.gold } }, "[" + ntDuree(s.t0) + "]"), s.texte ? ntH("p", { className: "text-sm", style: { color: COLORS.text, whiteSpace: "pre-wrap", wordBreak: "break-word" } }, s.texte) : ntH("p", { className: "text-xs", style: { color: COLORS.textFaint } }, s.statut === "perdu" ? "Audio non conservé : ce morceau ne peut plus être transcrit." : s.statut === "attente" ? "⏳ En attente de connexion…" : "Transcription en cours…"))),
+        note.segments.length === 0 && ntH("p", { className: "text-sm py-6 text-center", style: { color: COLORS.textFaint } }, "Aucune transcription.")
+      ),
+      onglet === "questions" && ntH(
+        "div",
+        { className: "flex flex-col gap-2" },
+        !transcription.trim() && ntH("p", { className: "text-sm py-6 text-center", style: { color: COLORS.textFaint } }, "Il faut d'abord une transcription pour poser des questions."),
+        (note.discussion || []).map((m, i) => ntH("div", { key: i, className: "max-w-[88%] rounded-2xl px-3 py-2 text-sm " + (m.role === "moi" ? "self-end" : "self-start"), style: { backgroundColor: m.role === "moi" ? "rgba(var(--accent-rgb),0.2)" : COLORS.surface, border: "1px solid " + COLORS.border, color: COLORS.text, whiteSpace: "pre-wrap", wordBreak: "break-word" } }, m.texte)),
+        occupe === "q" && ntH("p", { className: "text-xs self-start", style: { color: COLORS.textMuted } }, "Sabi réfléchit…"),
+        transcription.trim() && ntH("div", { className: "flex items-center gap-2 mt-1" }, ntH("input", { value: question, onChange: (e) => setQuestion(e.target.value), onKeyDown: (e) => e.key === "Enter" && demander(), placeholder: "Pose une question sur ce cours…", className: "flex-1 min-w-0 rounded-full px-4 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text } }), ntH("button", { type: "button", onClick: demander, disabled: !question.trim() || !!occupe, className: "w-11 h-11 rounded-full flex items-center justify-center disabled:opacity-40", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "➤"))
+      ),
+      onglet !== "questions" && texteActif.trim() && ntH(
+        "div",
+        { className: "flex gap-2 flex-wrap" },
+        ntH("button", { type: "button", onClick: () => copier(texteActif), className: "text-xs font-semibold px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.text } }, "⎘ Copier"),
+        ntH("button", { type: "button", onClick: () => partager(note.titre + "\n\n" + texteActif), className: "text-xs font-semibold px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.text } }, "↗ Partager")
+      ),
+      info && ntH("p", { className: "text-[11px]", style: { color: COLORS.terraText } }, info),
+      confirm && ntH(MsFeuille, { titre: "Supprimer cette note ?", onFermer: () => setConfirm(false) }, ntH("p", { className: "text-xs text-center", style: { color: COLORS.textMuted } }, "La transcription et les résumés seront effacés de ce téléphone."), msBouton("Supprimer", () => {
+        ntSupprimer(noteId);
+        onRetour();
+      }, true), msBouton("Annuler", () => setConfirm(false)))
+    );
+  }
+  function NotesCoeur({ setTab }) {
+    const R = react_shim_default;
+    const notes = useNotes();
+    const [vue, setVue] = R.useState({ t: "liste" });
+    const [q, setQ] = R.useState("");
+    const [import_, setImport] = R.useState("");
+    const n = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    if (vue.t === "rec") return ntH(NtEnregistreur, { noteId: vue.id, onFini: (id) => setVue({ t: "note", id }) });
+    if (vue.t === "note") return ntH(NtNote, { noteId: vue.id, setTab, onRetour: () => setVue({ t: "liste" }) });
+    const commencer = () => {
+      const nt = ntCreer();
+      setVue({ t: "rec", id: nt.id });
+    };
+    const importer = async (e) => {
+      const f = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!f) return;
+      if (f.size > 120 * 1024 * 1024) {
+        setImport("Fichier trop gros (120 Mo maximum).");
+        return;
+      }
+      const nt = ntCreer("Import : " + f.name.replace(/\.[^.]+$/, "").slice(0, 40));
+      try {
+        setImport("Lecture du fichier…");
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const audio = await ctx.decodeAudioData(await f.arrayBuffer());
+        ctx.close && ctx.close();
+        const total = audio.duration, sr = audio.sampleRate, data = audio.getChannelData(0);
+        const nb = Math.ceil(total / NT_SEG_SEC);
+        ntMaj(nt.id, (m) => {
+          m.duree = total;
+          m.segments = Array.from({ length: nb }, (_, i) => ({ i, t0: i * NT_SEG_SEC, texte: "", statut: "encours" }));
+        });
+        for (let i = 0; i < nb; i++) {
+          setImport("Transcription " + (i + 1) + " / " + nb + "…");
+          const part = data.subarray(Math.floor(i * NT_SEG_SEC * sr), Math.min(data.length, Math.floor((i + 1) * NT_SEG_SEC * sr)));
+          const wav = asEncoderWav({ getChannelData: () => part, sampleRate: sr });
+          try {
+            if (navigator.onLine === false) throw new Error("hors ligne");
+            const t = await ntTranscrireWav(wav, i);
+            ntMaj(nt.id, (m) => {
+              const s = m.segments.find((x) => x.i === i);
+              if (s) {
+                s.texte = t;
+                s.statut = "ok";
+              }
+            });
+          } catch (x) {
+            ntMaj(nt.id, (m) => {
+              const s = m.segments.find((y) => y.i === i);
+              if (s) s.statut = "perdu";
+            });
+          }
+        }
+        setImport("Résumé en cours…");
+        await ntFinaliser(nt.id);
+        setImport("");
+        setVue({ t: "note", id: nt.id });
+      } catch (x) {
+        ntSupprimer(nt.id);
+        setImport("Fichier audio illisible sur ce téléphone. Essaie un fichier MP3, M4A ou WAV.");
+      }
+    };
+    const liste = notes.filter((x) => !q.trim() || n(x.titre + " " + ntTexte(x)).includes(n(q)));
+    return ntH(
+      "div",
+      { className: "flex flex-col gap-4 pb-6" },
+      ntH("div", null, ntH("h2", { className: "text-lg font-bold", style: { color: COLORS.text } }, "Notes IA"), ntH("p", { className: "text-xs mt-0.5", style: { color: COLORS.textFaint } }, "Enregistre ton cours : Sabi le transcrit, le résume et répond à tes questions. Exclusif Pro+.")),
+      ntH(
+        "div",
+        { className: "flex gap-2" },
+        ntH("button", { type: "button", onClick: commencer, className: "flex-1 rounded-2xl py-4 text-sm font-bold flex items-center justify-center gap-2", style: { backgroundColor: COLORS.terra, color: COLORS.bg } }, "● Enregistrer"),
+        ntH("label", { className: "flex-1 rounded-2xl py-4 text-sm font-bold flex items-center justify-center gap-2 border cursor-pointer", style: { borderColor: COLORS.border, color: COLORS.text, backgroundColor: COLORS.surface } }, "⬆ Importer un audio", ntH("input", { type: "file", accept: "audio/*", className: "hidden", onChange: importer }))
+      ),
+      import_ && ntH("p", { className: "text-xs", style: { color: COLORS.gold } }, import_),
+      notes.length > 3 && ntH("input", { value: q, onChange: (e) => setQ(e.target.value), placeholder: "Rechercher dans tes notes…", className: "rounded-full px-4 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text } }),
+      liste.length === 0 && ntH("div", { className: "rounded-2xl border p-6 text-center", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-3xl mb-2" }, "🎙"), ntH("p", { className: "text-sm", style: { color: COLORS.textMuted } }, notes.length ? "Aucune note ne correspond." : "Aucune note pour l'instant. Pose ton téléphone près du professeur et touche Enregistrer.")),
+      liste.map((x) => {
+        const apercu = (x.resumes && x.resumes.cours || ntTexte(x)).replace(/[#*\n]+/g, " ").trim().slice(0, 110);
+        const att = x.segments.filter((s) => s.statut === "attente").length;
+        return ntH("button", { key: x.id, type: "button", onClick: () => setVue({ t: "note", id: x.id }), className: "w-full text-left rounded-2xl border p-3.5 flex flex-col gap-1", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("div", { className: "flex items-center justify-between gap-2" }, ntH("p", { className: "text-sm font-bold truncate", style: { color: COLORS.text } }, x.titre), ntH("span", { className: "text-[10px] font-mono flex-shrink-0", style: { color: COLORS.textFaint } }, ntDuree(x.duree))), ntH("p", { className: "text-[11px] font-mono", style: { color: COLORS.textFaint } }, new Date(x.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) + (att ? " · ⏳ " + att + " en attente" : "")), apercu && ntH("p", { className: "text-xs", style: { color: COLORS.textMuted } }, apercu + "…"));
+      }),
+      ntH("p", { className: "text-[11px] text-center", style: { color: COLORS.textFaint } }, "Les notes sont gardées sur ce téléphone. Pense à demander la permission d'enregistrer en classe.")
+    );
   }
 
   // src/tabs/MembresTab.js
@@ -14024,6 +14641,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
           { id: "myscore", label: "MyScore, mes notes", icon: "award" },
           { id: "resumes", label: "R\xE9sum\xE9s de cours (Pro+)", icon: "file-text" },
           { id: "assistante", label: "Assistante vocale Sabi", icon: "\u{1F3A4}" },
+          { id: "notes", label: "Notes IA, enregistrer un cours (Pro+)", icon: "\u{1F399}" },
           { id: "studio", label: "Studio, s\xE9rie, quiz, examens, cartes", icon: "zap" },
           { id: "simulateur", label: "Simulateur de moyenne", icon: "\u2211" }
         ]
@@ -15843,6 +16461,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       boutique: "Boutique & Bounty",
       simulateur: "Simulateur de moyenne",
       mentor: "Coach R\xE9ussite",
+      notes: "Notes IA",
       membres: "Membres",
       admin: "Administration",
       resumes: "R\xE9sum\xE9s de cours",
@@ -15942,7 +16561,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       el.addEventListener("touchmove", onSwipeTouchMove, { passive: false });
       return () => el.removeEventListener("touchmove", onSwipeTouchMove);
     }, [tab]);
-    const secondaryIds = ["assistante", "studio", "boussole", "classement", "boutique", "simulateur", "mentor", "membres", "admin", "myscoreAdmin", "promoAdmin", "resumes", "myscore", "assistance", "supportAdmin", "infosperso"];
+    const secondaryIds = ["assistante", "notes", "studio", "boussole", "classement", "boutique", "simulateur", "mentor", "membres", "admin", "myscoreAdmin", "promoAdmin", "resumes", "myscore", "assistance", "supportAdmin", "infosperso"];
     const activeBottom = tabs.some((t) => t.id === tab) ? tab : null;
     const afficherRetour = secondaryIds.includes(tab) || tab === "contribuer";
     const demandesAnneeCount = useFirebaseList(demandesAnneeRef, { actif: isOwner }).length;
@@ -16090,6 +16709,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       simulateur: () => react_shim_default.createElement(SimulateurTab, { authUid: authUser.uid, profilAnnee: profil.annee, profilFiliere: profil.filiere }),
       studio: () => react_shim_default.createElement(StudioTab, { pseudo, profil, onGagnerPoints: addPoints }),
       assistante: () => react_shim_default.createElement(AssistanteTab, { epreuves, resumes, setTab, pseudo, profil, acces: isOwner || isAdminEffectif || abonnement === "proplus" }),
+      notes: () => react_shim_default.createElement(NotesTab, { setTab, acces: isOwner || isAdminEffectif || abonnement === "proplus" }),
       mentor: () => react_shim_default.createElement(MentorTab, { authUid: authUser.uid, profil, pseudo, abonnement, isOwner, isAdmin: isAdminEffectif, setTab, resumes })
     };
     return react_shim_default.createElement(
