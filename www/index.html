@@ -1915,7 +1915,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       icone: "book",
       titre: "4. \xC9preuves",
       blocs: [
-        { type: "p", texte: "Retrouve les anciens sujets d'examen et leurs corrig\xE9s, filtrables par ann\xE9e, fili\xE8re, semestre et mati\xE8re. Le contenu correspondant \xE0 ta promo appara\xEEt en priorit\xE9. L'acc\xE8s complet aux \xE9preuves et \xE0 leurs corrections est r\xE9serv\xE9 aux abonn\xE9s Sabi Pro." },
+        { type: "p", texte: "Retrouve les anciens sujets d'examen et leurs corrig\xE9s, filtrables par ann\xE9e, fili\xE8re, semestre et mati\xE8re. Le contenu correspondant \xE0 ta promo appara\xEEt en priorit\xE9. L'acc\xE8s complet aux \xE9preuves et \xE0 leurs corrections est r\xE9serv\xE9 aux abonn\xE9s Sabi Pro. Tu vois les \xE9preuves du semestre en cours." },
         { type: "sous-titre", texte: "Il me manque une \xE9preuve" },
         { type: "list", items: [
           "Dans Acc\xE8s rapide, choisis ta mati\xE8re puis touche \u00AB Il me manque une \xE9preuve de cette mati\xE8re \u00BB. Indique le type (examen, devoir\u2026) et, si tu le sais, l'ann\xE9e du sujet.",
@@ -1948,11 +1948,15 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         { type: "list", items: [
           "Communaut\xE9 Sabi. Le salon g\xE9n\xE9ral, ouvert \xE0 tous les \xE9tudiants de l'IUT FV Bandjoun.",
           "Ta communaut\xE9 de fili\xE8re. Tu y es ajout\xE9 automatiquement d'apr\xE8s ta fili\xE8re ; seuls les \xE9tudiants de ta fili\xE8re y ont acc\xE8s. Les annonces importantes des admins sont \xE9pingl\xE9es en haut.",
-          "Messages priv\xE9s. Touche \u00AB Nouveau \u00BB ou le bouton \u00AB Envoyer un message \u00BB sur le profil d'un membre (liste des Membres). Tu re\xE7ois une notification quand quelqu'un t'\xE9crit."
+          "Messages priv\xE9s. Touche le bouton vert \u270E ou le bouton \u00AB Envoyer un message \u00BB sur le profil d'un membre (liste des Membres). Tu re\xE7ois une notification quand quelqu'un t'\xE9crit."
         ] },
         { type: "sous-titre", texte: "Dans une conversation" },
         { type: "list", items: [
-          "Touche \u22EF sur un message pour r\xE9pondre, copier, supprimer le tien, le signaler ou bloquer son auteur.",
+          "Fais glisser un message vers la droite pour y r\xE9pondre, comme sur WhatsApp. Touche la citation pour retrouver le message d'origine.",
+          "Garde le doigt appuy\xE9 sur un message pour r\xE9pondre, copier, supprimer le tien, le signaler ou bloquer son auteur.",
+          "Sur tes messages priv\xE9s : \u2713 = envoy\xE9, \u2713\u2713 bleus = lu. Dans la liste, une pastille verte indique le nombre de messages non lus ; la recherche et les filtres (Non lues, Priv\xE9es, Communaut\xE9s) t'aident \xE0 retrouver une discussion.",
+          "Quand tu ouvres une discussion, la barre du bas et la barre du haut disparaissent pour te laisser tout l'\xE9cran, comme sur WhatsApp. Touche la photo ou le nom en haut pour voir la photo de profil en grand et les infos du membre.",
+          "Les dates s'affichent entre les messages (Aujourd'hui, Hier\u2026) et un bouton \u2304 te ram\xE8ne au dernier message.",
           "Touche \uD83D\uDCF7 pour envoyer une photo et \uD83D\uDCCE pour partager une \xE9preuve de l'application.",
           "Seuls les 50 derniers messages sont charg\xE9s ; touche \u00AB Charger les messages pr\xE9c\xE9dents \u00BB pour remonter.",
           "Bloquer un membre : tu ne vois plus ses messages et il ne peut plus t'\xE9crire. Tu peux le d\xE9bloquer depuis la liste des conversations.",
@@ -2089,7 +2093,8 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           "Quiz oral : dis \u00AB interroge-moi sur \u2026 \u00BB et r\xE9ponds \xE0 voix haute ; dis \u00AB stop \u00BB pour arr\xEAter.",
           "Mode Libre : elle r\xE9\xE9coute automatiquement apr\xE8s chaque r\xE9ponse.",
           "Hors connexion, elle cherche dans tes \xE9preuves t\xE9l\xE9charg\xE9es (r\xE9ponse locale, sans IA) ; la dict\xE9e vocale demande Internet.",
-          "Pendant une session de focus, elle se met en pause : plus de bouton, plus de voix."
+          "Pendant une session de focus, elle se met en pause : plus de bouton, plus de voix.",
+          "Si elle \u00E9crit mais ne parle pas : monte le volume m\u00E9dia, v\u00E9rifie que le bouton Voix est activ\u00E9 dans l'assistante, et que ton t\u00E9l\u00E9phone a un moteur de synth\u00E8se vocale (R\u00E9glages > Synth\u00E8se vocale, par exemple Google). Elle parle avec la voix d'Android."
         ] }
       ]
     },
@@ -3332,7 +3337,21 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
   }
   var SEGMENTS_ROUE = [2, 5, 1, 10, 3, 0, 2, 5];
   var POIDS_ROUE = [3, 2, 3, 0.5, 3, 1.5, 3, 2];
+  function roueJourLocal() {
+    const d = /* @__PURE__ */ new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function roueMarqueLocale(uid, ecrire) {
+    const cle = "sabi_roue_" + uid;
+    try {
+      if (ecrire) localStorage.setItem(cle, roueJourLocal());
+      return localStorage.getItem(cle) === roueJourLocal();
+    } catch (e) {
+      return false;
+    }
+  }
   function RoueDuJour({ ouvert, onFermer, authUid, onGain }) {
+    const verrou = useRef(false);
     const [dejaJoue, setDejaJoue] = useState(null);
     const [rotation, setRotation] = useState(0);
     const [enCours, setEnCours] = useState(false);
@@ -3341,13 +3360,23 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       if (!ouvert || !authUid) return;
       setGain(null);
       setEnCours(false);
-      usersRef.child(authUid).child("derniereRoue").once("value").then((snap) => setDejaJoue(snap.val() === jourCle())).catch(() => setDejaJoue(false));
+      if (roueMarqueLocale(authUid, false)) {
+        setDejaJoue(true);
+        return;
+      }
+      usersRef.child(authUid).child("derniereRoue").once("value").then((snap) => setDejaJoue(snap.val() === roueJourLocal() || snap.val() === jourCle())).catch(() => setDejaJoue(false));
     }, [ouvert, authUid]);
     if (!ouvert) return null;
     const tourner = () => {
-      if (enCours || dejaJoue) return;
+      if (enCours || dejaJoue || verrou.current || roueMarqueLocale(authUid, false)) {
+        setDejaJoue(true);
+        return;
+      }
+      verrou.current = true;
       setEnCours(true);
-      usersRef.child(authUid).child("derniereRoue").set(jourCle());
+      roueMarqueLocale(authUid, true);
+      usersRef.child(authUid).child("derniereRoue").set(roueJourLocal()).catch(() => {
+      });
       const total = POIDS_ROUE.reduce((a, b) => a + b, 0);
       let r = Math.random() * total, idx = 0;
       for (let i = 0; i < POIDS_ROUE.length; i++) {
@@ -3369,6 +3398,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         setGain(pts);
         setEnCours(false);
         setDejaJoue(true);
+        verrou.current = false;
         if (pts > 0) {
           onGain(pts);
           celebrer();
@@ -7929,48 +7959,155 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       ))
     );
   }
+  var MS_VERT = "#25d366";
+  var MS_BLEU = "#53bdeb";
+  function msJour(ts) {
+    const d = new Date(ts), n = new Date();
+    const j = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+    const ecart = Math.round((j(n) - j(d)) / 864e5);
+    if (ecart === 0) return "Aujourd'hui";
+    if (ecart === 1) return "Hier";
+    if (ecart > 1 && ecart < 7) { const t = d.toLocaleDateString("fr-FR", { weekday: "long" }); return t.charAt(0).toUpperCase() + t.slice(1); }
+    return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: d.getFullYear() === n.getFullYear() ? void 0 : "numeric" });
+  }
+  function msIcone(nom, taille) {
+    const t = taille || 22;
+    const chemins = {
+      image: [["rect", { x: 3, y: 3, width: 18, height: 18, rx: 4 }], ["circle", { cx: 8.5, cy: 9, r: 1.6 }], ["path", { d: "M21 15.5l-4.6-4.6a1.5 1.5 0 0 0-2.1 0L5 20" }]],
+      attache: [["path", { d: "M20.5 11.5l-8.2 8.2a5 5 0 0 1-7.1-7.1l8.7-8.7a3.3 3.3 0 0 1 4.7 4.7l-8.8 8.7a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9" }]],
+      envoi: [["path", { d: "M21.5 3.5L10.5 14.5" }], ["path", { d: "M21.5 3.5l-6.8 18-4.2-7-7-4.2z" }]],
+      crayon: [["path", { d: "M12 20h9" }], ["path", { d: "M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" }]]
+    };
+    return msH("svg", { width: t, height: t, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" }, (chemins[nom] || []).map((e, i) => msH(e[0], Object.assign({ key: i }, e[1]))));
+  }
+  function msCouleurNom(id) {
+    const pal = ["#f59e0b", "#34d399", "#60a5fa", "#f472b6", "#a78bfa", "#fb7185", "#2dd4bf", "#facc15", "#fb923c", "#38bdf8"];
+    let h = 0;
+    const t = String(id || "?");
+    for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
+    return pal[h % pal.length];
+  }
+  function MsCoches({ lu }) {
+    return msH("span", { className: "text-[11px] font-bold leading-none", style: { color: lu ? MS_BLEU : COLORS.textFaint, letterSpacing: "-3px", marginRight: 3 } }, lu ? "✓✓" : "✓");
+  }
+  function MsRangee({ gauche, titre, sous, heure, nb, nonLu, coches, onClick }) {
+    return msH(
+      "button",
+      { type: "button", onClick, className: "w-full flex items-center gap-3 px-4 py-2.5 text-left active:opacity-70", style: { backgroundColor: "transparent" } },
+      gauche,
+      msH(
+        "div",
+        { className: "flex-1 min-w-0 py-0.5", style: { borderBottom: "1px solid " + COLORS.border, paddingBottom: 10, marginBottom: -10 } },
+        msH(
+          "div",
+          { className: "flex items-baseline justify-between gap-2" },
+          msH("p", { className: "text-[15px] truncate", style: { color: COLORS.text, fontWeight: nonLu ? 700 : 600 } }, titre),
+          heure && msH("span", { className: "text-[11px] flex-shrink-0", style: { color: nonLu ? MS_VERT : COLORS.textFaint, fontWeight: nonLu ? 700 : 400 } }, heure)
+        ),
+        msH(
+          "div",
+          { className: "flex items-center justify-between gap-2 mt-0.5" },
+          msH("p", { className: "text-[13px] truncate flex items-center", style: { color: nonLu ? COLORS.text : COLORS.textMuted } }, coches, msH("span", { className: "truncate" }, sous || "")),
+          nonLu && msH("span", { className: "flex-shrink-0 rounded-full text-[11px] font-bold flex items-center justify-center", style: { backgroundColor: MS_VERT, color: "#06210f", minWidth: 20, height: 20, padding: "0 6px" } }, nb > 99 ? "99+" : nb || 1)
+        )
+      )
+    );
+  }
   function MsListe({ authUid, profil, isAdmin, dmIndex, blocages, onOuvrir, onDebloquer }) {
     const R = react_shim_default;
     const [nouveau, setNouveau] = R.useState(false);
-    const convs = Object.keys(dmIndex || {}).map((k) => ({ conv: k, ...dmIndex[k] })).filter((e) => e.dernierTs && e.autre && !(blocages && blocages[e.autre])).sort((a, b) => b.dernierTs - a.dernierTs);
+    const [q, setQ] = R.useState("");
+    const [filtre, setFiltre] = R.useState("tous");
+    const n = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const tous = Object.keys(dmIndex || {}).map((k) => ({ conv: k, ...dmIndex[k] })).filter((e) => e.dernierTs && e.autre && !(blocages && blocages[e.autre])).sort((a, b) => b.dernierTs - a.dernierTs);
+    const nonLu = (e) => e.dernierDe !== authUid && (e.dernierTs || 0) > (e.luLe || 0);
+    const convs = tous.filter((e) => (!q.trim() || n(e.autrePseudo).includes(n(q))) && (filtre !== "nonlus" || nonLu(e)) && filtre !== "comm");
     const maFiliere = profil && profil.filiere;
     const bloques = Object.keys(blocages || {});
-    const titreSection = (t) => msH("p", { className: "text-xs font-mono uppercase tracking-wider mt-1", style: { color: COLORS.textMuted } }, t);
-    const emoji = (e, c) => msH("div", { className: "w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0", style: { backgroundColor: c || "rgba(var(--accent-rgb),0.15)" } }, e);
+    const avatarEmoji = (e, c) => msH("div", { className: "w-[50px] h-[50px] rounded-full flex items-center justify-center text-2xl flex-shrink-0", style: { background: c } }, e);
+    const comms = [];
+    if (filtre === "tous" || filtre === "comm") {
+      if (!q.trim() || n("Communauté Sabi").includes(n(q))) comms.push(msH(MsRangee, { key: "gen", gauche: avatarEmoji("🌍", "linear-gradient(135deg,#25d366,#128c7e)"), titre: "Communauté Sabi", sous: "Tous les étudiants de l'IUT FV Bandjoun", onClick: () => onOuvrir({ type: "general", titre: "Communauté Sabi" }) }));
+      if (maFiliere && (!q.trim() || n(maFiliere).includes(n(q)))) comms.push(msH(MsRangee, { key: "fil", gauche: avatarEmoji("🎓", "linear-gradient(135deg,#60a5fa,#6366f1)"), titre: maFiliere, sous: "Communauté de ta filière", onClick: () => onOuvrir({ type: "filiere", cle: msCleFiliere(maFiliere), titre: maFiliere }) }));
+      if (isAdmin) FILIERES.filter((f) => f !== maFiliere && (!q.trim() || n(f).includes(n(q)))).forEach((f) => comms.push(msH(MsRangee, { key: "a" + f, gauche: avatarEmoji("🛡️", "linear-gradient(135deg,#f59e0b,#ef4444)"), titre: f, sous: "Modération (admin)", onClick: () => onOuvrir({ type: "filiere", cle: msCleFiliere(f), titre: f }) })));
+    }
+    const chip = (id, label) => msH("button", { key: id, type: "button", onClick: () => setFiltre(id), className: "px-3.5 py-1.5 rounded-full text-[13px] font-semibold flex-shrink-0", style: filtre === id ? { backgroundColor: "rgba(37,211,102,0.2)", color: MS_VERT, border: "1px solid rgba(37,211,102,0.45)" } : { backgroundColor: COLORS.surface2, color: COLORS.textMuted, border: "1px solid " + COLORS.border } }, label);
+    const nbNonLus = tous.filter(nonLu).length;
     return msH(
       "div",
-      { className: "flex flex-col gap-2.5 pb-4" },
-      titreSection("Communautés"),
-      msH(MsLigne, { gauche: emoji("🌍"), titre: "Communauté Sabi", sous: "Tous les étudiants de l'IUT FV Bandjoun", onClick: () => onOuvrir({ type: "general", titre: "Communauté Sabi" }) }),
-      maFiliere ? msH(MsLigne, { gauche: emoji("🎓"), titre: maFiliere, sous: "Ta communauté de filière", onClick: () => onOuvrir({ type: "filiere", cle: msCleFiliere(maFiliere), titre: maFiliere }) }) : msH("p", { className: "text-xs", style: { color: COLORS.textFaint } }, "Renseigne ta filière dans ton profil pour rejoindre sa communauté."),
-      isAdmin && FILIERES.filter((f) => f !== maFiliere).map((f) => msH(MsLigne, { key: f, gauche: emoji("🛡️"), titre: f, sous: "Modération (admin)", onClick: () => onOuvrir({ type: "filiere", cle: msCleFiliere(f), titre: f }) })),
+      { className: "relative flex flex-col min-h-0", style: { margin: "-16px -20px -12px", height: "calc(100% + 28px)" } },
       msH(
         "div",
-        { className: "flex items-center justify-between mt-2" },
-        titreSection("Messages privés"),
-        msH("button", { type: "button", onClick: () => setNouveau(true), className: "text-xs font-semibold px-3 py-1.5 rounded-full", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "✏ Nouveau")
+        { className: "flex-shrink-0 px-4 pt-3 pb-2 flex flex-col gap-2.5" },
+        msH("input", { value: q, onChange: (e) => setQ(e.target.value), placeholder: "🔍  Rechercher une discussion", className: "w-full rounded-full px-4 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface2, borderColor: COLORS.border, color: COLORS.text } }),
+        msH("div", { className: "flex gap-2 overflow-x-auto", style: { scrollbarWidth: "none" } }, chip("tous", "Toutes"), chip("nonlus", "Non lues" + (nbNonLus ? " " + nbNonLus : "")), chip("prives", "Privées"), chip("comm", "Communautés"))
       ),
-      convs.length === 0 && msH("p", { className: "text-xs py-3 text-center", style: { color: COLORS.textFaint } }, "Aucune conversation. Touche « Nouveau » ou le bouton Message sur le profil d'un membre."),
-      convs.map((e) => msH(MsLigne, { key: e.conv, gauche: msH(MsAvatar, { uid: e.autre, nom: e.autrePseudo, size: 40 }), titre: e.autrePseudo || "Membre", sous: (e.dernierDe === authUid ? "Toi : " : "") + (e.dernier || ""), droite: msHeure(e.dernierTs), pastille: e.dernierDe !== authUid && (e.dernierTs || 0) > (e.luLe || 0), onClick: () => onOuvrir({ type: "dm", conv: e.conv, titre: e.autrePseudo || "Membre", autre: { uid: e.autre, pseudo: e.autrePseudo } }) })),
-      isAdmin && msH(MsSignalements, null),
-      bloques.length > 0 && msH(
+      msH(
         "div",
-        { className: "flex flex-col gap-1.5 mt-2" },
-        titreSection("Membres bloqués"),
-        bloques.map((u) => msH(
+        { className: "flex-1 min-h-0 overflow-y-auto pb-24" },
+        comms,
+        filtre !== "comm" && convs.map((e) => msH(MsRangee, { key: e.conv, gauche: msH(MsAvatar, { uid: e.autre, nom: e.autrePseudo, size: 50 }), titre: e.autrePseudo || "Membre", sous: e.dernier || "", coches: e.dernierDe === authUid ? msH(MsCoches, { lu: (e.luAutreLe || 0) >= (e.dernierTs || 0) }) : null, heure: msHeure(e.dernierTs), nonLu: nonLu(e), nb: e.nb, onClick: () => onOuvrir({ type: "dm", conv: e.conv, titre: e.autrePseudo || "Membre", autre: { uid: e.autre, pseudo: e.autrePseudo } }) })),
+        filtre !== "comm" && convs.length === 0 && msH("p", { className: "text-[13px] py-8 px-8 text-center", style: { color: COLORS.textFaint } }, filtre === "nonlus" ? "Aucune discussion non lue." : q.trim() ? "Aucun résultat." : "Aucune discussion privée. Touche le bouton vert pour écrire à un membre."),
+        isAdmin && filtre === "tous" && msH("div", { className: "px-4 pt-3" }, msH(MsSignalements, null)),
+        bloques.length > 0 && filtre === "tous" && msH(
           "div",
-          { key: u, className: "flex items-center justify-between rounded-xl border px-3 py-2", style: { borderColor: COLORS.border } },
-          msH("span", { className: "text-sm", style: { color: COLORS.text } }, typeof blocages[u] === "string" ? blocages[u] : "Membre"),
-          msH("button", { type: "button", onClick: () => onDebloquer(u), className: "text-xs font-semibold", style: { color: COLORS.gold } }, "Débloquer")
-        ))
+          { className: "flex flex-col gap-1.5 px-4 pt-4" },
+          msH("p", { className: "text-xs font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Membres bloqués"),
+          bloques.map((u) => msH(
+            "div",
+            { key: u, className: "flex items-center justify-between rounded-xl border px-3 py-2", style: { borderColor: COLORS.border } },
+            msH("span", { className: "text-sm", style: { color: COLORS.text } }, typeof blocages[u] === "string" ? blocages[u] : "Membre"),
+            msH("button", { type: "button", onClick: () => onDebloquer(u), className: "text-xs font-semibold", style: { color: MS_VERT } }, "Débloquer")
+          ))
+        )
       ),
+      msH("button", { type: "button", onClick: () => setNouveau(true), "aria-label": "Nouveau message", className: "absolute flex items-center justify-center rounded-2xl text-2xl", style: { right: 18, bottom: 18, width: 58, height: 58, backgroundColor: MS_VERT, color: "#06210f", boxShadow: "0 6px 18px rgba(0,0,0,0.4)" } }, msIcone("crayon", 24)),
       nouveau && msH(MsNouveau, { authUid, onFermer: () => setNouveau(false), onChoisir: (m) => {
         setNouveau(false);
         onOuvrir({ type: "dm", conv: msConvId(authUid, m.uid), titre: m.pseudo, autre: { uid: m.uid, pseudo: m.pseudo } });
       } })
     );
   }
-  function MsSalon({ room, authUid, pseudo, badgeActif, isAdmin, epreuves, blocages, setTab, onRetour, onBloquer, onDebloquer }) {
+  function MsProfil({ uid, nom, onFermer, bloque, onBloquer, onDebloquer }) {
+    const R = react_shim_default;
+    const [info, setInfo] = R.useState(null);
+    const [zoom, setZoom] = R.useState(false);
+    R.useEffect(() => {
+      let vivant = true;
+      usersRef.child(uid).once("value").then((s) => {
+        if (vivant) setInfo(s.val() || {});
+      }).catch(() => {
+        if (vivant) setInfo({});
+      });
+      return () => {
+        vivant = false;
+      };
+    }, [uid]);
+    const url = info && info.photoUrl || msPhotos[uid] || "";
+    const detail = info ? [info.filiere, info.annee].filter(Boolean).join(" · ") : "";
+    return dom_shim_default.createPortal(msH(
+      "div",
+      { className: "fixed inset-0 z-[230] flex flex-col", style: { backgroundColor: COLORS.bg } },
+      msH(
+        "div",
+        { className: "flex items-center gap-2 px-2 pb-2 flex-shrink-0", style: { backgroundColor: COLORS.surface, borderBottom: "1px solid " + COLORS.border, paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)" } },
+        msH("button", { type: "button", onClick: onFermer, "aria-label": "Retour", className: "w-9 h-9 rounded-full flex items-center justify-center text-2xl", style: { color: COLORS.text } }, "‹"),
+        msH("p", { className: "text-[15px] font-bold", style: { color: COLORS.text } }, "Infos du contact")
+      ),
+      msH(
+        "div",
+        { className: "flex-1 overflow-y-auto flex flex-col items-center gap-3 px-6 py-6" },
+        url ? msH("img", { src: url, alt: nom, onClick: () => setZoom(true), style: { width: "min(78vw, 320px)", height: "min(78vw, 320px)", objectFit: "cover", borderRadius: 24, border: "1px solid " + COLORS.border } }) : msH(AvatarPhoto, { nom: nom || "?", size: 160, rond: true, url: "" }),
+        msH("p", { className: "text-xl font-bold text-center", style: { color: COLORS.text } }, nom),
+        detail && msH("p", { className: "text-sm text-center", style: { color: COLORS.textMuted } }, detail),
+        info === null && msH("p", { className: "text-xs", style: { color: COLORS.textFaint } }, "Chargement…"),
+        info && info.bio && msH("p", { className: "text-sm text-center", style: { color: COLORS.text, whiteSpace: "pre-wrap" } }, info.bio),
+        msH("button", { type: "button", onClick: bloque ? onDebloquer : onBloquer, className: "mt-4 w-full max-w-xs rounded-xl py-3 text-sm font-semibold border", style: { borderColor: COLORS.border, color: bloque ? MS_VERT : COLORS.terraText, backgroundColor: COLORS.surface2 } }, bloque ? "Débloquer " + nom : "⛔ Bloquer " + nom)
+      ),
+      zoom && url && msH("div", { className: "fixed inset-0 z-[240] flex items-center justify-center", style: { backgroundColor: "rgba(0,0,0,0.95)" }, onClick: () => setZoom(false) }, msH("img", { src: url, alt: nom, style: { maxWidth: "100%", maxHeight: "100%", objectFit: "contain" } }))
+    ), document.body);
+  }
+  function MsSalon({ room, authUid, pseudo, badgeActif, isAdmin, epreuves, blocages, setTab, dmInfo, onRetour, onBloquer, onDebloquer }) {
     const R = react_shim_default;
     const ref = db.ref(msChemin(room));
     const estDm = room.type === "dm";
@@ -7987,6 +8124,11 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     const [choixEp, setChoixEp] = R.useState(false);
     const [qEp, setQEp] = R.useState("");
     const [epingle, setEpingle] = R.useState(null);
+    const [bas, setBas] = R.useState(false);
+    const [nonVus, setNonVus] = R.useState(0);
+    const [flash, setFlash] = R.useState(null);
+    const gest = R.useRef(null);
+    const champRef = R.useRef(null);
     const finRef = R.useRef(null);
     const listeRef = R.useRef(null);
     const procheBas = R.useRef(true);
@@ -8020,17 +8162,39 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         dejaVu.current = visibles.length;
         return;
       }
+      if (dejaVu.current > 0 && !procheBas.current && dernier && dernier.uid !== authUid && visibles.length > dejaVu.current) setNonVus((v) => v + (visibles.length - dejaVu.current));
       if (dejaVu.current === 0 || procheBas.current || dernier && dernier.uid === authUid) fin.scrollIntoView({ block: "end", behavior: dejaVu.current === 0 ? "auto" : "smooth" });
       dejaVu.current = visibles.length;
     }, [visibles.length]);
     R.useEffect(() => {
       if (!estDm || msgs.length === 0) return;
-      db.ref("dmIndex/" + authUid + "/" + room.conv + "/luLe").set(Date.now()).catch(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      const maintenant = Date.now();
+      db.ref("dmIndex/" + authUid + "/" + room.conv).update({ luLe: maintenant, nb: 0 }).catch(() => {
+      });
+      db.ref("dmIndex/" + room.autre.uid + "/" + room.conv + "/luAutreLe").set(maintenant).catch(() => {
       });
     }, [estDm, msgs.length, room.conv]);
+    R.useEffect(() => {
+      if (!estDm) return;
+      const lire = () => {
+        if (document.visibilityState === "hidden") return;
+        const t = Date.now();
+        db.ref("dmIndex/" + authUid + "/" + room.conv).update({ luLe: t, nb: 0 }).catch(() => {
+        });
+        db.ref("dmIndex/" + room.autre.uid + "/" + room.conv + "/luAutreLe").set(t).catch(() => {
+        });
+      };
+      document.addEventListener("visibilitychange", lire);
+      return () => document.removeEventListener("visibilitychange", lire);
+    }, [estDm, room.conv]);
     const surDefilement = () => {
       const el = listeRef.current;
-      if (el) procheBas.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+      if (el) {
+        procheBas.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+        setBas(!procheBas.current);
+        if (procheBas.current) setNonVus(0);
+      }
     };
     const messageErreur = (e) => /permission/i.test(e && e.message || "") ? estDm ? "Message refusé : ce membre t'a peut-être bloqué." : "Message refusé : tu n'as pas accès à cette communauté." : "Envoi impossible. Vérifie ta connexion.";
     const envoyer = async (extra) => {
@@ -8061,17 +8225,21 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           up[base1 + "dernierTs"] = msg.timestamp;
           up[base1 + "dernierDe"] = authUid;
           up[base1 + "luLe"] = msg.timestamp;
+          up[base1 + "nb"] = 0;
           up[base2 + "autre"] = authUid;
           up[base2 + "autrePseudo"] = pseudo || "Membre";
           up[base2 + "dernier"] = apercu;
           up[base2 + "dernierTs"] = msg.timestamp;
           up[base2 + "dernierDe"] = authUid;
           await db.ref().update(up);
+          db.ref(base2 + "nb").transaction((v) => (typeof v === "number" ? v : 0) + 1).catch(() => {
+          });
           envoyerNotification({ cibleUid: autre, titre: pseudo || "Nouveau message", corps: apercu });
         } else if (room.type === "general") {
           envoyerNotification({ diffusion: true, titre: (pseudo || "") + " (Communauté Sabi)", corps: apercu });
         }
         setTexte("");
+        if (champRef.current) champRef.current.style.height = "auto";
         setReponse(null);
         procheBas.current = true;
       } catch (e) {
@@ -8115,73 +8283,164 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       setActions(null);
     };
     const eps = (epreuves || []).map((e) => ({ id: e.id, titre: [e.matiere, e.type, e.annee].filter(Boolean).join(" · ") || "Épreuve" })).filter((e) => !qEp.trim() || e.titre.toLowerCase().includes(qEp.trim().toLowerCase())).slice(0, 40);
-    const bulle = (m) => {
+    const aller = (id) => {
+      const el = document.getElementById("msg-" + id);
+      if (!el) return;
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      setFlash(id);
+      setTimeout(() => setFlash(null), 1300);
+    };
+    const gestes = (m, moi) => ({
+      onTouchStart: (e) => {
+        e.stopPropagation();
+        const t = e.touches[0];
+        const g = { x: t.clientX, y: t.clientY, h: null, dx: 0, el: e.currentTarget, m, moi };
+        g.timer = setTimeout(() => {
+          if (gest.current === g && g.h !== true) {
+            gest.current = null;
+            try { navigator.vibrate && navigator.vibrate(12); } catch (x) {}
+            setActions({ m, moi });
+          }
+        }, 450);
+        gest.current = g;
+      },
+      onTouchMove: (e) => {
+        e.stopPropagation();
+        const g = gest.current;
+        if (!g) return;
+        const t = e.touches[0];
+        const dx = t.clientX - g.x, dy = t.clientY - g.y;
+        if (g.h === null) {
+          if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+          clearTimeout(g.timer);
+          g.h = dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.3;
+        }
+        if (!g.h) return;
+        g.dx = Math.max(0, Math.min(dx, 84));
+        g.el.style.transition = "none";
+        g.el.style.transform = "translateX(" + g.dx + "px)";
+      },
+      onTouchEnd: (e) => {
+        e.stopPropagation();
+        const g = gest.current;
+        gest.current = null;
+        if (!g) return;
+        clearTimeout(g.timer);
+        g.el.style.transition = "transform 170ms ease-out";
+        g.el.style.transform = "translateX(0)";
+        if (g.dx > 56) {
+          try { navigator.vibrate && navigator.vibrate(10); } catch (x) {}
+          setReponse({ id: m.id, pseudo: m.pseudo || "", extrait: String(m.texte || (m.imageUrl ? "📷 Photo" : "📎 Épreuve")).slice(0, 80) });
+          if (champRef.current) champRef.current.focus();
+        }
+      },
+      onTouchCancel: () => {
+        const g = gest.current;
+        gest.current = null;
+        if (g) {
+          clearTimeout(g.timer);
+          g.el.style.transform = "translateX(0)";
+        }
+      },
+      onContextMenu: (e) => {
+        e.preventDefault();
+        setActions({ m, moi });
+      }
+    });
+    const lignes = [];
+    visibles.forEach((m, i) => {
+      const prev = visibles[i - 1];
+      const nouveauJour = !prev || new Date(prev.timestamp).toDateString() !== new Date(m.timestamp).toDateString();
+      const premier = nouveauJour || (prev.uid || prev.pseudo) !== (m.uid || m.pseudo);
       const moi = m.uid ? m.uid === authUid : m.pseudo === pseudo;
-      return msH(
+      if (nouveauJour) lignes.push(msH("div", { key: "j" + m.id, className: "flex justify-center my-2" }, msH("span", { className: "text-[11px] font-semibold px-3 py-1 rounded-lg", style: { backgroundColor: COLORS.surface2, color: COLORS.textMuted, boxShadow: "0 1px 2px rgba(0,0,0,0.25)" } }, msJour(m.timestamp))));
+      const lu = estDm && moi && dmInfo && (dmInfo.luAutreLe || 0) >= (m.timestamp || 0);
+      const coul = msCouleurNom(m.uid || m.pseudo);
+      lignes.push(msH(
         "div",
-        { key: m.id, className: "flex flex-col " + (moi ? "items-end" : "items-start") },
+        { key: m.id, id: "msg-" + m.id, className: "flex px-2 " + (moi ? "justify-end" : "justify-start"), style: { marginTop: premier ? 6 : 0, touchAction: "pan-y", transition: "background-color 400ms", backgroundColor: flash === m.id ? "rgba(37,211,102,0.18)" : "transparent" } },
         msH(
           "div",
-          { className: "max-w-[85%] rounded-2xl px-3 py-2", style: { backgroundColor: moi ? "rgba(var(--accent-rgb),0.18)" : COLORS.surface, border: "1px solid " + COLORS.border } },
-          !moi && !estDm && msH("p", { className: "text-[11px] font-semibold mb-0.5", style: { color: COLORS.gold } }, m.pseudo || "?"),
-          m.reponse && msH("div", { className: "rounded-lg px-2 py-1 mb-1.5 text-[11px]", style: { borderLeft: "3px solid " + COLORS.gold, backgroundColor: "rgba(0,0,0,0.2)", color: COLORS.textMuted } }, msH("b", null, m.reponse.pseudo || ""), " ", m.reponse.extrait || ""),
-          m.imageUrl && msH("img", { src: m.imageUrl, alt: "Photo", loading: "lazy", onClick: () => setActions({ image: m.imageUrl }), className: "rounded-lg mb-1.5", style: { maxWidth: "100%", maxHeight: 260, objectFit: "cover" } }),
-          m.epreuve && msH("button", { type: "button", onClick: () => setTab("epreuves"), className: "w-full text-left rounded-lg px-2.5 py-2 mb-1.5 text-xs font-semibold", style: { backgroundColor: "rgba(var(--accent-rgb),0.15)", color: COLORS.gold } }, "📎 Épreuve : " + (m.epreuve.titre || "") + " ›"),
-          m.texte && msH("p", { className: "text-sm", style: { color: COLORS.text, wordBreak: "break-word", whiteSpace: "pre-wrap" } }, m.texte),
+          Object.assign({ className: "max-w-[82%] px-2.5 pt-1.5 pb-1", style: { backgroundColor: moi ? "rgba(37,211,102,0.2)" : COLORS.surface2, borderRadius: 12, borderTopRightRadius: premier && moi ? 3 : 12, borderTopLeftRadius: premier && !moi ? 3 : 12, boxShadow: "0 1px 1.5px rgba(0,0,0,0.3)", WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" } }, gestes(m, moi)),
+          !moi && !estDm && premier && msH("p", { className: "text-[12.5px] font-bold mb-0.5", style: { color: coul } }, m.pseudo || "?"),
+          m.reponse && msH("button", { type: "button", onClick: (e) => { e.stopPropagation(); if (m.reponse.id) aller(m.reponse.id); }, className: "w-full text-left rounded-lg px-2 py-1 mb-1 text-[12px]", style: { borderLeft: "4px solid " + msCouleurNom(m.reponse.pseudo), backgroundColor: "rgba(0,0,0,0.22)", color: COLORS.textMuted } }, msH("b", { className: "block text-[12px]", style: { color: msCouleurNom(m.reponse.pseudo) } }, m.reponse.pseudo || ""), msH("span", { className: "block truncate" }, m.reponse.extrait || "")),
+          m.imageUrl && msH("img", { src: m.imageUrl, alt: "Photo", loading: "lazy", onClick: () => setActions({ image: m.imageUrl }), className: "rounded-lg mb-1", style: { maxWidth: "100%", maxHeight: 280, objectFit: "cover" } }),
+          m.epreuve && msH("button", { type: "button", onClick: () => setTab("epreuves"), className: "w-full text-left rounded-lg px-2.5 py-2 mb-1 text-xs font-semibold", style: { backgroundColor: "rgba(0,0,0,0.22)", color: MS_VERT } }, "📎 Épreuve : " + (m.epreuve.titre || "") + " ›"),
           msH(
             "div",
-            { className: "flex items-center justify-end gap-3 mt-1" },
-            msH("span", { className: "text-[10px] font-mono", style: { color: COLORS.textFaint } }, msHeure(m.timestamp)),
-            msH("button", { type: "button", onClick: () => setActions({ m, moi }), "aria-label": "Actions", className: "text-sm px-1", style: { color: COLORS.textMuted } }, "⋯")
+            { className: "flex items-end gap-2 flex-wrap justify-end" },
+            m.texte ? msH("p", { className: "text-[15px] flex-1", style: { color: COLORS.text, wordBreak: "break-word", whiteSpace: "pre-wrap", lineHeight: 1.35, minWidth: 0 } }, m.texte) : null,
+            msH("span", { className: "flex items-center text-[10.5px] flex-shrink-0", style: { color: COLORS.textFaint, marginLeft: "auto", paddingTop: 2 } }, msHeure(m.timestamp), estDm && moi && msH("span", { style: { marginLeft: 4 } }, msH(MsCoches, { lu })))
           )
         )
-      );
-    };
+      ));
+    });
+    const sousTitre = estDm ? "Message privé" : room.type === "general" ? "Tous les étudiants" : "Communauté de filière";
     return msH(
       "div",
-      { className: "flex flex-col h-full min-h-0" },
+      { className: "flex flex-col min-h-0 relative", style: { margin: "-16px -20px -12px", height: "calc(100% + 28px)", backgroundColor: COLORS.bg } },
       msH(
         "div",
-        { className: "flex items-center gap-2 pb-2 flex-shrink-0" },
-        msH("button", { type: "button", onClick: onRetour, "aria-label": "Retour", className: "w-9 h-9 rounded-full flex items-center justify-center text-lg", style: { color: COLORS.text, backgroundColor: COLORS.surface } }, "‹"),
-        estDm && msH(MsAvatar, { uid: room.autre.uid, nom: room.autre.pseudo, size: 34 }),
-        msH("div", { className: "flex-1 min-w-0" }, msH("p", { className: "text-sm font-bold truncate", style: { color: COLORS.text } }, room.titre), msH("p", { className: "text-[10px] font-mono", style: { color: COLORS.textFaint } }, estDm ? "Message privé" : room.type === "general" ? "Communauté générale" : "Communauté de filière")),
-        estDm && msH("button", { type: "button", onClick: () => bloqueDm ? onDebloquer(room.autre.uid) : setActions({ bloquer: true }), className: "text-[11px] font-mono px-2.5 py-1 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, bloqueDm ? "Débloquer" : "Bloquer")
+        { className: "flex items-center gap-2 px-2 pb-2 flex-shrink-0", style: { backgroundColor: COLORS.surface, borderBottom: "1px solid " + COLORS.border, paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)" } },
+        msH("button", { type: "button", onClick: onRetour, "aria-label": "Retour", className: "w-9 h-9 rounded-full flex items-center justify-center text-2xl", style: { color: COLORS.text } }, "‹"),
+        msH(
+          "button",
+          { type: "button", onClick: () => estDm && setActions({ profil: true }), className: "flex items-center gap-2.5 flex-1 min-w-0 text-left" },
+        estDm ? msH(MsAvatar, { uid: room.autre.uid, nom: room.autre.pseudo, size: 38 }) : msH("div", { className: "w-[38px] h-[38px] rounded-full flex items-center justify-center text-xl flex-shrink-0", style: { background: room.type === "general" ? "linear-gradient(135deg,#25d366,#128c7e)" : "linear-gradient(135deg,#60a5fa,#6366f1)" } }, room.type === "general" ? "🌍" : "🎓"),
+        msH("div", { className: "flex-1 min-w-0" }, msH("p", { className: "text-[15px] font-bold truncate", style: { color: COLORS.text } }, room.titre), msH("p", { className: "text-[11px] truncate", style: { color: COLORS.textFaint } }, sousTitre))
+        ),
+        estDm && msH("button", { type: "button", onClick: () => bloqueDm ? onDebloquer(room.autre.uid) : setActions({ bloquer: true }), "aria-label": "Options", className: "w-9 h-9 rounded-full flex items-center justify-center text-xl", style: { color: COLORS.textMuted } }, "⋮")
       ),
       epingle && epingle.texte && msH(
         "div",
-        { className: "flex-shrink-0 rounded-xl px-3 py-2 mb-2 text-xs flex items-start gap-2", style: { backgroundColor: "rgba(var(--accent-rgb),0.12)", border: "1px solid " + COLORS.border, color: COLORS.text } },
+        { className: "flex-shrink-0 px-3 py-2 text-xs flex items-start gap-2", style: { backgroundColor: COLORS.surface, borderBottom: "1px solid " + COLORS.border, color: COLORS.text } },
         msH("span", null, "📌"),
         msH("span", { className: "flex-1", style: { wordBreak: "break-word" } }, epingle.texte),
         isAdmin && msH("button", { type: "button", onClick: () => db.ref("epingles/" + cleEp).remove(), "aria-label": "Désépingler", style: { color: COLORS.textMuted } }, "✕")
       ),
       msH(
         "div",
-        { ref: listeRef, onScroll: surDefilement, className: "flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-1" },
-        msgs.length >= limite && msH("button", { type: "button", onClick: () => {
-          sautRef.current = true;
-          setLimite(limite + 50);
-        }, className: "self-center text-xs font-mono px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, "Charger les messages précédents"),
-        erreurLecture ? msH("p", { className: "text-xs text-center py-6", style: { color: COLORS.terraText } }, erreurLecture) : visibles.length === 0 ? msH(EmptyState, { icon: "message-circle", text: "Aucun message pour l'instant. Lance la discussion." }) : visibles.map(bulle),
-        msH("div", { ref: finRef })
-      ),
-      erreur && msH("p", { className: "text-[11px] flex-shrink-0 pt-1", style: { color: COLORS.terraText } }, erreur),
-      bloqueDm ? msH("p", { className: "text-xs text-center py-3 flex-shrink-0", style: { color: COLORS.textMuted } }, "Tu as bloqué ce membre.") : msH(
-        "div",
-        { className: "flex-shrink-0 pt-2 mt-1", style: { backgroundColor: COLORS.bg, borderTop: "1px solid " + COLORS.border } },
-        reponse && msH("div", { className: "flex items-center gap-2 rounded-lg px-2.5 py-1.5 mb-2 text-[11px]", style: { borderLeft: "3px solid " + COLORS.gold, backgroundColor: COLORS.surface, color: COLORS.textMuted } }, msH("span", { className: "flex-1 truncate" }, "Réponse à " + (reponse.pseudo || "") + " : " + (reponse.extrait || "")), msH("button", { type: "button", onClick: () => setReponse(null), "aria-label": "Annuler la réponse" }, "✕")),
-        photo !== null && msH("p", { className: "text-[11px] mb-1", style: { color: COLORS.textMuted } }, "Envoi de la photo : " + photo + " %"),
+        { className: "flex-1 min-h-0 relative" },
         msH(
           "div",
-          { className: "flex items-center gap-2" },
-          msH("label", { className: "w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0 cursor-pointer", style: { backgroundColor: COLORS.surface, border: "1px solid " + COLORS.border }, "aria-label": "Envoyer une photo" }, "📷", msH("input", { type: "file", accept: "image/*", className: "hidden", onChange: choisirPhoto })),
-          msH("button", { type: "button", onClick: () => setChoixEp(true), "aria-label": "Partager une épreuve", className: "w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0", style: { backgroundColor: COLORS.surface, border: "1px solid " + COLORS.border } }, "📎"),
-          msH("input", { value: texte, maxLength: 500, onChange: (e) => setTexte(e.target.value), onKeyDown: (e) => {
-            if (e.key === "Enter") envoyer();
-          }, placeholder: "Écris un message…", className: "flex-1 min-w-0 rounded-full px-4 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text } }),
-          msH("button", { type: "button", onClick: () => envoyer(), disabled: !texte.trim() || !!envoi, "aria-label": "Envoyer", className: "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-40", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "➤")
+          { ref: listeRef, onScroll: surDefilement, onTouchStart: (e) => e.stopPropagation(), onTouchMove: (e) => e.stopPropagation(), onTouchEnd: (e) => e.stopPropagation(), className: "absolute inset-0 overflow-y-auto flex flex-col py-2", style: { backgroundImage: "radial-gradient(rgba(var(--accent-rgb),0.07) 1.2px, transparent 1.2px)", backgroundSize: "24px 24px", overscrollBehavior: "contain" } },
+          msgs.length >= limite && msH("button", { type: "button", onClick: () => {
+            sautRef.current = true;
+            setLimite(limite + 50);
+          }, className: "self-center text-xs font-semibold px-3 py-1.5 rounded-full mb-2", style: { backgroundColor: COLORS.surface2, color: COLORS.textMuted } }, "Charger les messages précédents"),
+          erreurLecture ? msH("p", { className: "text-xs text-center py-6", style: { color: COLORS.terraText } }, erreurLecture) : visibles.length === 0 ? msH("div", { className: "m-auto px-8 text-center text-[13px] py-10", style: { color: COLORS.textFaint } }, "Aucun message pour l'instant. Lance la discussion 👋") : lignes,
+          msH("div", { ref: finRef, style: { height: 2 } })
+        ),
+        bas && msH("button", { type: "button", onClick: () => { setNonVus(0); finRef.current && finRef.current.scrollIntoView({ block: "end", behavior: "smooth" }); }, "aria-label": "Aller au dernier message", className: "absolute flex items-center justify-center rounded-full text-lg", style: { right: 14, bottom: 12, width: 42, height: 42, backgroundColor: COLORS.surface2, color: COLORS.text, boxShadow: "0 2px 8px rgba(0,0,0,0.4)", border: "1px solid " + COLORS.border } }, "⌄", nonVus > 0 && msH("span", { className: "absolute rounded-full text-[10px] font-bold flex items-center justify-center", style: { top: -7, right: -2, minWidth: 19, height: 19, padding: "0 5px", backgroundColor: MS_VERT, color: "#06210f" } }, nonVus))
+      ),
+      erreur && msH("p", { className: "text-[11px] flex-shrink-0 px-3 py-1", style: { color: COLORS.terraText, backgroundColor: COLORS.bg } }, erreur),
+      bloqueDm ? msH("p", { className: "text-xs text-center py-3 flex-shrink-0", style: { color: COLORS.textMuted, backgroundColor: COLORS.surface } }, "Tu as bloqué ce membre.") : msH(
+        "div",
+        { className: "flex-shrink-0 px-2 pt-2", style: { backgroundColor: COLORS.bg, paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 8px)" } },
+        reponse && msH("div", { className: "flex items-center gap-2 rounded-xl px-3 py-2 mb-1.5 text-[12px]", style: { borderLeft: "4px solid " + msCouleurNom(reponse.pseudo), backgroundColor: COLORS.surface2, color: COLORS.textMuted } }, msH("div", { className: "flex-1 min-w-0" }, msH("b", { className: "block", style: { color: msCouleurNom(reponse.pseudo) } }, reponse.pseudo || ""), msH("span", { className: "block truncate" }, reponse.extrait || "")), msH("button", { type: "button", onClick: () => setReponse(null), "aria-label": "Annuler la réponse", className: "px-1" }, "✕")),
+        photo !== null && msH("p", { className: "text-[11px] mb-1 px-2", style: { color: COLORS.textMuted } }, "Envoi de la photo : " + photo + " %"),
+        msH(
+          "div",
+          { className: "flex items-end gap-2" },
+          msH(
+            "div",
+            { className: "flex-1 min-w-0 flex items-end rounded-3xl px-1", style: { backgroundColor: COLORS.surface2, border: "1px solid " + COLORS.border } },
+            msH("textarea", { ref: champRef, value: texte, rows: 1, maxLength: 500, onChange: (e) => {
+              setTexte(e.target.value);
+              const el = e.target;
+              el.style.height = "auto";
+              el.style.height = Math.min(el.scrollHeight, 112) + "px";
+            }, placeholder: "Message", className: "flex-1 min-w-0 bg-transparent outline-none resize-none px-3 py-2.5", style: { fontSize: 16, color: COLORS.text, lineHeight: 1.3, maxHeight: 112 } }),
+            msH("button", { type: "button", onClick: () => setChoixEp(true), "aria-label": "Partager une épreuve", className: "w-10 h-10 flex items-center justify-center text-xl flex-shrink-0", style: { color: COLORS.textMuted } }, msIcone("attache", 22)),
+            msH("label", { className: "w-10 h-10 flex items-center justify-center text-xl flex-shrink-0 cursor-pointer", "aria-label": "Envoyer une photo", style: { color: COLORS.textMuted } }, msIcone("image", 22), msH("input", { type: "file", accept: "image/*", className: "hidden", onChange: choisirPhoto }))
+          ),
+          msH("button", { type: "button", onClick: () => envoyer(), disabled: !texte.trim() || !!envoi, "aria-label": "Envoyer", className: "w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-xl disabled:opacity-50", style: { backgroundColor: MS_VERT, color: "#06210f" } }, msIcone("envoi", 22))
         )
       ),
+      actions && actions.profil && estDm && msH(MsProfil, { uid: room.autre.uid, nom: room.autre.pseudo, bloque: !!bloqueDm, onFermer: () => setActions(null), onBloquer: () => setActions({ bloquer: true }), onDebloquer: () => {
+        onDebloquer(room.autre.uid);
+        setActions(null);
+      } }),
       actions && actions.image && dom_shim_default.createPortal(msH("div", { className: "fixed inset-0 z-[220] flex items-center justify-center", style: { backgroundColor: "rgba(0,0,0,0.92)" }, onClick: () => setActions(null) }, msH("img", { src: actions.image, alt: "Photo", style: { maxWidth: "100%", maxHeight: "100%", objectFit: "contain" } })), document.body),
       actions && actions.m && msH(
         MsFeuille,
@@ -8234,9 +8493,15 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       )
     );
   }
-  function MessagerieTab({ authUid, pseudo, profil, badgeActif, isAdmin, epreuves, setTab, dmIndex, dmCible, onDmCibleConsommee }) {
+  function MessagerieTab({ authUid, pseudo, profil, badgeActif, isAdmin, epreuves, setTab, dmIndex, dmCible, onDmCibleConsommee, onSalon }) {
     const R = react_shim_default;
     const [room, setRoom] = R.useState(null);
+    R.useEffect(() => {
+      if (onSalon) onSalon(!!room);
+    }, [!!room]);
+    R.useEffect(() => () => {
+      if (onSalon) onSalon(false);
+    }, []);
     const [blocages, setBlocages] = R.useState({});
     R.useEffect(() => {
       const r = db.ref("blocages/" + authUid);
@@ -8250,7 +8515,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     }, [dmCible && dmCible.uid]);
     const bloquer = (uid, p) => db.ref("blocages/" + authUid + "/" + uid).set(String(p || "Membre").slice(0, 60));
     const debloquer = (uid) => db.ref("blocages/" + authUid + "/" + uid).remove();
-    if (room) return msH(MsSalon, { key: room.type + (room.conv || room.cle || ""), room, authUid, pseudo, badgeActif, isAdmin, epreuves, blocages, setTab, onRetour: () => setRoom(null), onBloquer: bloquer, onDebloquer: debloquer });
+    if (room) return msH(MsSalon, { key: room.type + (room.conv || room.cle || ""), room, authUid, pseudo, badgeActif, isAdmin, epreuves, blocages, setTab, dmInfo: room.conv && dmIndex ? dmIndex[room.conv] : null, onRetour: () => setRoom(null), onBloquer: bloquer, onDebloquer: debloquer });
     return msH(MsListe, { authUid, profil, isAdmin, dmIndex, blocages, onOuvrir: setRoom, onDebloquer: debloquer });
   }
 
@@ -9604,20 +9869,20 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     const [filtreAnneeEp, setFiltreAnneeEp] = useState("Toutes");
     const [filtreFiliereEp, setFiltreFiliereEp] = useState("Toutes");
     const [filtreTypeEp, setFiltreTypeEp] = useState("Toutes");
-    const [filtreSemestreEp, setFiltreSemestreEp] = useState(semestreActuel(Date.now()));
+    const [filtreSemestreEp, setFiltreSemestreEp] = useState(isOwner || isAdmin ? "Tous" : semestreActuel(Date.now()));
     const [matiereRapide, setMatiereRapide] = useState("");
     const filtered = (isOwner ? epreuves.filter(
       (e) => (filtreAnneeEp === "Toutes" || e.annee === filtreAnneeEp) && (filtreFiliereEp === "Toutes" || e.filiere === filtreFiliereEp)
-    ) : isAdmin ? epreuves.filter((e) => filtreAnneeEp === "Toutes" || e.annee === filtreAnneeEp) : epreuves.filter((e) => e.semestre === semestreActuel(Date.now()))).filter((e) => filtreTypeEp === "Toutes" || e.type === filtreTypeEp);
+    ) : isAdmin ? epreuves.filter((e) => filtreAnneeEp === "Toutes" || e.annee === filtreAnneeEp) : epreuves.filter((e) => e.semestre === semestreActuel(Date.now()))).filter((e) => filtreTypeEp === "Toutes" || e.type === filtreTypeEp).filter((e) => filtreSemestreEp === "Tous" || e.semestre === filtreSemestreEp);
     const filiereVerrouillee = isAdmin && !isOwner;
     const filiereActive = isOwner ? filtreFiliereEp !== "Toutes" ? filtreFiliereEp : profil.filiere || FILIERES[0] : profil.filiere || FILIERES[0];
     const anneeActive = filtreAnneeEp !== "Toutes" ? filtreAnneeEp : profil.annee || ANNEES[0];
-    const filantes = matieresFilantes(filiereActive, anneeActive, filtreSemestreEp);
+    const filantes = filtreSemestreEp === "Tous" ? ["Semestre 1", "Semestre 2"].flatMap((sm) => matieresFilantes(filiereActive, anneeActive, sm).map((f) => ({ ...f, semestre: sm }))) : matieresFilantes(filiereActive, anneeActive, filtreSemestreEp).map((f) => ({ ...f, semestre: filtreSemestreEp }));
     const filteredParMatiere = matiereRapide ? filtered.filter((ep) => ep.code === matiereRapide) : filtered;
     const allerVersMatiere = (codeChoisi) => {
       setMatiereRapide(codeChoisi);
       if (!codeChoisi) return;
-      const trouvees = epreuves.filter((ep) => ep.code === codeChoisi);
+      const trouvees = filtered.filter((ep) => ep.code === codeChoisi);
       const avecPdf = trouvees.find((ep) => ep.pdfUrl);
       if (avecPdf) setPreviewUrl(avecPdf.pdfUrl);
       else if (trouvees.length > 0) setExpanded(trouvees[0].id);
@@ -9990,7 +10255,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
             onChange: (e) => changerSemestreEp(e.target.value),
             className: "w-full rounded-lg px-2 py-1.5 text-sm outline-none border",
             style: { backgroundColor: COLORS.bg, borderColor: COLORS.border, color: COLORS.text }
-          }, ["Semestre 1", "Semestre 2"].map((s) => react_shim_default.createElement("option", { key: s }, s))),
+          }, (isOwner || isAdmin ? ["Tous", "Semestre 1", "Semestre 2"] : [semestreActuel(Date.now())]).map((s) => react_shim_default.createElement("option", { key: s }, s))),
           react_shim_default.createElement(
             "select",
             {
@@ -10006,7 +10271,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           matiereRapide && filteredParMatiere.length === 0 && react_shim_default.createElement("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Aucune \xE9preuve n'est disponible pour le moment."),
           matiereRapide && (() => {
             const mo = filantes.find((f) => f.code === matiereRapide);
-            return mo ? react_shim_default.createElement(BoutonManque, { matiereObj: mo, filiere: filiereActive, annee: anneeActive, semestre: filtreSemestreEp, authUid, pseudo, demandes, nbExistantes: filteredParMatiere.length }) : null;
+            return mo ? react_shim_default.createElement(BoutonManque, { matiereObj: mo, filiere: filiereActive, annee: anneeActive, semestre: mo.semestre, authUid, pseudo, demandes, nbExistantes: filteredParMatiere.length }) : null;
           })(),
           matiereRapide && react_shim_default.createElement("button", { onClick: () => allerVersMatiere(""), className: "self-start text-[10px] font-mono uppercase", style: { color: COLORS.gold } }, "R\xE9initialiser")
         ),
@@ -10912,22 +11177,111 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
   function asPourLaVoix(t) {
     return String(t || "").replace(/[*_`#>|]/g, "").replace(/\n+/g, ". ").replace(/\s+/g, " ").trim();
   }
-  function asParler(texte, actif, onFin) {
+  var asVoixJeton = 0;
+  function asVoixNative() {
     try {
-      if (!actif || !window.speechSynthesis) {
-        if (onFin) onFin();
+      const C = window.Capacitor;
+      if (C && C.isNativePlatform && C.isNativePlatform()) return C.Plugins && C.Plugins.SabiVoix || (C.registerPlugin ? C.registerPlugin("SabiVoix") : null);
+    } catch (e) {
+    }
+    return null;
+  }
+  function asArreterVoix() {
+    asVoixJeton++;
+    try {
+      const N = asVoixNative();
+      if (N && N.stop) N.stop().catch(() => {
+      });
+    } catch (e) {
+    }
+    try {
+      window.speechSynthesis && window.speechSynthesis.cancel();
+    } catch (e) {
+    }
+  }
+  function asVoixFr() {
+    try {
+      const v = window.speechSynthesis.getVoices() || [];
+      return v.find((x) => /^fr[-_]FR/i.test(x.lang)) || v.find((x) => /^fr/i.test(x.lang)) || null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function asParlerWeb(t, fin, jeton) {
+    try {
+      const S = window.speechSynthesis;
+      if (!S || typeof SpeechSynthesisUtterance === "undefined") {
+        fin(false);
         return;
       }
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(asPourLaVoix(texte).slice(0, 900));
-      u.lang = "fr-FR";
-      u.rate = 1;
-      u.onend = onFin || null;
-      u.onerror = onFin || null;
-      window.speechSynthesis.speak(u);
+      const morceaux = (t.match(/[^.!?;:]+[.!?;:]?\s*/g) || [t]).map((m) => m.trim()).filter(Boolean);
+      let i = 0, demarre = false;
+      const garde = setTimeout(() => {
+        if (!demarre) {
+          try {
+            S.cancel();
+          } catch (e) {
+          }
+          fin(false);
+        }
+      }, 3500);
+      const suite = () => {
+        if (jeton !== asVoixJeton) {
+          clearTimeout(garde);
+          return;
+        }
+        if (i >= morceaux.length) {
+          clearTimeout(garde);
+          fin(true);
+          return;
+        }
+        const u = new SpeechSynthesisUtterance(morceaux[i++]);
+        u.lang = "fr-FR";
+        u.rate = 1;
+        const voix = asVoixFr();
+        if (voix) u.voice = voix;
+        u.onstart = () => {
+          demarre = true;
+          clearTimeout(garde);
+        };
+        u.onend = suite;
+        u.onerror = () => {
+          clearTimeout(garde);
+          if (jeton === asVoixJeton) fin(demarre);
+        };
+        S.speak(u);
+      };
+      setTimeout(suite, 80);
     } catch (e) {
-      if (onFin) onFin();
+      fin(false);
     }
+  }
+  function asParler(texte, actif, onFin) {
+    asArreterVoix();
+    const mien = asVoixJeton;
+    let fini = false;
+    const fin = (ok) => {
+      if (fini) return;
+      fini = true;
+      if (mien === asVoixJeton && onFin) onFin(ok);
+    };
+    if (!actif) {
+      fin(true);
+      return;
+    }
+    const t = asPourLaVoix(texte).slice(0, 900);
+    if (!t) {
+      fin(true);
+      return;
+    }
+    const N = asVoixNative();
+    if (N && N.speak) {
+      N.speak({ text: t, lang: "fr-FR", rate: 1 }).then(() => fin(true)).catch(() => {
+        if (mien === asVoixJeton) asParlerWeb(t, fin, mien);
+      });
+      return;
+    }
+    asParlerWeb(t, fin, mien);
   }
   function asEncoderWav(buffer) {
     const cible = 16e3;
@@ -11050,7 +11404,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         setFocus(!!e.detail);
         if (e.detail) {
           try {
-            window.speechSynthesis && window.speechSynthesis.cancel();
+            asArreterVoix();
           } catch (x) {
           }
           setEtat("repos");
@@ -11066,7 +11420,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         window.removeEventListener("offline", off);
         window.removeEventListener("sabi-focus", surFocus);
         try {
-          window.speechSynthesis && window.speechSynthesis.cancel();
+          asArreterVoix();
         } catch (e) {
         }
       };
@@ -11083,7 +11437,8 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         return;
       }
       setEtat("parle");
-      asParler(rep, true, () => {
+      asParler(rep, true, (ok) => {
+        if (ok === false) setInfo("Je n'arrive pas \u00E0 parler sur ce t\u00E9l\u00E9phone. V\u00E9rifie que le volume m\u00E9dia est mont\u00E9 et que Android a un moteur de synth\u00E8se vocale (R\u00E9glages > Synth\u00E8se vocale, ex. Google).");
         setEtat("repos");
         if (refLibre.current && refEcouter.current && !focusSourdine) setTimeout(() => refEcouter.current && refEcouter.current(), 350);
       });
@@ -11214,7 +11569,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         return;
       }
       try {
-        window.speechSynthesis && window.speechSynthesis.cancel();
+        asArreterVoix();
       } catch (e) {
       }
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -11251,7 +11606,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       stSet("voix", v);
       if (!v) {
         try {
-          window.speechSynthesis && window.speechSynthesis.cancel();
+          asArreterVoix();
         } catch (e) {
         }
         setEtat("repos");
@@ -11307,7 +11662,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       window.addEventListener("sabi-focus", f);
       return () => window.removeEventListener("sabi-focus", f);
     }, []);
-    if (focus || ["assistante", "actualites", "chat", "carte", "profil"].includes(tab)) return null;
+    if (focus || ["assistante", "actualites", "chat", "carte", "profil", "assistance", "supportAdmin", "contribuer", "infosperso", "admin", "myscoreAdmin", "promoAdmin"].includes(tab)) return null;
     return stH("button", { type: "button", onClick: () => setTab("assistante"), "aria-label": "Assistante vocale Sabi", className: "fixed z-[60] rounded-full flex items-center justify-center text-xl", style: { width: 48, height: 48, right: 16, bottom: "calc(env(safe-area-inset-bottom, 0px) + 96px)", backgroundColor: COLORS.gold, color: COLORS.bg, boxShadow: "0 6px 20px rgba(0,0,0,.35)", touchAction: "manipulation" } }, acces ? "\uD83C\uDFA4" : "\uD83D\uDD12");
   }
 
@@ -14749,6 +15104,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
     const dmIndex = useDmIndex(authUser && authUser.uid);
     const dmNonLus = msNonLus(dmIndex, authUser && authUser.uid);
     const [dmCible, setDmCible] = useState(null);
+    const [salonOuvert, setSalonOuvert] = useState(false);
     const dmVusRef = react_shim_default.useRef(null);
     const dmNonLusRef = react_shim_default.useRef(0);
     dmNonLusRef.current = dmNonLus;
@@ -15605,6 +15961,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
     }, [tab, authUser, notifsNonLues]);
     const retourVers = tab === "contribuer" ? "accueil" : "profil";
     const estProfil = tab === "profil";
+    const plein = tab === "chat" && salonOuvert;
     const dernierAppuiRetour = react_shim_default.useRef(0);
     useEffect(() => {
       if (!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) return;
@@ -15727,7 +16084,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       boutique: () => react_shim_default.createElement(BoutiqueTab, { points, badges, badgeActif, vip, bounties, pseudo, authUid: authUser.uid, abonnement, promos, verifPaiementStatut, verifPaiementDetail, onVerifierPaiement: reverifierPaiement, onBuyBadge: handleBuyBadge, onSetBadgeActif: handleSetBadgeActif, onBuyVip: handleBuyVip, onCreateBounty: handleCreateBounty, onRespondBounty: handleRespondBounty, onChooseWinner: handleChooseWinner, onDemandeAbonnement: handleDemandeAbonnement, onPayerAbonnement: handleDemarrerPaiement }),
       carte: () => react_shim_default.createElement(CarteTab, { points: cartePoints, onAddPoint: handleAddCartePoint, onUpdatePoint: handleUpdateCartePoint, onDeletePoint: handleDeleteCartePoint, isOwner }),
       actualites: () => react_shim_default.createElement(FilTab, { cards, onVote: handleVote, myVotes, onPin: handleEpingle, points, pseudo, isOwner, isAdmin: isAdminEffectif, onDelete: handleDeleteCard, onClearAll: handleClearAllCards }),
-      chat: () => react_shim_default.createElement(MessagerieTab, { authUid: authUser.uid, pseudo, profil, badgeActif, isAdmin: isAdminEffectif, epreuves, setTab, dmIndex, dmCible, onDmCibleConsommee: () => setDmCible(null) }),
+      chat: () => react_shim_default.createElement(MessagerieTab, { authUid: authUser.uid, pseudo, profil, badgeActif, isAdmin: isAdminEffectif, epreuves, setTab, dmIndex, dmCible, onDmCibleConsommee: () => setDmCible(null), onSalon: setSalonOuvert }),
       contribuer: () => react_shim_default.createElement(ContribuerTab, { onSubmit: handleContribute, pseudo, vip, filiere: profil.filiere, points, isOwner, isAdmin: isAdminEffectif, prefill: partagePrefill, prefillImage: partageImagePrefill }),
       infosperso: () => react_shim_default.createElement(InfosPersoSection, { pseudo, profil, isOwner, email: authUser.email, whatsapp, matricule, onUpdatePseudo: handleUpdatePseudo, onUpdateWhatsapp: handleUpdateWhatsapp, onUpdatePassword: handleUpdatePassword, onSetMatricule: handleSetMatricule, onDemandeChangementAnnee: handleDemandeChangementAnnee, onDemandeChangementFiliere: handleDemandeChangementFiliere, onDemandeDeblocageMatricule: handleDemandeDeblocageMatricule }),
       simulateur: () => react_shim_default.createElement(SimulateurTab, { authUid: authUser.uid, profilAnnee: profil.annee, profilFiliere: profil.filiere }),
@@ -15775,7 +16132,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
           onClick: () => setTab(estProfil ? tabAvantProfil : retourVers),
           className: "flex items-center gap-1.5 text-xs font-mono px-5 pt-5 pb-2 flex-shrink-0",
           style: { color: COLORS.textMuted }
-        }, react_shim_default.createElement(Icon, { name: "arrow-left", size: 14 }), " Retour") : react_shim_default.createElement(
+        }, react_shim_default.createElement(Icon, { name: "arrow-left", size: 14 }), " Retour") : plein ? null : react_shim_default.createElement(
           react_shim_default.Fragment,
           null,
           react_shim_default.createElement(
@@ -15865,8 +16222,8 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
         }, react_shim_default.createElement(Icon, { name: "edit-2", size: 22 })),
         // Navigation — ancrée en bas de l'écran (comme la plupart des apps mobiles).
         // Masquée sur l'écran Profil, qui n'a pas de nav (voir bouton retour ci-dessus).
-        !estProfil && react_shim_default.createElement(BoutonAssistante, { tab, setTab, acces: isOwner || isAdminEffectif || abonnement === "proplus" }),
-        !estProfil && react_shim_default.createElement(
+        !estProfil && !plein && react_shim_default.createElement(BoutonAssistante, { tab, setTab, acces: isOwner || isAdminEffectif || abonnement === "proplus" }),
+        !estProfil && !plein && react_shim_default.createElement(
           "div",
           { className: "sabi-nav-wrap" },
           react_shim_default.createElement(
