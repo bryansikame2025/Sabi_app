@@ -171,6 +171,105 @@ public class IconSwitcherPlugin extends Plugin {
 '''
 
 
+JAVA_VOIX = '''package com.sabi.app;
+
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+import java.util.Locale;
+
+/** Voix de l'assistante : utilise la synthese vocale d'Android (le WebView ne sait pas parler). */
+@CapacitorPlugin(name = "SabiVoix")
+public class SabiVoixPlugin extends Plugin {
+  private TextToSpeech tts;
+  private boolean pret = false;
+  private PluginCall enCours = null;
+  private PluginCall attente = null;
+
+  private synchronized void preparer() {
+    if (tts != null) return;
+    tts = new TextToSpeech(getContext().getApplicationContext(), status -> {
+      if (status == TextToSpeech.SUCCESS) {
+        try {
+          int r = tts.setLanguage(Locale.FRANCE);
+          if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) {
+            tts.setLanguage(Locale.FRENCH);
+          }
+        } catch (Exception e) { /* on garde la langue par defaut */ }
+        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+          @Override public void onStart(String id) { }
+          @Override public void onDone(String id) { terminer(null); }
+          @Override public void onError(String id) { terminer("Erreur de lecture"); }
+        });
+        pret = true;
+        PluginCall c = attente;
+        attente = null;
+        if (c != null) { lancer(c); }
+      } else {
+        tts = null;
+        PluginCall c = attente;
+        attente = null;
+        if (c != null) { c.reject("Synthese vocale indisponible sur ce telephone"); }
+      }
+    });
+  }
+
+  private synchronized void terminer(String erreur) {
+    PluginCall c = enCours;
+    enCours = null;
+    if (c == null) return;
+    if (erreur != null) { c.reject(erreur); } else { c.resolve(new JSObject()); }
+  }
+
+  private synchronized void lancer(PluginCall call) {
+    String texte = call.getString("text", "");
+    if (texte == null || texte.trim().isEmpty()) { call.resolve(new JSObject()); return; }
+    Double vitesse = call.getDouble("rate", 1.0);
+    try { tts.setSpeechRate(vitesse == null ? 1.0f : vitesse.floatValue()); } catch (Exception e) { }
+    terminer(null);
+    enCours = call;
+    int r = tts.speak(texte, TextToSpeech.QUEUE_FLUSH, null, "sabi-voix");
+    if (r != TextToSpeech.SUCCESS) { terminer("Lecture impossible"); }
+  }
+
+  @PluginMethod
+  public void speak(PluginCall call) {
+    synchronized (this) {
+      if (tts == null) {
+        if (attente != null) { attente.reject("Remplace par une nouvelle demande"); }
+        attente = call;
+        preparer();
+        return;
+      }
+      if (!pret) {
+        attente = call;
+        return;
+      }
+    }
+    lancer(call);
+  }
+
+  @PluginMethod
+  public void stop(PluginCall call) {
+    try { if (tts != null && pret) { tts.stop(); } } catch (Exception e) { }
+    terminer(null);
+    call.resolve(new JSObject());
+  }
+
+  @Override
+  protected void handleOnDestroy() {
+    try { if (tts != null) { tts.stop(); tts.shutdown(); } } catch (Exception e) { }
+    tts = null;
+    pret = false;
+  }
+}
+'''
+
+
 def installer_plugin():
     os.makedirs(JAVA_DIR, exist_ok=True)
     noms = ", ".join('"' + i + '"' for i, _, _ in ICONES)
@@ -187,6 +286,35 @@ def installer_plugin():
         with open(main, "w") as f:
             f.write(src)
     print("Plugin IconSwitcher installe et enregistre.")
+
+
+def installer_voix():
+    """Plugin natif SabiVoix : la voix de l'assistante passe par la synthese vocale d'Android."""
+    os.makedirs(JAVA_DIR, exist_ok=True)
+    with open(os.path.join(JAVA_DIR, "SabiVoixPlugin.java"), "w") as f:
+        f.write(JAVA_VOIX)
+    main = os.path.join(JAVA_DIR, "MainActivity.java")
+    with open(main) as f:
+        src = f.read()
+    if "SabiVoixPlugin" not in src:
+        marque = "super.onCreate(savedInstanceState);"
+        if marque not in src:
+            raise RuntimeError("MainActivity.java : super.onCreate introuvable")
+        src = src.replace(marque, "registerPlugin(SabiVoixPlugin.class);\n    " + marque, 1)
+        with open(main, "w") as f:
+            f.write(src)
+    # Android 11+ : l'app doit declarer qu'elle utilise un moteur de synthese vocale.
+    with open(MANIFEST, encoding="utf-8") as f:
+        xml = f.read()
+    if "android.intent.action.TTS_SERVICE" not in xml:
+        intent = '<intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>'
+        if "<queries>" in xml:
+            xml = xml.replace("<queries>", "<queries>\n        " + intent, 1)
+        else:
+            xml = xml.replace("<application", "    <queries>\n        " + intent + "\n    </queries>\n    <application", 1)
+        with open(MANIFEST, "w", encoding="utf-8") as f:
+            f.write(xml)
+    print("Plugin SabiVoix installe et enregistre.")
 
 
 def patcher_manifest(icones_ok=True):
@@ -258,6 +386,10 @@ def main():
     except Exception as e:
         icones_ok = False
         print("ATTENTION : generation des icones coloree impossible (" + str(e) + "). Les alias utiliseront l'icone normale.")
+    try:
+        installer_voix()
+    except Exception as e:
+        print("ATTENTION : voix native non installee (" + str(e) + "). L'assistante utilisera la voix du navigateur.")
     try:
         installer_plugin()
         patcher_manifest(icones_ok)
