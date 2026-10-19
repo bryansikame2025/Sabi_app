@@ -111,7 +111,9 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Renommer l'APK pour un lien de telechargement plus lisible
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/sabi.apk
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/sabi.apk
+          (cd android/app/build/outputs/apk/debug && zip -q sabi.zip sabi.apk)
 
       - name: Publier un lien de telechargement public (accessible a tous, sans compte GitHub)
         if: ${{ github.event.inputs.pour_captures_ecran != 'true' }}
@@ -120,7 +122,9 @@ jobs:
           tag_name: sabi-derniere-version
           name: "Sabi — dernière version"
           body: "Télécharge sabi.apk ci-dessous et installe-le (autorise \"sources inconnues\" si demandé)."
-          files: android/app/build/outputs/apk/debug/sabi.apk
+          files: |
+            android/app/build/outputs/apk/debug/sabi.apk
+            android/app/build/outputs/apk/debug/sabi.zip
           prerelease: false
 
       - name: Preparer le site de telechargement (la page et l'APK au meme endroit = barre de progression)
@@ -129,6 +133,7 @@ jobs:
         run: |
           mkdir -p pages-out
           cp android/app/build/outputs/apk/debug/sabi.apk pages-out/sabi.apk
+          cp android/app/build/outputs/apk/debug/sabi.zip pages-out/sabi.zip
           if [ -f site/index.html ]; then
             cp site/index.html pages-out/index.html
           else
