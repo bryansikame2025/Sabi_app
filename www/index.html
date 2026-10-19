@@ -2107,6 +2107,11 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           "Pendant l'enregistrement : Pause, Reprendre, \u2605 Rep\xE8re (marque un moment important) et Terminer. Garde l'appli ouverte et l'\xE9cran allum\xE9.",
           "R\xE9sum\xE9 par mod\xE8les : R\xE9sum\xE9 de cours, Points cl\xE9s, Fiche de r\xE9vision, Questions d'examen, Plan du cours, Devoirs et dates.",
           "Onglet Demander : pose des questions sur ce cours, Sabi r\xE9pond \xE0 partir de la transcription.",
+          "Lecteur audio fa\xE7on Plaud : \xE9coute ton enregistrement (\u221215 s, +15 s, vitesse 1\xD7/1,5\xD7/2\xD7). Dans Transcription, touche l'heure d'une phrase pour \xE9couter \xE0 cet endroit ; la phrase en cours est surlign\xE9e.",
+          "Orateurs : quand plusieurs voix parlent, Sabi \xE9tiquette Orateur 1, Orateur 2\u2026 ; touche le nom pour le renommer (Prof, Moi\u2026). \u2606 surligne une phrase importante.",
+          "Onglet Carte : Sabi transforme le cours en carte mentale color\xE9e (fais d\xE9filer pour tout voir).",
+          "Mod\xE8les en plus : Compte rendu, Notes Cornell, Flashcards, Message de suivi et \u270E Mon mod\xE8le (tu \xE9cris ta propre consigne). \u21E9 Tout exporter partage r\xE9sum\xE9, carte et transcription.",
+          "Favoris \u2605 et dossiers \uD83D\uDCC1 : classe tes notes par mati\xE8re avec les boutons en haut de la note, puis filtre la liste.",
           "Importer un audio : transcris un enregistrement d\xE9j\xE0 fait (MP3, M4A, WAV).",
           "Sans Internet, l'enregistrement continue ; la transcription reprend quand tu es connect\xE9 (touche R\xE9essayer).",
           "Tu peux copier ou partager les r\xE9sum\xE9s. Les notes restent sur ton t\xE9l\xE9phone. Demande la permission d'enregistrer en classe."
@@ -11691,7 +11696,12 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     { id: "fiche", nom: "Fiche de révision", consigne: "Crée une fiche de révision : définitions, formules, étapes de méthode, pièges fréquents, puis 3 exemples ou mini-exercices tirés du cours." },
     { id: "questions", nom: "Questions d'examen", consigne: "Propose 8 questions d'examen probables (mélange de QCM et de questions ouvertes), chacune suivie de la réponse attendue." },
     { id: "plan", nom: "Plan du cours", consigne: "Donne le plan détaillé du cours sous forme de liste hiérarchique (type carte mentale en texte), sur 3 niveaux maximum." },
-    { id: "taches", nom: "Devoirs et dates", consigne: "Extrais tout ce qui a été annoncé : devoirs à faire, dates, exposés, examens, consignes du professeur. Si rien n'a été dit, réponds simplement qu'il n'y a rien à signaler." }
+    { id: "taches", nom: "Devoirs et dates", consigne: "Extrais tout ce qui a été annoncé : devoirs à faire, dates, exposés, examens, consignes du professeur. Si rien n'a été dit, réponds simplement qu'il n'y a rien à signaler." },
+    { id: "reunion", nom: "Compte rendu", consigne: "Rédige un compte rendu : contexte, sujets abordés, décisions prises, points en suspens, puis la liste des actions avec le responsable quand il est cité. Si plusieurs orateurs parlent, attribue les idées à chacun." },
+    { id: "cornell", nom: "Notes Cornell", consigne: "Présente le contenu en méthode Cornell : une section « Questions clés » (colonne gauche), une section « Notes » détaillées (colonne droite), puis une section « Synthèse » en 4 phrases." },
+    { id: "flash", nom: "Flashcards", consigne: "Crée 12 flashcards de révision. Pour chacune écris « Q : … » puis « R : … » sur la ligne suivante, réponses courtes et précises." },
+    { id: "mail", nom: "Message de suivi", consigne: "Rédige un court message de suivi (WhatsApp ou e-mail) à envoyer à un camarade absent : ce qu'il a manqué, les points importants et les devoirs éventuels." },
+    { id: "perso", nom: "✎ Mon modèle", consigne: "" }
   ];
   function ntLire() {
     const l = stGet("notes", []);
@@ -11793,7 +11803,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     return btoa(bin);
   }
   async function ntTranscrireWav(wav, indice) {
-    const consigne = "Transcris fidèlement cet extrait d'un enregistrement (cours, TD, réunion ou discussion d'étudiants camerounais, en français, parfois en anglais). C'est le morceau n°" + (indice + 1) + " d'un enregistrement plus long : ne répète pas d'introduction. Ponctue correctement, garde les termes techniques. Réponds uniquement avec la transcription, sans commentaire. Si rien d'audible, réponds : (vide)";
+    const consigne = "Transcris fidèlement cet extrait d'un enregistrement (cours, TD, réunion ou discussion d'étudiants camerounais, en français, parfois en anglais). C'est le morceau n°" + (indice + 1) + " d'un enregistrement plus long : ne répète pas d'introduction. Ponctue correctement, garde les termes techniques. FORMAT OBLIGATOIRE : une ligne par prise de parole ou par paragraphe, commençant par l'heure relative au début de l'extrait entre crochets, puis, seulement si plusieurs voix distinctes sont audibles, l'étiquette « Orateur 1 : », « Orateur 2 : »… (même numéro pour la même voix). Exemple : [00:00] Orateur 1 : Bonjour à tous.\n[00:06] Orateur 2 : Bonjour monsieur. Une seule voix : pas d'étiquette, seulement l'heure. Réponds uniquement avec la transcription, sans commentaire. Si rien d'audible, réponds : (vide)";
     const texte = await genererViaGeminiParts([{ text: consigne }, { inline_data: { mime_type: "audio/wav", data: ntWavBinaire(wav) } }], "transcription");
     return texte.replace(/^\(vide\)$/i, "").trim();
   }
@@ -11808,6 +11818,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
   }
   async function ntTranscrireSegment(noteId, idx, blob) {
     const cle = noteId + ":" + idx;
+    await ntAudioPut(cle, blob);
     try {
       if (navigator.onLine === false) throw new Error("hors ligne");
       let texte = null, erreur = null;
@@ -11827,7 +11838,6 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           s.statut = "ok";
         }
       });
-      ntAudioDel(cle);
       return true;
     } catch (e) {
       ntMaj(noteId, (n) => {
@@ -11857,8 +11867,29 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       await ntTranscrireSegment(noteId, s.i, blob);
     }
   }
-  function ntTexte(n) {
-    return (n.segments || []).filter((s) => s.texte).sort((a, b) => a.i - b.i).map((s) => s.texte).join("\n\n");
+  function ntLignes(n) {
+    const orat = n.orateurs || {};
+    const out = [];
+    (n.segments || []).filter((s) => s.texte).slice().sort((a, b) => a.i - b.i).forEach((s) => {
+      String(s.texte).split("\n").map((p) => p.trim()).filter(Boolean).forEach((p, j) => {
+        let abs = s.t0 || 0, o = "", reste = p;
+        const m = p.match(/^\[(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\]\s*/);
+        if (m) {
+          abs = (s.t0 || 0) + (m[1] ? +m[1] * 3600 : 0) + +m[2] * 60 + +m[3];
+          reste = p.slice(m[0].length);
+        }
+        const mo = reste.match(/^(Orateur \d{1,2})\s*:\s*/i);
+        if (mo) {
+          o = mo[1].replace(/^orateur/i, "Orateur");
+          reste = reste.slice(mo[0].length);
+        }
+        if (reste.trim()) out.push({ k: s.i + "-" + j, abs, orat: o, nom: o ? orat[o] || o : "", texte: reste.trim() });
+      });
+    });
+    return out;
+  }
+  function ntTexte(n, avecTemps) {
+    return ntLignes(n).map((l) => (avecTemps ? "[" + ntDuree(l.abs) + "] " : "") + (l.orat ? l.nom + " : " : "") + l.texte).join("\n");
   }
   function ntDuree(sec) {
     sec = Math.max(0, Math.round(sec || 0));
@@ -11870,7 +11901,9 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     const texte = ntTexte(note).slice(0, 60000);
     if (!texte.trim()) throw new Error("La transcription est vide.");
     const m = NT_MODELES.find((x) => x.id === modele) || NT_MODELES[0];
-    const prompt = "Tu es « Sabi », l'assistante des étudiants de l'IUT FV Bandjoun (Cameroun). Voici la transcription automatique d'un enregistrement (cours, TD ou réunion) ; elle peut contenir des erreurs de reconnaissance. Base-toi UNIQUEMENT sur elle, n'invente rien. Écris en français clair. Format : texte simple, titres avec « ## », puces avec « - », mots importants en **gras**.\n\nTÂCHE : " + m.consigne + "\n\nTRANSCRIPTION :\n" + texte;
+    const consigneM = modele === "perso" ? String(note.persoConsigne || "").trim() : m.consigne;
+    if (!consigneM) throw new Error("Écris d'abord ta consigne dans la case « Mon modèle ».");
+    const prompt = "Tu es « Sabi », l'assistante des étudiants de l'IUT FV Bandjoun (Cameroun). Voici la transcription automatique d'un enregistrement (cours, TD ou réunion) ; elle peut contenir des erreurs de reconnaissance. Base-toi UNIQUEMENT sur elle, n'invente rien. Écris en français clair. Format : texte simple, titres avec « ## », puces avec « - », mots importants en **gras**.\n\nTÂCHE : " + consigneM + "\n\nTRANSCRIPTION :\n" + texte;
     return (await genererViaGeminiParts([{ text: prompt }], "résumé")).trim();
   }
   async function ntFinaliser(noteId) {
@@ -11897,6 +11930,234 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       if (/^\s*[-*•]\s+/.test(l)) return ntH("div", { key: i, className: "flex gap-2 text-sm", style: { color: COLORS.textMuted, paddingLeft: /^\s{2,}/.test(l) ? 14 : 0 } }, ntH("span", { style: { color: COLORS.gold } }, "•"), ntH("span", { className: "flex-1", style: { wordBreak: "break-word" } }, gras(l.replace(/^\s*[-*•]\s+/, ""), i)));
       return ntH("p", { key: i, className: "text-sm", style: { color: COLORS.textMuted, wordBreak: "break-word" } }, gras(l, i));
     });
+  }
+  function ntCarteNettoyer(x, niv) {
+    if (!x || typeof x.t !== "string") return null;
+    const e = niv < 3 && Array.isArray(x.e) ? x.e.map((c) => ntCarteNettoyer(c, niv + 1)).filter(Boolean).slice(0, niv === 0 ? 8 : 5) : [];
+    return { t: x.t.trim().slice(0, 60), e };
+  }
+  async function ntGenererCarte(note) {
+    const texte = ntTexte(note).slice(0, 60000);
+    if (!texte.trim()) throw new Error("La transcription est vide.");
+    const prompt = "Tu es « Sabi », l'assistante des étudiants de l'IUT FV Bandjoun. À partir de la transcription ci-dessous (elle peut contenir des erreurs), construis une carte mentale en français. Réponds UNIQUEMENT avec un JSON valide, sans balises ni texte autour, de la forme {\"t\":\"sujet central\",\"e\":[{\"t\":\"branche\",\"e\":[{\"t\":\"idée\",\"e\":[]}]}]}. Règles : 4 à 7 branches principales, 2 à 4 sous-idées par branche, 3 niveaux au maximum, libellés de 1 à 6 mots, n'invente rien.\n\nTRANSCRIPTION :\n" + texte;
+    const r = await genererViaGeminiParts([{ text: prompt }], "carte");
+    let o = null;
+    try {
+      o = JSON.parse(r.slice(r.indexOf("{"), r.lastIndexOf("}") + 1));
+    } catch (x) {
+    }
+    const c = ntCarteNettoyer(o, 0);
+    if (!c || !c.e.length) throw new Error("La carte n'a pas pu être créée, réessaie.");
+    return c;
+  }
+  function ntCarteTexte(c, niv) {
+    niv = niv || 0;
+    return (niv ? "  ".repeat(niv - 1) + "- " : "# ") + c.t + "\n" + c.e.map((x) => ntCarteTexte(x, niv + 1)).join("");
+  }
+  function ntEnrouler(t, max) {
+    const l = [];
+    let cur = "";
+    String(t).split(/\s+/).forEach((m) => {
+      if ((cur + " " + m).trim().length > max && cur) {
+        l.push(cur);
+        cur = m;
+      } else cur = (cur + " " + m).trim();
+    });
+    if (cur) l.push(cur);
+    if (l.length > 3) {
+      l.length = 3;
+      l[2] = l[2].slice(0, max - 1) + "…";
+    }
+    return l;
+  }
+  function NtCarte({ arbre }) {
+    const PAL = ["#53bdeb", "#f59e0b", "#25d366", "#e879f9", "#f87171", "#a78bfa", "#34d399", "#fb923c"];
+    const W = 150, GAP = 34, SLOT = 58;
+    let cpt = 0, maxN = 0;
+    const noeuds = [], liens = [];
+    const pos = (n, niv, br) => {
+      const o = { t: n.t, niv, br, lignes: ntEnrouler(n.t, niv === 0 ? 16 : 19), enf: [] };
+      maxN = Math.max(maxN, niv);
+      if (!n.e.length) o.y = cpt++ * SLOT;
+      else {
+        o.enf = n.e.map((c, k) => pos(c, niv + 1, niv === 0 ? k : br));
+        o.y = (o.enf[0].y + o.enf[o.enf.length - 1].y) / 2;
+      }
+      noeuds.push(o);
+      return o;
+    };
+    pos(arbre, 0, 0);
+    noeuds.forEach((o) => o.enf.forEach((c) => liens.push([o, c])));
+    const larg = (maxN + 1) * (W + GAP) - GAP + 16, haut = Math.max(cpt, 1) * SLOT + 16;
+    const X = (o) => 8 + o.niv * (W + GAP);
+    const Y = (o) => o.y + 8 + SLOT / 2;
+    return ntH(
+      "div",
+      { className: "rounded-2xl border overflow-auto", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface, maxHeight: "65dvh" } },
+      ntH(
+        "svg",
+        { width: larg, height: haut, viewBox: "0 0 " + larg + " " + haut, style: { display: "block" } },
+        liens.map(([a, b], i) => {
+          const x1 = X(a) + W, y1 = Y(a), x2 = X(b), y2 = Y(b);
+          return ntH("path", { key: "l" + i, d: "M" + x1 + " " + y1 + " C" + (x1 + GAP / 2) + " " + y1 + ", " + (x2 - GAP / 2) + " " + y2 + ", " + x2 + " " + y2, fill: "none", stroke: PAL[b.br % PAL.length], strokeWidth: 2, opacity: 0.8 });
+        }),
+        noeuds.map((o, i) => {
+          const h = o.lignes.length * 14 + 14, cy = Y(o), racine = o.niv === 0;
+          return ntH(
+            "g",
+            { key: "n" + i },
+            ntH("rect", { x: X(o), y: cy - h / 2, width: W, height: h, rx: 10, fill: racine ? COLORS.gold : COLORS.surface2, stroke: racine ? "none" : PAL[o.br % PAL.length], strokeWidth: 1.5 }),
+            o.lignes.map((l, k) => ntH("text", { key: k, x: X(o) + W / 2, y: cy - (o.lignes.length - 1) * 7 + k * 14 + 4, textAnchor: "middle", fontSize: 11, fontWeight: racine ? 700 : 500, fill: racine ? COLORS.bg : COLORS.text }, l))
+          );
+        })
+      )
+    );
+  }
+  function NtLecteur({ note, api, onT }) {
+    const R = react_shim_default;
+    const [dispo, setDispo] = R.useState(null);
+    const [t, setT] = R.useState(0);
+    const [lit, setLit] = R.useState(false);
+    const [vit, setVit] = R.useState(1);
+    const [charge, setCharge] = R.useState(false);
+    const E = R.useRef({ a: null, url: null, src: null, jeton: 0, vit: 1, onT: null, sources: [], dernier: -1, glisse: false });
+    const e = E.current;
+    e.onT = onT;
+    const total = note.duree || (note.segments.length ? Math.max.apply(null, note.segments.map((s) => (s.t0 || 0) + NT_SEG_SEC)) : 0);
+    e.sources = note.audio === "fichier" ? [{ cle: note.id + ":f", t0: 0 }] : note.segments.slice().sort((a, b) => a.i - b.i).map((s) => ({ cle: note.id + ":" + s.i, t0: s.t0 || 0 }));
+    const maj = (x) => {
+      setT(x);
+      e.onT && e.onT(x);
+    };
+    const charger = async (src, depart, jouer) => {
+      const jeton = ++e.jeton;
+      setCharge(true);
+      let blob = await ntAudioGet(src.cle);
+      if (jeton !== e.jeton) return;
+      if (!blob) {
+        setCharge(false);
+        setDispo(false);
+        return;
+      }
+      if (note.audio !== "fichier") {
+        try {
+          blob = new Blob([await ntBlobVersWav(blob)], { type: "audio/wav" });
+        } catch (x) {
+        }
+      }
+      if (jeton !== e.jeton) return;
+      const a = e.a, ancien = e.url;
+      e.url = URL.createObjectURL(blob);
+      e.src = src;
+      a.src = e.url;
+      a.onloadedmetadata = () => {
+        try {
+          a.currentTime = depart;
+          a.playbackRate = e.vit;
+        } catch (x) {
+        }
+        if (jouer) {
+          const pr = a.play();
+          pr && pr.catch && pr.catch(() => {
+          });
+        }
+      };
+      a.load();
+      if (ancien) URL.revokeObjectURL(ancien);
+      setCharge(false);
+    };
+    const aller = (abs) => {
+      abs = Math.max(0, total ? Math.min(abs, total) : abs);
+      let src = e.sources[0];
+      e.sources.forEach((x) => {
+        if (x.t0 <= abs + 0.05) src = x;
+      });
+      if (!src) return;
+      maj(abs);
+      if (e.src && e.src.cle === src.cle && e.a.readyState > 0) {
+        try {
+          e.a.currentTime = Math.max(0, abs - src.t0);
+          const pr = e.a.play();
+          pr && pr.catch && pr.catch(() => {
+          });
+        } catch (x) {
+        }
+        return;
+      }
+      charger(src, Math.max(0, abs - src.t0), true);
+    };
+    api.current = { aller };
+    R.useEffect(() => {
+      const a = new Audio();
+      e.a = a;
+      a.onplay = () => setLit(true);
+      a.onpause = () => setLit(false);
+      a.ontimeupdate = () => {
+        if (!e.src) return;
+        const x = e.src.t0 + a.currentTime;
+        setT(x);
+        const f = Math.floor(x);
+        if (f !== e.dernier) {
+          e.dernier = f;
+          e.onT && e.onT(x);
+        }
+      };
+      a.onended = () => {
+        const k = e.sources.findIndex((s) => e.src && s.cle === e.src.cle);
+        if (k >= 0 && e.sources[k + 1]) charger(e.sources[k + 1], 0, true);
+        else setLit(false);
+      };
+      ntAudioGet(e.sources[0] ? e.sources[0].cle : "x").then((b) => setDispo(!!b));
+      return () => {
+        try {
+          e.jeton++;
+          a.pause();
+          a.removeAttribute("src");
+          if (e.url) URL.revokeObjectURL(e.url);
+        } catch (x) {
+        }
+      };
+    }, [note.id]);
+    if (dispo === null) return null;
+    if (dispo === false) return ntH("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "🔇 L'audio de cette note n'est pas conservé (note enregistrée avant la mise à jour).");
+    const basculer = () => {
+      if (!e.src) return aller(0);
+      if (e.a.paused) {
+        const pr = e.a.play();
+        pr && pr.catch && pr.catch(() => {
+        });
+      } else e.a.pause();
+    };
+    const chVit = () => {
+      const l = [1, 1.5, 2], v = l[(l.indexOf(vit) + 1) % l.length];
+      setVit(v);
+      e.vit = v;
+      if (e.a) e.a.playbackRate = v;
+    };
+    const fin = () => {
+      if (e.glisse) {
+        e.glisse = false;
+        aller(t);
+      }
+    };
+    const petit = (l, f, aria) => ntH("button", { type: "button", onClick: f, "aria-label": aria, className: "h-9 px-3 rounded-full text-xs font-bold flex-shrink-0", style: { backgroundColor: COLORS.surface2, color: COLORS.text } }, l);
+    return ntH(
+      "div",
+      { className: "rounded-2xl border p-3 flex flex-col gap-2", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } },
+      ntH("input", { type: "range", min: 0, max: Math.max(1, Math.round(total)), step: 1, value: Math.min(Math.round(t), Math.max(1, Math.round(total))), onChange: (ev) => {
+        e.glisse = true;
+        maj(+ev.target.value);
+      }, onMouseUp: fin, onTouchEnd: fin, onKeyUp: fin, "aria-label": "Position", style: { width: "100%", accentColor: COLORS.gold } }),
+      ntH(
+        "div",
+        { className: "flex items-center gap-2" },
+        petit("−15", () => aller(t - 15), "Reculer de 15 secondes"),
+        ntH("button", { type: "button", onClick: basculer, "aria-label": "Lecture", className: "w-11 h-11 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, charge ? "…" : lit ? "⏸" : "▶"),
+        petit("+15", () => aller(t + 15), "Avancer de 15 secondes"),
+        ntH("span", { className: "flex-1 text-center text-[11px] font-mono", style: { color: COLORS.textMuted } }, ntDuree(t) + " / " + ntDuree(total)),
+        petit(vit + "×", chVit, "Vitesse")
+      )
+    );
   }
   function NotesTab(props) {
     if (!props.acces) return react_shim_default.createElement(PaywallSabiPro, { setTab: props.setTab, palierRequis: "proplus" });
@@ -12069,7 +12330,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       ),
       ntH("p", { className: "text-[11px] text-center px-6", style: { color: COLORS.textFaint } }, "Garde l'appli ouverte et l'écran allumé. Sabi transcrit au fur et à mesure (toutes les " + NT_SEG_SEC + " secondes)."),
       attente > 0 && ntH("p", { className: "text-[11px] text-center px-6", style: { color: COLORS.alerte } }, "⏳ " + attente + " morceau" + (attente > 1 ? "x" : "") + " en attente de connexion : la transcription reprendra quand tu auras Internet."),
-      recents.length > 0 && ntH("div", { className: "w-full rounded-2xl border p-3 flex flex-col gap-1.5", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Dernières phrases transcrites"), recents.map((s) => ntH("p", { key: s.i, className: "text-xs", style: { color: COLORS.textMuted } }, s.texte.slice(-220))))
+      recents.length > 0 && ntH("div", { className: "w-full rounded-2xl border p-3 flex flex-col gap-1.5", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Dernières phrases transcrites"), recents.map((s) => ntH("p", { key: s.i, className: "text-xs", style: { color: COLORS.textMuted } }, s.texte.replace(/\[\d{1,2}:\d{2}(?::\d{2})?\]\s*/g, "").slice(-220))))
     );
   }
   function NtNote({ noteId, setTab, onRetour }) {
@@ -12083,9 +12344,56 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     const [question, setQuestion] = R.useState("");
     const [confirm, setConfirm] = R.useState(false);
     const [titreEdit, setTitreEdit] = R.useState(null);
+    const api = R.useRef(null);
+    const [tL, setTL] = R.useState(0);
+    const [renomme, setRenomme] = R.useState(null);
+    const [dossierOuvert, setDossierOuvert] = R.useState(false);
+    const [nouveauDossier, setNouveauDossier] = R.useState("");
+    const [soloSur, setSoloSur] = R.useState(false);
     if (!note) return ntH("div", { className: "py-10 text-center text-sm", style: { color: COLORS.textMuted } }, "Note introuvable.", ntH("div", null, ntH("button", { type: "button", onClick: onRetour, className: "mt-3 text-xs font-semibold", style: { color: COLORS.gold } }, "Retour")));
     const transcription = ntTexte(note);
     const enAttente = note.segments.filter((s) => s.statut === "attente" || s.statut === "perdu").length;
+    const lignes = ntLignes(note);
+    const dossiers = [...new Set(ntLire().map((x) => x.dossier).filter(Boolean))];
+    const PALO = ["#53bdeb", "#f59e0b", "#25d366", "#e879f9", "#f87171"];
+    const coulOrat = (o) => PALO[(parseInt(String(o).replace(/\D/g, ""), 10) || 1) % PALO.length];
+    const actifK = (() => {
+      let k = null;
+      lignes.forEach((l) => {
+        if (l.abs <= tL + 0.3) k = l.k;
+      });
+      return tL > 0 ? k : null;
+    })();
+    const surligner = (k) => ntMaj(noteId, (n) => {
+      const st = new Set(n.surlignes || []);
+      if (st.has(k)) st.delete(k);
+      else st.add(k);
+      n.surlignes = [...st];
+    });
+    const genCarte = async () => {
+      setOccupe("carte");
+      setInfo("");
+      try {
+        const c = await ntGenererCarte(note);
+        ntMaj(noteId, (n) => {
+          n.carte = c;
+        });
+      } catch (e) {
+        setInfo(e && e.message ? e.message : "Carte impossible, réessaie.");
+      }
+      setOccupe("");
+    };
+    const toutExporter = () => note.titre + "\n" + new Date(note.date).toLocaleDateString("fr-FR") + "\n\n" + (note.resumes && note.resumes.cours ? "RÉSUMÉ\n" + note.resumes.cours + "\n\n" : "") + (note.carte ? "CARTE MENTALE\n" + ntCarteTexte(note.carte) + "\n" : "") + "TRANSCRIPTION\n" + ntTexte(note, true);
+    const ligneJsx = (l) => {
+      const sur = (note.surlignes || []).includes(l.k), actif = actifK === l.k;
+      return ntH(
+        "div",
+        { key: l.k, className: "rounded-xl border p-2.5 flex gap-2", style: { borderColor: sur ? "#facc15" : actif ? COLORS.gold : COLORS.border, backgroundColor: actif ? "rgba(var(--accent-rgb),0.12)" : sur ? "rgba(250,204,21,0.12)" : COLORS.surface } },
+        ntH("button", { type: "button", onClick: () => api.current && api.current.aller(l.abs), "aria-label": "Écouter à " + ntDuree(l.abs), className: "flex-shrink-0 text-[10px] font-mono mt-0.5", style: { color: COLORS.gold } }, ntDuree(l.abs)),
+        ntH("div", { className: "flex-1 min-w-0" }, l.orat && ntH("button", { type: "button", onClick: () => setRenomme({ cle: l.orat, val: l.nom === l.orat ? "" : l.nom }), className: "text-[11px] font-bold mb-0.5 block", style: { color: coulOrat(l.orat) } }, l.nom + " ✎"), ntH("p", { className: "text-sm", style: { color: COLORS.text, whiteSpace: "pre-wrap", wordBreak: "break-word" } }, l.texte)),
+        ntH("button", { type: "button", onClick: () => surligner(l.k), "aria-label": "Surligner", className: "flex-shrink-0 text-base", style: { color: sur ? "#facc15" : COLORS.textFaint } }, sur ? "★" : "☆")
+      );
+    };
     const generer = async (id) => {
       setOccupe("resume");
       setInfo("");
@@ -12142,8 +12450,8 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       if (n2 && ntTexte(n2).trim() && !(n2.resumes && n2.resumes.cours)) await ntFinaliser(noteId);
       setOccupe("");
     };
-    const onglets = [["resume", "Résumé"], ["transcription", "Transcription"], ["questions", "Demander"]];
-    const texteActif = onglet === "resume" ? note.resumes && note.resumes[modele] || "" : transcription;
+    const onglets = [["resume", "Résumé"], ["transcription", "Transcription"], ["carte", "Carte"], ["questions", "Demander"]];
+    const texteActif = onglet === "resume" ? note.resumes && note.resumes[modele] || "" : onglet === "carte" ? note.carte ? ntCarteTexte(note.carte) : "" : ntTexte(note, true);
     return ntH(
       "div",
       { className: "flex flex-col gap-3 pb-6" },
@@ -12158,23 +12466,43 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           });
           setTitreEdit(null);
         }, onKeyDown: (e) => e.key === "Enter" && e.target.blur(), className: "flex-1 min-w-0 rounded-lg px-3 py-1.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text } }) : ntH("button", { type: "button", onClick: () => setTitreEdit(note.titre), className: "flex-1 min-w-0 text-left" }, ntH("p", { className: "text-base font-bold truncate", style: { color: COLORS.text } }, note.titre, " ✎"), ntH("p", { className: "text-[11px] font-mono", style: { color: COLORS.textFaint } }, new Date(note.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) + " · " + ntDuree(note.duree))),
+        ntH("button", { type: "button", onClick: () => ntMaj(noteId, (n) => {
+          n.favori = !n.favori;
+        }), "aria-label": "Favori", className: "w-9 h-9 rounded-full flex items-center justify-center text-lg", style: { color: note.favori ? "#facc15" : COLORS.textMuted, backgroundColor: COLORS.surface } }, note.favori ? "★" : "☆"),
+        ntH("button", { type: "button", onClick: () => setDossierOuvert(true), "aria-label": "Dossier", className: "w-9 h-9 rounded-full flex items-center justify-center", style: { color: note.dossier ? COLORS.gold : COLORS.textMuted, backgroundColor: COLORS.surface } }, "📁"),
         ntH("button", { type: "button", onClick: () => setConfirm(true), "aria-label": "Supprimer", className: "w-9 h-9 rounded-full flex items-center justify-center", style: { color: COLORS.terraText, backgroundColor: COLORS.surface } }, "🗑")
       ),
       enAttente > 0 && ntH("div", { className: "rounded-xl border p-3 flex items-center gap-3", style: { borderColor: COLORS.alerte, backgroundColor: COLORS.surface } }, ntH("p", { className: "flex-1 text-xs", style: { color: COLORS.textMuted } }, "⏳ " + enAttente + " morceau" + (enAttente > 1 ? "x" : "") + " pas encore transcrit" + (enAttente > 1 ? "s" : "") + " (connexion)."), ntH("button", { type: "button", onClick: reprise, disabled: !!occupe, className: "text-xs font-bold px-3 py-1.5 rounded-full", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, occupe === "reprise" ? "…" : "Réessayer")),
+      (note.segments.length > 0 || note.audio) && ntH(NtLecteur, { note, api, onT: setTL }),
+      note.dossier && ntH("p", { className: "text-[11px] font-mono", style: { color: COLORS.textFaint } }, "📁 " + note.dossier),
       ntH("div", { className: "flex gap-1 rounded-full p-1", style: { backgroundColor: COLORS.surface, border: "1px solid " + COLORS.border } }, onglets.map(([id, l]) => ntH("button", { key: id, type: "button", onClick: () => setOnglet(id), className: "flex-1 rounded-full py-1.5 text-xs font-semibold", style: onglet === id ? { backgroundColor: COLORS.gold, color: COLORS.bg } : { color: COLORS.textMuted } }, l))),
       onglet === "resume" && ntH(
         "div",
         { className: "flex flex-col gap-3" },
         ntH("div", { className: "flex gap-2 overflow-x-auto pb-1", style: { scrollbarWidth: "none" } }, NT_MODELES.map((m) => ntH("button", { key: m.id, type: "button", onClick: () => setModele(m.id), className: "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border", style: modele === m.id ? { backgroundColor: "rgba(var(--accent-rgb),0.18)", borderColor: COLORS.gold, color: COLORS.gold } : { borderColor: COLORS.border, color: COLORS.textMuted } }, (note.resumes && note.resumes[m.id] ? "✓ " : "") + m.nom))),
+        modele === "perso" && ntH("textarea", { value: note.persoConsigne || "", onChange: (ev) => {
+          const v = ev.target.value;
+          ntMaj(noteId, (n) => {
+            n.persoConsigne = v;
+          });
+        }, rows: 3, placeholder: "Dis à Sabi quoi faire avec ce cours (ex : « Explique-moi comme à un débutant, avec des exemples locaux »)", className: "rounded-2xl px-4 py-3 outline-none border resize-none", style: { fontSize: 16, backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text } }),
         occupe === "resume" ? ntH("p", { className: "text-sm py-8 text-center", style: { color: COLORS.textMuted } }, "Sabi rédige…") : note.resumes && note.resumes[modele] ? ntH("div", { className: "rounded-2xl border p-4 flex flex-col gap-1", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntRendu(note.resumes[modele])) : ntH("div", { className: "rounded-2xl border p-5 text-center", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-sm mb-3", style: { color: COLORS.textMuted } }, transcription.trim() ? "Génère « " + (NT_MODELES.find((m) => m.id === modele) || {}).nom + " » à partir de la transcription." : "Pas encore de transcription à résumer."), transcription.trim() && ntH("button", { type: "button", onClick: () => generer(modele), className: "rounded-full px-5 py-2.5 text-sm font-bold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Générer")),
         note.resumes && note.resumes[modele] && occupe !== "resume" && ntH("div", { className: "flex gap-2 flex-wrap" }, ntH("button", { type: "button", onClick: () => generer(modele), className: "text-xs font-semibold px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, "↻ Régénérer"))
       ),
       onglet === "transcription" && ntH(
         "div",
         { className: "flex flex-col gap-2" },
-        note.reperes && note.reperes.length > 0 && ntH("p", { className: "text-xs", style: { color: COLORS.gold } }, "★ Repères : " + note.reperes.map(ntDuree).join(" · ")),
-        note.segments.slice().sort((a, b) => a.i - b.i).map((s) => ntH("div", { key: s.i, className: "rounded-xl border p-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-[10px] font-mono mb-1", style: { color: COLORS.gold } }, "[" + ntDuree(s.t0) + "]"), s.texte ? ntH("p", { className: "text-sm", style: { color: COLORS.text, whiteSpace: "pre-wrap", wordBreak: "break-word" } }, s.texte) : ntH("p", { className: "text-xs", style: { color: COLORS.textFaint } }, s.statut === "perdu" ? "Audio non conservé : ce morceau ne peut plus être transcrit." : s.statut === "attente" ? "⏳ En attente de connexion…" : "Transcription en cours…"))),
+        note.reperes && note.reperes.length > 0 && ntH("div", { className: "flex gap-1.5 flex-wrap items-center" }, ntH("span", { className: "text-xs", style: { color: COLORS.gold } }, "★ Repères :"), note.reperes.map((r, i) => ntH("button", { key: i, type: "button", onClick: () => api.current && api.current.aller(r), className: "text-[11px] font-mono px-2 py-0.5 rounded-full border", style: { borderColor: COLORS.gold, color: COLORS.gold } }, ntDuree(r)))),
+        lignes.length > 0 && ntH("div", { className: "flex items-center justify-between gap-2" }, ntH("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Touche l'heure pour écouter à cet endroit · ☆ pour surligner"), (note.surlignes || []).length > 0 && ntH("button", { type: "button", onClick: () => setSoloSur(!soloSur), className: "text-[11px] font-semibold px-2.5 py-1 rounded-full border flex-shrink-0", style: soloSur ? { borderColor: COLORS.gold, color: COLORS.gold } : { borderColor: COLORS.border, color: COLORS.textMuted } }, "★ Surlignés")),
+        lignes.filter((l) => !soloSur || (note.surlignes || []).includes(l.k)).map(ligneJsx),
+        note.segments.filter((s) => !s.texte).sort((a, b) => a.i - b.i).map((s) => ntH("div", { key: "p" + s.i, className: "rounded-xl border p-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-[10px] font-mono mb-1", style: { color: COLORS.gold } }, "[" + ntDuree(s.t0) + "]"), ntH("p", { className: "text-xs", style: { color: COLORS.textFaint } }, s.statut === "perdu" ? "Audio non conservé : ce morceau ne peut plus être transcrit." : s.statut === "attente" ? "⏳ En attente de connexion…" : "Transcription en cours…"))),
         note.segments.length === 0 && ntH("p", { className: "text-sm py-6 text-center", style: { color: COLORS.textFaint } }, "Aucune transcription.")
+      ),
+      onglet === "carte" && ntH(
+        "div",
+        { className: "flex flex-col gap-3" },
+        occupe === "carte" ? ntH("p", { className: "text-sm py-8 text-center", style: { color: COLORS.textMuted } }, "Sabi dessine la carte…") : note.carte ? ntH(NtCarte, { arbre: note.carte }) : ntH("div", { className: "rounded-2xl border p-5 text-center", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-sm mb-3", style: { color: COLORS.textMuted } }, transcription.trim() ? "Transforme ce cours en carte mentale." : "Pas encore de transcription."), transcription.trim() && ntH("button", { type: "button", onClick: genCarte, className: "rounded-full px-5 py-2.5 text-sm font-bold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Créer la carte mentale")),
+        note.carte && occupe !== "carte" && ntH("div", { className: "flex gap-2 flex-wrap" }, ntH("button", { type: "button", onClick: genCarte, className: "text-xs font-semibold px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.textMuted } }, "↻ Refaire la carte"))
       ),
       onglet === "questions" && ntH(
         "div",
@@ -12188,13 +12516,42 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         "div",
         { className: "flex gap-2 flex-wrap" },
         ntH("button", { type: "button", onClick: () => copier(texteActif), className: "text-xs font-semibold px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.text } }, "⎘ Copier"),
-        ntH("button", { type: "button", onClick: () => partager(note.titre + "\n\n" + texteActif), className: "text-xs font-semibold px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.text } }, "↗ Partager")
+        ntH("button", { type: "button", onClick: () => partager(note.titre + "\n\n" + texteActif), className: "text-xs font-semibold px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.text } }, "↗ Partager"), ntH("button", { type: "button", onClick: () => partager(toutExporter()), className: "text-xs font-semibold px-3 py-1.5 rounded-full border", style: { borderColor: COLORS.border, color: COLORS.text } }, "⇩ Tout exporter")
       ),
       info && ntH("p", { className: "text-[11px]", style: { color: COLORS.terraText } }, info),
       confirm && ntH(MsFeuille, { titre: "Supprimer cette note ?", onFermer: () => setConfirm(false) }, ntH("p", { className: "text-xs text-center", style: { color: COLORS.textMuted } }, "La transcription et les résumés seront effacés de ce téléphone."), msBouton("Supprimer", () => {
         ntSupprimer(noteId);
         onRetour();
-      }, true), msBouton("Annuler", () => setConfirm(false)))
+      }, true), msBouton("Annuler", () => setConfirm(false))),
+      renomme && ntH(MsFeuille, { titre: "Qui est « " + renomme.cle + " » ?", onFermer: () => setRenomme(null) }, ntH("input", { autoFocus: true, value: renomme.val, maxLength: 24, onChange: (ev) => setRenomme({ ...renomme, val: ev.target.value }), placeholder: "Ex : Prof, Moi, Camarade", className: "rounded-xl px-4 py-3 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface2, borderColor: COLORS.border, color: COLORS.text } }), msBouton("Enregistrer", () => {
+        const v = renomme.val.trim(), c = renomme.cle;
+        ntMaj(noteId, (n) => {
+          const o = { ...n.orateurs || {} };
+          if (v) o[c] = v;
+          else delete o[c];
+          n.orateurs = o;
+        });
+        setRenomme(null);
+      }), msBouton("Annuler", () => setRenomme(null))),
+      dossierOuvert && ntH(MsFeuille, { titre: "Classer dans un dossier", onFermer: () => setDossierOuvert(false) }, dossiers.map((d) => msBouton((note.dossier === d ? "✓ " : "") + "📁 " + d, () => {
+        ntMaj(noteId, (n) => {
+          n.dossier = d;
+        });
+        setDossierOuvert(false);
+      })), note.dossier && msBouton("Retirer du dossier", () => {
+        ntMaj(noteId, (n) => {
+          delete n.dossier;
+        });
+        setDossierOuvert(false);
+      }, true), ntH("input", { value: nouveauDossier, maxLength: 24, onChange: (ev) => setNouveauDossier(ev.target.value), placeholder: "Nouveau dossier (ex : Réseaux S3)", className: "rounded-xl px-4 py-3 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface2, borderColor: COLORS.border, color: COLORS.text } }), msBouton("Créer et classer", () => {
+        const d = nouveauDossier.trim();
+        if (!d) return;
+        ntMaj(noteId, (n) => {
+          n.dossier = d;
+        });
+        setNouveauDossier("");
+        setDossierOuvert(false);
+      }))
     );
   }
   function NotesCoeur({ setTab }) {
@@ -12203,6 +12560,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     const [vue, setVue] = R.useState({ t: "liste" });
     const [q, setQ] = R.useState("");
     const [import_, setImport] = R.useState("");
+    const [filtre, setFiltre] = R.useState("tous");
     const n = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
     if (vue.t === "rec") return ntH(NtEnregistreur, { noteId: vue.id, onFini: (id) => setVue({ t: "note", id }) });
     if (vue.t === "note") return ntH(NtNote, { noteId: vue.id, setTab, onRetour: () => setVue({ t: "liste" }) });
@@ -12221,6 +12579,10 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       const nt = ntCreer("Import : " + f.name.replace(/\.[^.]+$/, "").slice(0, 40));
       try {
         setImport("Lecture du fichier…");
+        await ntAudioPut(nt.id + ":f", f);
+        ntMaj(nt.id, (m) => {
+          m.audio = "fichier";
+        });
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const audio = await ctx.decodeAudioData(await f.arrayBuffer());
         ctx.close && ctx.close();
@@ -12260,7 +12622,8 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         setImport("Fichier audio illisible sur ce téléphone. Essaie un fichier MP3, M4A ou WAV.");
       }
     };
-    const liste = notes.filter((x) => !q.trim() || n(x.titre + " " + ntTexte(x)).includes(n(q)));
+    const dossiers = [...new Set(notes.map((x) => x.dossier).filter(Boolean))];
+    const liste = notes.filter((x) => (filtre === "tous" || (filtre === "fav" ? x.favori : x.dossier === filtre.slice(2))) && (!q.trim() || n(x.titre + " " + ntTexte(x)).includes(n(q))));
     return ntH(
       "div",
       { className: "flex flex-col gap-4 pb-6" },
@@ -12273,13 +12636,14 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       ),
       import_ && ntH("p", { className: "text-xs", style: { color: COLORS.gold } }, import_),
       notes.length > 3 && ntH("input", { value: q, onChange: (e) => setQ(e.target.value), placeholder: "Rechercher dans tes notes…", className: "rounded-full px-4 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text } }),
+      (notes.some((x) => x.favori) || dossiers.length > 0) && ntH("div", { className: "flex gap-2 overflow-x-auto pb-1", style: { scrollbarWidth: "none" } }, [["tous", "Toutes"], ...notes.some((x) => x.favori) ? [["fav", "★ Favoris"]] : [], ...dossiers.map((d) => ["d:" + d, "📁 " + d])].map(([id, l]) => ntH("button", { key: id, type: "button", onClick: () => setFiltre(id), className: "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border", style: filtre === id ? { backgroundColor: "rgba(var(--accent-rgb),0.18)", borderColor: COLORS.gold, color: COLORS.gold } : { borderColor: COLORS.border, color: COLORS.textMuted } }, l))),
       liste.length === 0 && ntH("div", { className: "rounded-2xl border p-6 text-center", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-3xl mb-2" }, "🎙"), ntH("p", { className: "text-sm", style: { color: COLORS.textMuted } }, notes.length ? "Aucune note ne correspond." : "Aucune note pour l'instant. Pose ton téléphone près du professeur et touche Enregistrer.")),
       liste.map((x) => {
         const apercu = (x.resumes && x.resumes.cours || ntTexte(x)).replace(/[#*\n]+/g, " ").trim().slice(0, 110);
         const att = x.segments.filter((s) => s.statut === "attente").length;
-        return ntH("button", { key: x.id, type: "button", onClick: () => setVue({ t: "note", id: x.id }), className: "w-full text-left rounded-2xl border p-3.5 flex flex-col gap-1", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("div", { className: "flex items-center justify-between gap-2" }, ntH("p", { className: "text-sm font-bold truncate", style: { color: COLORS.text } }, x.titre), ntH("span", { className: "text-[10px] font-mono flex-shrink-0", style: { color: COLORS.textFaint } }, ntDuree(x.duree))), ntH("p", { className: "text-[11px] font-mono", style: { color: COLORS.textFaint } }, new Date(x.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) + (att ? " · ⏳ " + att + " en attente" : "")), apercu && ntH("p", { className: "text-xs", style: { color: COLORS.textMuted } }, apercu + "…"));
+        return ntH("button", { key: x.id, type: "button", onClick: () => setVue({ t: "note", id: x.id }), className: "w-full text-left rounded-2xl border p-3.5 flex flex-col gap-1", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("div", { className: "flex items-center justify-between gap-2" }, ntH("p", { className: "text-sm font-bold truncate", style: { color: COLORS.text } }, x.favori ? "★ " + x.titre : x.titre), ntH("span", { className: "text-[10px] font-mono flex-shrink-0", style: { color: COLORS.textFaint } }, ntDuree(x.duree))), ntH("p", { className: "text-[11px] font-mono", style: { color: COLORS.textFaint } }, new Date(x.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) + (x.dossier ? " · 📁 " + x.dossier : "") + (att ? " · ⏳ " + att + " en attente" : "")), apercu && ntH("p", { className: "text-xs", style: { color: COLORS.textMuted } }, apercu + "…"));
       }),
-      ntH("p", { className: "text-[11px] text-center", style: { color: COLORS.textFaint } }, "Les notes sont gardées sur ce téléphone. Pense à demander la permission d'enregistrer en classe.")
+      ntH("p", { className: "text-[11px] text-center", style: { color: COLORS.textFaint } }, "Les notes et leur audio sont gardés sur ce téléphone. Pense à demander la permission d'enregistrer en classe.")
     );
   }
 
