@@ -1921,7 +1921,9 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           "Dans Acc\xE8s rapide, choisis ta mati\xE8re puis touche \u00AB Il me manque une \xE9preuve de cette mati\xE8re \u00BB. Indique le type (examen, devoir\u2026) et, si tu le sais, l'ann\xE9e du sujet.",
           "Ta demande appara\xEEt dans \u00AB \xC9preuves demand\xE9es \u00BB, visible par les \xE9tudiants de ta fili\xE8re. Touche \u00AB Moi aussi \u00BB pour soutenir la demande d'un camarade.",
           "Tu as l'\xE9preuve ? Touche \u00AB J'ai cette \xE9preuve \u00BB et envoie une photo ou un PDF : le demandeur est pr\xE9venu, et tu gagnes 3 points. Les admins peuvent ensuite la publier dans les \xE9preuves.",
-          "Quand l'\xE9preuve est publi\xE9e, la demande passe en \u00AB Comblée \u00BB et les \xE9tudiants concern\xE9s re\xE7oivent une notification."
+          "Quand l'\xE9preuve est publi\xE9e, la demande passe en \u00AB Comblée \u00BB et les \xE9tudiants concern\xE9s re\xE7oivent une notification.",
+          "Envoi de photos ou de PDF : les photos sont allégées automatiquement avant l'envoi, les PDF de plus de 3 Mo sont aussi compressés (les pages deviennent des images : le texte n'est plus sélectionnable) et, si le réseau coupe, Sabi réessaie jusqu'à 4 fois. Si « Erreur réseau pendant l'envoi » revient, rapproche-toi d'une meilleure zone ou envoie un fichier plus léger.",
+          "Photos d'épreuve en plein écran : touche une photo pour l'agrandir. Pince avec deux doigts (ou touche + / −) pour zoomer, touche deux fois pour zoomer vite, fais glisser pour te déplacer et balaie pour passer à la photo suivante."
         ] }
       ]
     },
@@ -2111,6 +2113,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           "Orateurs : quand plusieurs voix parlent, Sabi \xE9tiquette Orateur 1, Orateur 2\u2026 ; touche le nom pour le renommer (Prof, Moi\u2026). \u2606 surligne une phrase importante.",
           "Onglet Carte : Sabi transforme le cours en carte mentale color\xE9e (fais d\xE9filer pour tout voir).",
           "Mod\xE8les en plus : Compte rendu, Notes Cornell, Flashcards, Message de suivi et \u270E Mon mod\xE8le (tu \xE9cris ta propre consigne). \u21E9 Tout exporter partage r\xE9sum\xE9, carte et transcription.",
+          "\u270D \xC9crire / \uD83D\uDCF7 Photo \u2192 texte : \xE9cris une note au clavier, ou ajoute des photos (galerie ou appareil photo) : Sabi recopie le texte \xE9crit \xE0 la main ou imprim\xE9. Pendant un enregistrement, le bouton \u00AB passer \xE0 l'\xE9criture \u00BB arr\xEAte l'audio et ouvre l'\xE9diteur sur la m\xEAme note.",
           "Favoris \u2605 et dossiers \uD83D\uDCC1 : classe tes notes par mati\xE8re avec les boutons en haut de la note, puis filtre la liste.",
           "Importer un audio : transcris un enregistrement d\xE9j\xE0 fait (MP3, M4A, WAV).",
           "Sans Internet, l'enregistrement continue ; la transcription reprend quand tu es connect\xE9 (touche R\xE9essayer).",
@@ -9022,6 +9025,130 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     );
   }
 
+  // Visionneuse plein écran : pincer pour zoomer, glisser, double-toucher, balayer pour changer de photo
+  function VisionneuseImages({ urls, debut, onFermer }) {
+    const R = react_shim_default;
+    const [i, setI] = R.useState(debut || 0);
+    const [vue, setVue] = R.useState({ s: 1, x: 0, y: 0 });
+    const vr = R.useRef(vue);
+    const g = R.useRef({ pts: {}, d0: 0, s0: 1, x0: 0, y0: 0, p0x: 0, p0y: 0, sx: 0, sy: 0, t0: 0, bouge: false, dernierTap: 0, multi: false });
+    const maj = (v) => {
+      const s = Math.min(6, Math.max(1, v.s));
+      const mx = (s - 1) * window.innerWidth / 2, my = (s - 1) * window.innerHeight / 2;
+      const n = { s, x: s <= 1 ? 0 : Math.max(-mx, Math.min(mx, v.x)), y: s <= 1 ? 0 : Math.max(-my, Math.min(my, v.y)) };
+      vr.current = n;
+      setVue(n);
+    };
+    const aller = (k) => {
+      if (k < 0 || k >= urls.length) return;
+      setI(k);
+      maj({ s: 1, x: 0, y: 0 });
+    };
+    R.useEffect(() => {
+      const f = (e) => {
+        if (e.key === "Escape") onFermer();
+        if (e.key === "ArrowRight") aller(i + 1);
+        if (e.key === "ArrowLeft") aller(i - 1);
+      };
+      window.addEventListener("keydown", f);
+      return () => window.removeEventListener("keydown", f);
+    }, [i]);
+    const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const bas = (e) => {
+      const G = g.current;
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch (x) {
+      }
+      G.pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      const ids = Object.keys(G.pts);
+      if (ids.length === 2) {
+        G.d0 = dist(G.pts[ids[0]], G.pts[ids[1]]) || 1;
+        G.s0 = vr.current.s;
+        G.multi = true;
+      } else if (ids.length === 1) {
+        G.p0x = e.clientX;
+        G.p0y = e.clientY;
+        G.sx = e.clientX;
+        G.sy = e.clientY;
+        G.x0 = vr.current.x;
+        G.y0 = vr.current.y;
+        G.t0 = Date.now();
+        G.bouge = false;
+        G.multi = false;
+      }
+    };
+    const bouge = (e) => {
+      const G = g.current;
+      if (!G.pts[e.pointerId]) return;
+      G.pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      const ids = Object.keys(G.pts);
+      if (ids.length === 2) {
+        maj({ ...vr.current, s: G.s0 * dist(G.pts[ids[0]], G.pts[ids[1]]) / G.d0 });
+        G.bouge = true;
+      } else if (ids.length === 1 && !G.multi) {
+        const dx = e.clientX - G.p0x, dy = e.clientY - G.p0y;
+        if (Math.abs(dx) + Math.abs(dy) > 8) G.bouge = true;
+        if (vr.current.s > 1) maj({ s: vr.current.s, x: G.x0 + dx, y: G.y0 + dy });
+      }
+    };
+    const haut = (e) => {
+      const G = g.current;
+      if (!G.pts[e.pointerId]) return;
+      const restant = Object.keys(G.pts).length;
+      delete G.pts[e.pointerId];
+      if (restant > 1) {
+        const r = Object.keys(G.pts)[0];
+        if (r) {
+          G.p0x = G.pts[r].x;
+          G.p0y = G.pts[r].y;
+          G.x0 = vr.current.x;
+          G.y0 = vr.current.y;
+        }
+        return;
+      }
+      if (G.multi) {
+        G.multi = false;
+        if (vr.current.s < 1.05) maj({ s: 1, x: 0, y: 0 });
+        return;
+      }
+      const dx = e.clientX - G.sx, dy = e.clientY - G.sy;
+      if (vr.current.s <= 1 && Math.abs(dx) > 60 && Math.abs(dy) < 90) {
+        aller(dx < 0 ? i + 1 : i - 1);
+        return;
+      }
+      if (!G.bouge && Date.now() - G.t0 < 300) {
+        const now = Date.now();
+        if (now - G.dernierTap < 320) {
+          G.dernierTap = 0;
+          maj(vr.current.s > 1 ? { s: 1, x: 0, y: 0 } : { s: 2.5, x: 0, y: 0 });
+        } else G.dernierTap = now;
+      }
+    };
+    const bt = (l, f, aria, extra) => R.createElement("button", { type: "button", onClick: (e) => {
+      e.stopPropagation();
+      f();
+    }, "aria-label": aria, className: "w-11 h-11 rounded-full flex items-center justify-center text-lg font-bold", style: { backgroundColor: "rgba(255,255,255,0.14)", color: "#fff", ...extra || {} } }, l);
+    return dom_shim_default.createPortal(R.createElement(
+      "div",
+      { className: "fixed inset-0 flex items-center justify-center", style: { zIndex: 400, backgroundColor: "rgba(0,0,0,0.96)", touchAction: "none", userSelect: "none", WebkitUserSelect: "none" }, onPointerDown: bas, onPointerMove: bouge, onPointerUp: haut, onPointerCancel: haut },
+      R.createElement("img", { src: urls[i], alt: "Photo " + (i + 1), draggable: false, style: { maxWidth: "100%", maxHeight: "100%", objectFit: "contain", transform: "translate(" + vue.x + "px," + vue.y + "px) scale(" + vue.s + ")", transition: Object.keys(g.current.pts).length ? "none" : "transform 160ms", pointerEvents: "none" } }),
+      R.createElement(
+        "div",
+        { className: "absolute left-0 right-0 flex items-center justify-between px-3", style: { top: "calc(env(safe-area-inset-top, 0px) + 10px)" } },
+        R.createElement("span", { className: "text-xs font-mono px-3 py-1.5 rounded-full", style: { backgroundColor: "rgba(255,255,255,0.14)", color: "#fff" } }, urls.length > 1 ? i + 1 + " / " + urls.length : "Photo"),
+        R.createElement("div", { className: "flex gap-2" }, bt("−", () => maj({ ...vr.current, s: vr.current.s - 0.75 }), "Dézoomer"), bt("+", () => maj({ ...vr.current, s: vr.current.s + 0.75 }), "Zoomer"), bt("✕", onFermer, "Fermer"))
+      ),
+      urls.length > 1 && i > 0 && bt("‹", () => aller(i - 1), "Photo précédente", { position: "absolute", left: 8, top: "50%" }),
+      urls.length > 1 && i < urls.length - 1 && bt("›", () => aller(i + 1), "Photo suivante", { position: "absolute", right: 8, top: "50%" })
+    ), document.body);
+  }
+  function ImageAgrandissable({ urls, index, alt, className, style }) {
+    const R = react_shim_default;
+    const [ouvert, setOuvert] = R.useState(false);
+    return R.createElement(R.Fragment, null, R.createElement("img", { src: urls[index], alt, className, style: { ...style || {}, cursor: "zoom-in" }, onClick: () => setOuvert(true) }), ouvert && R.createElement(VisionneuseImages, { urls, debut: index, onFermer: () => setOuvert(false) }));
+  }
+
   // src/components/PdfViewer.js
   var PDFJS_VERSION = "3.11.174";
   var PDFJS_SOURCES = [
@@ -9509,14 +9636,15 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
   // src/services/cloudinary.js
   var CLOUDINARY_CLOUD_NAME = "ugmlpnhi";
   var CLOUDINARY_UPLOAD_PRESET = "sabi_pdfs";
-  async function uploaderPdfCloudinary(file, onProgress) {
+  function cdnEnvoyerUnique(type, file, onProgress) {
     return new Promise((resolve, reject) => {
-      const url = "https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD_NAME + "/raw/upload";
+      const url = "https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD_NAME + "/" + type + "/upload";
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
       const xhr = new XMLHttpRequest();
       xhr.open("POST", url);
+      xhr.timeout = 180000;
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable && onProgress) onProgress(Math.round(e.loaded / e.total * 100));
       };
@@ -9526,48 +9654,119 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           if (xhr.status >= 200 && xhr.status < 300 && data.secure_url) {
             resolve(data.secure_url);
           } else {
-            {
-              const m = data.error && data.error.message || "\xC9chec de l'envoi (code " + xhr.status + ")";
-              reject(new Error(/too large|size|volumineux/i.test(m) ? m + " \u2014 fichier trop lourd pour ton compte Cloudinary (souvent 10 Mo en gratuit). Compresse-le puis r\xE9essaie." : m));
-            }
+            const m = data.error && data.error.message || "\xC9chec de l'envoi (code " + xhr.status + ")";
+            reject(new Error(/too large|size|volumineux/i.test(m) ? m + " — fichier trop lourd pour ton compte Cloudinary (souvent 10 Mo en gratuit). Compresse-le puis r\xE9essaie." : m));
           }
         } catch {
           reject(new Error("R\xE9ponse invalide de Cloudinary."));
         }
       };
       xhr.onerror = () => reject(new Error("Erreur r\xE9seau pendant l'envoi."));
+      xhr.ontimeout = () => reject(new Error("Erreur r\xE9seau pendant l'envoi (d\xE9lai d\xE9pass\xE9)."));
       xhr.send(formData);
     });
   }
-  async function uploaderImageCloudinary(file, onProgress) {
-    return new Promise((resolve, reject) => {
-      const url = "https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD_NAME + "/image/upload";
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", url);
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable && onProgress) onProgress(Math.round(e.loaded / e.total * 100));
-      };
-      xhr.onload = () => {
-        try {
-          const data = JSON.parse(xhr.responseText);
-          if (xhr.status >= 200 && xhr.status < 300 && data.secure_url) {
-            resolve(data.secure_url);
-          } else {
-            {
-              const m = data.error && data.error.message || "\xC9chec de l'envoi (code " + xhr.status + ")";
-              reject(new Error(/too large|size|volumineux/i.test(m) ? m + " \u2014 fichier trop lourd pour ton compte Cloudinary (souvent 10 Mo en gratuit). Compresse-le puis r\xE9essaie." : m));
-            }
-          }
-        } catch {
-          reject(new Error("R\xE9ponse invalide de Cloudinary."));
-        }
-      };
-      xhr.onerror = () => reject(new Error("Erreur r\xE9seau pendant l'envoi."));
-      xhr.send(formData);
+  async function cdnCompresser(file) {
+    try {
+      if (!file || !/^image\//.test(file.type) || file.size < 900 * 1024) return file;
+      const bmp = await createImageBitmap(file);
+      const k = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(bmp.width * k);
+      c.height = Math.round(bmp.height * k);
+      c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+      const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.8));
+      if (!blob || blob.size >= file.size) return file;
+      return new File([blob], String(file.name || "photo").replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+    } catch (e) {
+      return file;
+    }
+  }
+  async function cdnEnvoyer(type, file, onProgress) {
+    let erreur;
+    for (let essai = 0; essai < 4; essai++) {
+      try {
+        if (navigator.onLine === false) throw new Error("Erreur r\xE9seau pendant l'envoi (hors ligne).");
+        return await cdnEnvoyerUnique(type, file, onProgress);
+      } catch (e) {
+        erreur = e;
+        if (!/pendant l'envoi/.test(e && e.message || "")) throw e;
+        if (onProgress) onProgress(0);
+        await new Promise((r) => setTimeout(r, 1500 * (essai + 1)));
+      }
+    }
+    throw new Error("Ta connexion est trop faible ou coupe pendant l'envoi (" + (file.size / 1048576).toFixed(1) + " Mo, 4 essais). V\xE9rifie ton r\xE9seau, rapproche-toi d'une meilleure zone ou envoie un fichier plus l\xE9ger.");
+  }
+  function cdnPdfDepuisJpegs(pages) {
+    const enc = new TextEncoder(), parts = [], offs = [];
+    let len = 0;
+    const push = (x) => {
+      const b = typeof x === "string" ? enc.encode(x) : x;
+      parts.push(b);
+      len += b.length;
+    };
+    const obj = (id, body) => {
+      offs[id] = len;
+      push(id + " 0 obj\n");
+      push(body);
+      push("\nendobj\n");
+    };
+    const n = pages.length;
+    push("%PDF-1.4\n");
+    obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+    obj(2, "<< /Type /Pages /Kids [" + pages.map((_, i) => 3 + 3 * i + " 0 R").join(" ") + "] /Count " + n + " >>");
+    pages.forEach((p, i) => {
+      const pid = 3 + 3 * i, cid = pid + 1, iid = pid + 2;
+      obj(pid, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + p.pw + " " + p.ph + "] /Resources << /XObject << /Im0 " + iid + " 0 R >> >> /Contents " + cid + " 0 R >>");
+      const c = "q " + p.pw + " 0 0 " + p.ph + " 0 0 cm /Im0 Do Q";
+      obj(cid, "<< /Length " + c.length + " >>\nstream\n" + c + "\nendstream");
+      offs[iid] = len;
+      push(iid + " 0 obj\n<< /Type /XObject /Subtype /Image /Width " + p.w + " /Height " + p.h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + p.jpg.length + " >>\nstream\n");
+      push(p.jpg);
+      push("\nendstream\nendobj\n");
     });
+    const total = 3 * n + 3, xref = len;
+    let x = "xref\n0 " + total + "\n0000000000 65535 f \n";
+    for (let i = 1; i < total; i++) x += String(offs[i]).padStart(10, "0") + " 00000 n \n";
+    push(x + "trailer\n<< /Size " + total + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF");
+    return new Blob(parts, { type: "application/pdf" });
+  }
+  async function cdnCompresserPdf(file) {
+    try {
+      if (!file || file.size < 3 * 1024 * 1024) return file;
+      const lib = await chargerPdfJs();
+      const doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+      if (doc.numPages > 60) return file;
+      const pages = [];
+      for (let i = 1; i <= doc.numPages; i++) {
+        const page = await doc.getPage(i);
+        const v1 = page.getViewport({ scale: 1 });
+        const s = Math.max(1, Math.min(2.2, 1240 / v1.width));
+        const v = page.getViewport({ scale: s });
+        const c = document.createElement("canvas");
+        c.width = Math.round(v.width);
+        c.height = Math.round(v.height);
+        const ctx = c.getContext("2d");
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, c.width, c.height);
+        await page.render({ canvasContext: ctx, viewport: v }).promise;
+        const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.6));
+        if (!blob) return file;
+        pages.push({ w: c.width, h: c.height, pw: Math.round(v1.width * 100) / 100, ph: Math.round(v1.height * 100) / 100, jpg: new Uint8Array(await blob.arrayBuffer()) });
+        c.width = c.height = 0;
+      }
+      const out = cdnPdfDepuisJpegs(pages);
+      if (out.size > file.size * 0.8) return file;
+      return new File([out], file.name || "sujet.pdf", { type: "application/pdf" });
+    } catch (e) {
+      return file;
+    }
+  }
+  async function uploaderPdfCloudinary(file, onProgress) {
+    return cdnEnvoyer("raw", await cdnCompresserPdf(file), onProgress);
+  }
+  async function uploaderImageCloudinary(file, onProgress) {
+    return cdnEnvoyer("image", await cdnCompresser(file), onProgress);
   }
   var TAILLE_MAX_IMAGE_ACTU = 5 * 1024 * 1024;
   function validerTailleImageActu(file) {
@@ -9802,7 +10001,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         react_shim_default.createElement("p", { className: "text-[11px] font-mono", style: { color: COLORS.textMuted } }, [m.annee, m.semestre, m.type, m.filiere].filter(Boolean).join(" · ")),
         lecture.pdf && react_shim_default.createElement("button", { type: "button", onClick: ouvrirPdf, className: "rounded-xl py-2.5 text-sm font-semibold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "Ouvrir le sujet PDF"),
         m.contenu && react_shim_default.createElement("p", { className: "text-sm whitespace-pre-wrap", style: { color: COLORS.text } }, m.contenu),
-        lecture.urls.map((u, i) => react_shim_default.createElement("img", { key: i, src: u, alt: "Photo du sujet " + (i + 1), className: "w-full rounded-lg", style: { objectFit: "contain", backgroundColor: COLORS.bg } })),
+        lecture.urls.map((u, i) => react_shim_default.createElement(ImageAgrandissable, { key: i, urls: lecture.urls, index: i, alt: "Photo du sujet " + (i + 1), className: "w-full rounded-lg", style: { objectFit: "contain", backgroundColor: COLORS.bg } })),
         (m.corrige || m.corrigeIA) && react_shim_default.createElement("div", null, react_shim_default.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider mb-1", style: { color: COLORS.forestText } }, "Corrigé"), react_shim_default.createElement(CorrigeRendu, { texte: m.corrige || m.corrigeIA })),
         pdfUrl && react_shim_default.createElement(PdfPreviewModal, { rawUrl: pdfUrl, onClose: () => {
           URL.revokeObjectURL(pdfUrl);
@@ -10416,7 +10615,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
                 remplacerImageId === ep.id && remplacerImageErreur && react_shim_default.createElement("p", { className: "text-[11px] mt-1.5", style: { color: COLORS.terraText } }, remplacerImageErreur),
                 react_shim_default.createElement("p", { className: "text-[10px] font-mono uppercase tracking-wider mt-3 mb-1", style: { color: COLORS.textMuted } }, "Sujet"),
                 react_shim_default.createElement("p", { className: "text-sm whitespace-pre-wrap", style: { color: COLORS.text } }, ep.contenu),
-                (ep.imagesUrls && ep.imagesUrls.length ? ep.imagesUrls : ep.imageUrl ? [ep.imageUrl] : []).map((u, i) => react_shim_default.createElement("img", { key: i, src: u, alt: "Photo du sujet " + (i + 1), className: "w-full rounded-lg mt-2", style: { maxHeight: 420, objectFit: "contain", backgroundColor: COLORS.bg } })),
+                ((l) => l.map((u, i) => react_shim_default.createElement(ImageAgrandissable, { key: i, urls: l, index: i, alt: "Photo du sujet " + (i + 1), className: "w-full rounded-lg mt-2", style: { maxHeight: 420, objectFit: "contain", backgroundColor: COLORS.bg } })))(ep.imagesUrls && ep.imagesUrls.length ? ep.imagesUrls : ep.imageUrl ? [ep.imageUrl] : []),
                 ep.corrige && react_shim_default.createElement(
                   "div",
                   null,
@@ -11886,10 +12085,13 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         if (reste.trim()) out.push({ k: s.i + "-" + j, abs, orat: o, nom: o ? orat[o] || o : "", texte: reste.trim() });
       });
     });
+    String(n.texteEcrit || "").split("\n").forEach((p, j) => {
+      if (p.trim()) out.push({ k: "e-" + j, abs: -1, orat: "", nom: "", texte: p.trim() });
+    });
     return out;
   }
   function ntTexte(n, avecTemps) {
-    return ntLignes(n).map((l) => (avecTemps ? "[" + ntDuree(l.abs) + "] " : "") + (l.orat ? l.nom + " : " : "") + l.texte).join("\n");
+    return ntLignes(n).map((l) => (avecTemps && l.abs >= 0 ? "[" + ntDuree(l.abs) + "] " : "") + (l.orat ? l.nom + " : " : "") + l.texte).join("\n");
   }
   function ntDuree(sec) {
     sec = Math.max(0, Math.round(sec || 0));
@@ -11913,7 +12115,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       const t = await genererViaGeminiParts([{ text: "Donne un titre court (6 mots maximum, sans guillemets ni ponctuation finale) pour cet enregistrement d'étudiants :\n" + ntTexte(n).slice(0, 6000) }], "titre");
       const titre = t.replace(/["«»\n]/g, "").trim().slice(0, 60);
       if (titre) ntMaj(noteId, (m) => {
-        if (/^Cours du /.test(m.titre)) m.titre = titre;
+        if (/^(Cours|Note|Scan) du /.test(m.titre)) m.titre = titre;
       });
       const r = await ntGenerer(n, "cours");
       ntMaj(noteId, (m) => {
@@ -12159,6 +12361,191 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       )
     );
   }
+  async function ntPreparerImage(fichier) {
+    const dessiner = (src, w, h) => {
+      const k = Math.min(1, 1600 / Math.max(w, h));
+      const c = document.createElement("canvas");
+      c.width = Math.round(w * k);
+      c.height = Math.round(h * k);
+      const x = c.getContext("2d");
+      x.fillStyle = "#fff";
+      x.fillRect(0, 0, c.width, c.height);
+      x.drawImage(src, 0, 0, c.width, c.height);
+      const kv = Math.min(1, 96 / Math.max(c.width, c.height));
+      const cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(c.width * kv));
+      cv.height = Math.max(1, Math.round(c.height * kv));
+      cv.getContext("2d").drawImage(c, 0, 0, cv.width, cv.height);
+      return new Promise((ok) => c.toBlob((b) => ok({ blob: b, v: cv.toDataURL("image/jpeg", 0.6) }), "image/jpeg", 0.8));
+    };
+    let r = null;
+    try {
+      const bmp = await createImageBitmap(fichier);
+      r = await dessiner(bmp, bmp.width, bmp.height);
+    } catch (e) {
+      r = await new Promise((ok) => {
+        const img = new Image(), u = URL.createObjectURL(fichier);
+        img.onload = () => dessiner(img, img.naturalWidth, img.naturalHeight).then((x) => {
+          URL.revokeObjectURL(u);
+          ok(x);
+        });
+        img.onerror = () => {
+          URL.revokeObjectURL(u);
+          ok(null);
+        };
+        img.src = u;
+      });
+    }
+    if (!r || !r.blob) throw new Error("Image illisible sur ce téléphone.");
+    return r;
+  }
+  async function ntTranscrireImage(blob) {
+    const consigne = "Transcris fidèlement tout le texte visible sur cette photo (écriture manuscrite ou imprimée, tableaux, formules, schémas légendés). Garde la structure : titres, listes, retours à la ligne. Écris les formules en notation claire. Si un mot est illisible, écris [illisible]. N'ajoute aucun commentaire ni explication. Si la photo ne contient aucun texte, réponds : (vide)";
+    const t = await genererViaGeminiParts([{ text: consigne }, { inline_data: { mime_type: "image/jpeg", data: ntWavBinaire(new Uint8Array(await blob.arrayBuffer())) } }], "image");
+    return t.replace(/^\(vide\)$/i, "").trim();
+  }
+  function NtEditeur({ noteId, onFini }) {
+    const R = react_shim_default;
+    const notes = useNotes();
+    const note = notes.find((n) => n.id === noteId);
+    const [texte, setTexte] = R.useState(() => note && note.texteEcrit || "");
+    const [occupe, setOccupe] = R.useState(0);
+    const [info, setInfo] = R.useState("");
+    const [grande, setGrande] = R.useState(null);
+    const ref = R.useRef({ t: null, texte: texte });
+    const sauver = (v) => ntMaj(noteId, (n) => {
+      n.texteEcrit = v;
+    });
+    const changer = (v) => {
+      ref.current.texte = v;
+      setTexte(v);
+      clearTimeout(ref.current.t);
+      ref.current.t = setTimeout(() => sauver(v), 500);
+    };
+    const ajouter = (extra) => {
+      const base = ref.current.texte.replace(/\s+$/, "");
+      const v = (base ? base + "\n\n" : "") + extra;
+      ref.current.texte = v;
+      setTexte(v);
+      sauver(v);
+    };
+    R.useEffect(() => () => {
+      clearTimeout(ref.current.t);
+      sauver(ref.current.texte);
+    }, []);
+    const majImage = (k, st) => ntMaj(noteId, (n) => {
+      n.images = (n.images || []).map((i) => i.k === k ? { ...i, statut: st } : i);
+    });
+    const lireImage = async (k, blob) => {
+      try {
+        if (navigator.onLine === false) throw new Error("hors ligne");
+        let t = null, err = null;
+        for (let essai = 0; essai < 2 && t === null; essai++) {
+          try {
+            t = await ntTranscrireImage(blob);
+          } catch (e) {
+            err = e;
+            await new Promise((r) => setTimeout(r, 1200));
+          }
+        }
+        if (t === null) throw err || new Error("échec");
+        majImage(k, t ? "ok" : "vide");
+        if (t) ajouter(t);
+        else setInfo("Aucun texte trouvé sur une des photos.");
+      } catch (e) {
+        majImage(k, "echec");
+        setInfo("Transcription impossible pour une photo : touche ↻ sur sa vignette quand le réseau est bon.");
+      }
+    };
+    const traiter = async (fichiers) => {
+      setInfo("");
+      for (const f of fichiers) {
+        const k = Date.now().toString(36) + Math.random().toString(36).slice(2, 4);
+        setOccupe((x) => x + 1);
+        try {
+          const { blob, v } = await ntPreparerImage(f);
+          await ntAudioPut(noteId + ":i" + k, blob);
+          ntMaj(noteId, (n) => {
+            n.images = [...n.images || [], { k, v, statut: "encours" }];
+          });
+          await lireImage(k, blob);
+        } catch (e) {
+          setInfo(e && e.message ? e.message : "Image illisible.");
+        }
+        setOccupe((x) => x - 1);
+      }
+    };
+    const refaire = async (k) => {
+      const b = await ntAudioGet(noteId + ":i" + k);
+      if (!b) {
+        setInfo("Cette photo n'est plus disponible : ajoute-la de nouveau.");
+        return;
+      }
+      setOccupe((x) => x + 1);
+      majImage(k, "encours");
+      await lireImage(k, b);
+      setOccupe((x) => x - 1);
+    };
+    const ouvrir = async (k) => {
+      const b = await ntAudioGet(noteId + ":i" + k);
+      if (b) setGrande(URL.createObjectURL(b));
+    };
+    const retirer = (k) => {
+      ntAudioDel(noteId + ":i" + k);
+      ntMaj(noteId, (n) => {
+        n.images = (n.images || []).filter((i) => i.k !== k);
+      });
+    };
+    const terminer = () => {
+      clearTimeout(ref.current.t);
+      sauver(ref.current.texte);
+      const n = ntLire().find((x) => x.id === noteId);
+      const vide = !ref.current.texte.trim() && !(n && (n.segments || []).length) && !(n && (n.images || []).length);
+      if (vide) {
+        ntSupprimer(noteId);
+        onFini(null);
+        return;
+      }
+      if (ref.current.texte.trim().length > 40) ntFinaliser(noteId);
+      onFini(noteId);
+    };
+    const images = note && note.images || [];
+    const etiquette = (st) => st === "ok" ? "✓" : st === "encours" ? "…" : st === "vide" ? "∅" : "↻";
+    const bouton = { borderColor: COLORS.border, color: COLORS.text, backgroundColor: COLORS.surface };
+    return ntH(
+      "div",
+      { className: "flex flex-col gap-3 pb-6" },
+      ntH("div", { className: "flex items-center justify-between gap-2" }, ntH("div", null, ntH("p", { className: "text-base font-bold", style: { color: COLORS.text } }, "Écrire ou scanner"), ntH("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Tape ton texte, ou ajoute des photos : Sabi recopie ce qui est écrit.")), ntH("button", { type: "button", onClick: terminer, disabled: occupe > 0, className: "rounded-full px-5 py-2.5 text-sm font-bold disabled:opacity-50", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, occupe > 0 ? "…" : "✓ Terminer")),
+      ntH(
+        "div",
+        { className: "flex gap-2" },
+        ntH("label", { className: "flex-1 rounded-2xl py-3 text-sm font-semibold flex items-center justify-center gap-2 border cursor-pointer", style: bouton }, "🖼 Photos", ntH("input", { type: "file", accept: "image/*", multiple: true, className: "hidden", onChange: (e) => {
+          const l = Array.from(e.target.files || []);
+          e.target.value = "";
+          if (l.length) traiter(l);
+        } })),
+        ntH("label", { className: "flex-1 rounded-2xl py-3 text-sm font-semibold flex items-center justify-center gap-2 border cursor-pointer", style: bouton }, "📸 Prendre une photo", ntH("input", { type: "file", accept: "image/*", capture: "environment", className: "hidden", onChange: (e) => {
+          const l = Array.from(e.target.files || []);
+          e.target.value = "";
+          if (l.length) traiter(l);
+        } }))
+      ),
+      occupe > 0 && ntH("p", { className: "text-xs", style: { color: COLORS.gold } }, "Sabi lit " + (occupe > 1 ? occupe + " photos" : "la photo") + "…"),
+      images.length > 0 && ntH("div", { className: "flex gap-2 overflow-x-auto pb-1", style: { scrollbarWidth: "none" } }, images.map((i) => ntH(
+        "div",
+        { key: i.k, className: "relative flex-shrink-0", style: { width: 64, height: 64 } },
+        ntH("button", { type: "button", onClick: () => ouvrir(i.k), "aria-label": "Voir la photo", className: "w-full h-full rounded-xl overflow-hidden border", style: { borderColor: i.statut === "echec" ? COLORS.alerte : COLORS.border } }, ntH("img", { src: i.v, alt: "", style: { width: "100%", height: "100%", objectFit: "cover", opacity: i.statut === "encours" ? 0.5 : 1 } })),
+        ntH("button", { type: "button", onClick: () => i.statut === "echec" ? refaire(i.k) : retirer(i.k), "aria-label": i.statut === "echec" ? "Réessayer" : "Retirer", className: "absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center", style: { backgroundColor: i.statut === "echec" ? COLORS.alerte : COLORS.surface2, color: i.statut === "echec" ? COLORS.bg : COLORS.text, border: "1px solid " + COLORS.border } }, i.statut === "echec" ? "↻" : "✕"),
+        ntH("span", { className: "absolute bottom-0.5 left-1 text-[10px] font-bold", style: { color: "#fff", textShadow: "0 0 3px #000" } }, etiquette(i.statut))
+      ))),
+      ntH("textarea", { value: texte, onChange: (e) => changer(e.target.value), placeholder: "Écris ici… Le texte lu sur tes photos s'ajoutera à la suite, tu pourras le corriger.", className: "w-full rounded-2xl px-4 py-3 outline-none border resize-none", style: { fontSize: 16, minHeight: "42dvh", backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text, lineHeight: 1.5 } }),
+      info && ntH("p", { className: "text-[11px]", style: { color: COLORS.terraText } }, info),
+      grande && ntH(MsFeuille, { titre: "Photo", onFermer: () => {
+        URL.revokeObjectURL(grande);
+        setGrande(null);
+      } }, ntH("img", { src: grande, alt: "Photo", style: { width: "100%", borderRadius: 12 } }))
+    );
+  }
   function NotesTab(props) {
     if (!props.acces) return react_shim_default.createElement(PaywallSabiPro, { setTab: props.setTab, palierRequis: "proplus" });
     return react_shim_default.createElement(NotesCoeur, props);
@@ -12173,10 +12560,10 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     const notes = useNotes();
     const note = notes.find((n) => n.id === noteId);
     const etat = R.useRef({ suite: null, flux: null, rec: null, i: 0, segSec: 0, total: 0, pause: false, actif: true, file: Promise.resolve(), analyseur: null, ctx: null, verrou: null });
-    const finaliser = () => {
+    const finaliser = (versEcrit) => {
       const e = etat.current;
       e.suite = () => {
-        e.file.then(() => ntFinaliser(noteId)).then(() => onFini(noteId));
+        e.file.then(() => versEcrit ? null : ntFinaliser(noteId)).then(() => onFini(noteId, !!versEcrit));
       };
       if (!e.actif) return;
       e.actif = false;
@@ -12326,14 +12713,15 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         { className: "flex items-center gap-3" },
         ntH("button", { type: "button", onClick: repere, disabled: fin, className: "rounded-full px-4 py-3 text-sm font-semibold border", style: { borderColor: COLORS.border, color: COLORS.text, backgroundColor: COLORS.surface } }, "★ Repère"),
         ntH("button", { type: "button", onClick: basculerPause, disabled: fin, className: "rounded-full px-5 py-3 text-sm font-semibold border", style: { borderColor: COLORS.border, color: COLORS.text, backgroundColor: COLORS.surface } }, pause ? "▶ Reprendre" : "⏸ Pause"),
-        ntH("button", { type: "button", onClick: finaliser, disabled: fin, className: "rounded-full px-5 py-3 text-sm font-bold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "■ Terminer")
+        ntH("button", { type: "button", onClick: () => finaliser(false), disabled: fin, className: "rounded-full px-5 py-3 text-sm font-bold", style: { backgroundColor: COLORS.gold, color: COLORS.bg } }, "■ Terminer")
       ),
       ntH("p", { className: "text-[11px] text-center px-6", style: { color: COLORS.textFaint } }, "Garde l'appli ouverte et l'écran allumé. Sabi transcrit au fur et à mesure (toutes les " + NT_SEG_SEC + " secondes)."),
+      ntH("button", { type: "button", onClick: () => finaliser(true), disabled: fin, className: "rounded-full px-5 py-2.5 text-xs font-semibold border", style: { borderColor: COLORS.border, color: COLORS.text, backgroundColor: COLORS.surface } }, "✍ Arrêter l'audio et passer à l'écriture / photos"),
       attente > 0 && ntH("p", { className: "text-[11px] text-center px-6", style: { color: COLORS.alerte } }, "⏳ " + attente + " morceau" + (attente > 1 ? "x" : "") + " en attente de connexion : la transcription reprendra quand tu auras Internet."),
       recents.length > 0 && ntH("div", { className: "w-full rounded-2xl border p-3 flex flex-col gap-1.5", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-[10px] font-mono uppercase tracking-wider", style: { color: COLORS.textMuted } }, "Dernières phrases transcrites"), recents.map((s) => ntH("p", { key: s.i, className: "text-xs", style: { color: COLORS.textMuted } }, s.texte.replace(/\[\d{1,2}:\d{2}(?::\d{2})?\]\s*/g, "").slice(-220))))
     );
   }
-  function NtNote({ noteId, setTab, onRetour }) {
+  function NtNote({ noteId, setTab, onRetour, onEcrire }) {
     const R = react_shim_default;
     const notes = useNotes();
     const note = notes.find((n) => n.id === noteId);
@@ -12360,7 +12748,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     const actifK = (() => {
       let k = null;
       lignes.forEach((l) => {
-        if (l.abs <= tL + 0.3) k = l.k;
+        if (l.abs >= 0 && l.abs <= tL + 0.3) k = l.k;
       });
       return tL > 0 ? k : null;
     })();
@@ -12389,7 +12777,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       return ntH(
         "div",
         { key: l.k, className: "rounded-xl border p-2.5 flex gap-2", style: { borderColor: sur ? "#facc15" : actif ? COLORS.gold : COLORS.border, backgroundColor: actif ? "rgba(var(--accent-rgb),0.12)" : sur ? "rgba(250,204,21,0.12)" : COLORS.surface } },
-        ntH("button", { type: "button", onClick: () => api.current && api.current.aller(l.abs), "aria-label": "Écouter à " + ntDuree(l.abs), className: "flex-shrink-0 text-[10px] font-mono mt-0.5", style: { color: COLORS.gold } }, ntDuree(l.abs)),
+        l.abs >= 0 && ntH("button", { type: "button", onClick: () => api.current && api.current.aller(l.abs), "aria-label": "Écouter à " + ntDuree(l.abs), className: "flex-shrink-0 text-[10px] font-mono mt-0.5", style: { color: COLORS.gold } }, ntDuree(l.abs)),
         ntH("div", { className: "flex-1 min-w-0" }, l.orat && ntH("button", { type: "button", onClick: () => setRenomme({ cle: l.orat, val: l.nom === l.orat ? "" : l.nom }), className: "text-[11px] font-bold mb-0.5 block", style: { color: coulOrat(l.orat) } }, l.nom + " ✎"), ntH("p", { className: "text-sm", style: { color: COLORS.text, whiteSpace: "pre-wrap", wordBreak: "break-word" } }, l.texte)),
         ntH("button", { type: "button", onClick: () => surligner(l.k), "aria-label": "Surligner", className: "flex-shrink-0 text-base", style: { color: sur ? "#facc15" : COLORS.textFaint } }, sur ? "★" : "☆")
       );
@@ -12493,10 +12881,11 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         "div",
         { className: "flex flex-col gap-2" },
         note.reperes && note.reperes.length > 0 && ntH("div", { className: "flex gap-1.5 flex-wrap items-center" }, ntH("span", { className: "text-xs", style: { color: COLORS.gold } }, "★ Repères :"), note.reperes.map((r, i) => ntH("button", { key: i, type: "button", onClick: () => api.current && api.current.aller(r), className: "text-[11px] font-mono px-2 py-0.5 rounded-full border", style: { borderColor: COLORS.gold, color: COLORS.gold } }, ntDuree(r)))),
-        lignes.length > 0 && ntH("div", { className: "flex items-center justify-between gap-2" }, ntH("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, "Touche l'heure pour écouter à cet endroit · ☆ pour surligner"), (note.surlignes || []).length > 0 && ntH("button", { type: "button", onClick: () => setSoloSur(!soloSur), className: "text-[11px] font-semibold px-2.5 py-1 rounded-full border flex-shrink-0", style: soloSur ? { borderColor: COLORS.gold, color: COLORS.gold } : { borderColor: COLORS.border, color: COLORS.textMuted } }, "★ Surlignés")),
+        onEcrire && ntH("button", { type: "button", onClick: () => onEcrire(noteId), className: "w-full rounded-xl py-2.5 text-xs font-semibold border", style: { borderColor: COLORS.border, color: COLORS.text, backgroundColor: COLORS.surface } }, "✍ Ajouter du texte ou des photos à écrire"),
+        lignes.length > 0 && ntH("div", { className: "flex items-center justify-between gap-2" }, ntH("p", { className: "text-[11px]", style: { color: COLORS.textFaint } }, note.segments.length > 0 || note.audio ? "Touche l'heure pour écouter à cet endroit · ☆ pour surligner" : "☆ pour surligner une phrase importante"), (note.surlignes || []).length > 0 && ntH("button", { type: "button", onClick: () => setSoloSur(!soloSur), className: "text-[11px] font-semibold px-2.5 py-1 rounded-full border flex-shrink-0", style: soloSur ? { borderColor: COLORS.gold, color: COLORS.gold } : { borderColor: COLORS.border, color: COLORS.textMuted } }, "★ Surlignés")),
         lignes.filter((l) => !soloSur || (note.surlignes || []).includes(l.k)).map(ligneJsx),
         note.segments.filter((s) => !s.texte).sort((a, b) => a.i - b.i).map((s) => ntH("div", { key: "p" + s.i, className: "rounded-xl border p-3", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("p", { className: "text-[10px] font-mono mb-1", style: { color: COLORS.gold } }, "[" + ntDuree(s.t0) + "]"), ntH("p", { className: "text-xs", style: { color: COLORS.textFaint } }, s.statut === "perdu" ? "Audio non conservé : ce morceau ne peut plus être transcrit." : s.statut === "attente" ? "⏳ En attente de connexion…" : "Transcription en cours…"))),
-        note.segments.length === 0 && ntH("p", { className: "text-sm py-6 text-center", style: { color: COLORS.textFaint } }, "Aucune transcription.")
+        lignes.length === 0 && note.segments.length === 0 && ntH("p", { className: "text-sm py-6 text-center", style: { color: COLORS.textFaint } }, "Aucune transcription.")
       ),
       onglet === "carte" && ntH(
         "div",
@@ -12562,8 +12951,9 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     const [import_, setImport] = R.useState("");
     const [filtre, setFiltre] = R.useState("tous");
     const n = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-    if (vue.t === "rec") return ntH(NtEnregistreur, { noteId: vue.id, onFini: (id) => setVue({ t: "note", id }) });
-    if (vue.t === "note") return ntH(NtNote, { noteId: vue.id, setTab, onRetour: () => setVue({ t: "liste" }) });
+    if (vue.t === "rec") return ntH(NtEnregistreur, { noteId: vue.id, onFini: (id, versEcrit) => setVue({ t: versEcrit ? "ecrit" : "note", id }) });
+    if (vue.t === "ecrit") return ntH(NtEditeur, { noteId: vue.id, onFini: (id) => setVue(id ? { t: "note", id } : { t: "liste" }) });
+    if (vue.t === "note") return ntH(NtNote, { noteId: vue.id, setTab, onRetour: () => setVue({ t: "liste" }), onEcrire: (id) => setVue({ t: "ecrit", id }) });
     const commencer = () => {
       const nt = ntCreer();
       setVue({ t: "rec", id: nt.id });
@@ -12634,6 +13024,18 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         ntH("button", { type: "button", onClick: commencer, className: "flex-1 rounded-2xl py-4 text-sm font-bold flex items-center justify-center gap-2", style: { backgroundColor: COLORS.terra, color: COLORS.bg } }, "● Enregistrer"),
         ntH("label", { className: "flex-1 rounded-2xl py-4 text-sm font-bold flex items-center justify-center gap-2 border cursor-pointer", style: { borderColor: COLORS.border, color: COLORS.text, backgroundColor: COLORS.surface } }, "⬆ Importer un audio", ntH("input", { type: "file", accept: "audio/*", className: "hidden", onChange: importer }))
       ),
+      ntH(
+        "div",
+        { className: "flex gap-2" },
+        ntH("button", { type: "button", onClick: () => {
+          const nt = ntCreer("Note du " + new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" }));
+          setVue({ t: "ecrit", id: nt.id });
+        }, className: "flex-1 rounded-2xl py-3 text-sm font-semibold flex items-center justify-center gap-2 border", style: { borderColor: COLORS.border, color: COLORS.text, backgroundColor: COLORS.surface } }, "✍ Écrire"),
+        ntH("button", { type: "button", onClick: () => {
+          const nt = ntCreer("Scan du " + new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" }));
+          setVue({ t: "ecrit", id: nt.id });
+        }, className: "flex-1 rounded-2xl py-3 text-sm font-semibold flex items-center justify-center gap-2 border", style: { borderColor: COLORS.border, color: COLORS.text, backgroundColor: COLORS.surface } }, "📷 Photo → texte")
+      ),
       import_ && ntH("p", { className: "text-xs", style: { color: COLORS.gold } }, import_),
       notes.length > 3 && ntH("input", { value: q, onChange: (e) => setQ(e.target.value), placeholder: "Rechercher dans tes notes…", className: "rounded-full px-4 py-2.5 outline-none border", style: { fontSize: 16, backgroundColor: COLORS.surface, borderColor: COLORS.border, color: COLORS.text } }),
       (notes.some((x) => x.favori) || dossiers.length > 0) && ntH("div", { className: "flex gap-2 overflow-x-auto pb-1", style: { scrollbarWidth: "none" } }, [["tous", "Toutes"], ...notes.some((x) => x.favori) ? [["fav", "★ Favoris"]] : [], ...dossiers.map((d) => ["d:" + d, "📁 " + d])].map(([id, l]) => ntH("button", { key: id, type: "button", onClick: () => setFiltre(id), className: "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border", style: filtre === id ? { backgroundColor: "rgba(var(--accent-rgb),0.18)", borderColor: COLORS.gold, color: COLORS.gold } : { borderColor: COLORS.border, color: COLORS.textMuted } }, l))),
@@ -12641,7 +13043,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       liste.map((x) => {
         const apercu = (x.resumes && x.resumes.cours || ntTexte(x)).replace(/[#*\n]+/g, " ").trim().slice(0, 110);
         const att = x.segments.filter((s) => s.statut === "attente").length;
-        return ntH("button", { key: x.id, type: "button", onClick: () => setVue({ t: "note", id: x.id }), className: "w-full text-left rounded-2xl border p-3.5 flex flex-col gap-1", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("div", { className: "flex items-center justify-between gap-2" }, ntH("p", { className: "text-sm font-bold truncate", style: { color: COLORS.text } }, x.favori ? "★ " + x.titre : x.titre), ntH("span", { className: "text-[10px] font-mono flex-shrink-0", style: { color: COLORS.textFaint } }, ntDuree(x.duree))), ntH("p", { className: "text-[11px] font-mono", style: { color: COLORS.textFaint } }, new Date(x.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) + (x.dossier ? " · 📁 " + x.dossier : "") + (att ? " · ⏳ " + att + " en attente" : "")), apercu && ntH("p", { className: "text-xs", style: { color: COLORS.textMuted } }, apercu + "…"));
+        return ntH("button", { key: x.id, type: "button", onClick: () => setVue({ t: "note", id: x.id }), className: "w-full text-left rounded-2xl border p-3.5 flex flex-col gap-1", style: { borderColor: COLORS.border, backgroundColor: COLORS.surface } }, ntH("div", { className: "flex items-center justify-between gap-2" }, ntH("p", { className: "text-sm font-bold truncate", style: { color: COLORS.text } }, x.favori ? "★ " + x.titre : x.titre), ntH("span", { className: "text-[10px] font-mono flex-shrink-0", style: { color: COLORS.textFaint } }, (x.duree || x.segments.length ? ntDuree(x.duree) : "✍"))), ntH("p", { className: "text-[11px] font-mono", style: { color: COLORS.textFaint } }, new Date(x.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) + (x.dossier ? " · 📁 " + x.dossier : "") + (att ? " · ⏳ " + att + " en attente" : "")), apercu && ntH("p", { className: "text-xs", style: { color: COLORS.textMuted } }, apercu + "…"));
       }),
       ntH("p", { className: "text-[11px] text-center", style: { color: COLORS.textFaint } }, "Les notes et leur audio sont gardés sur ce téléphone. Pense à demander la permission d'enregistrer en classe.")
     );
@@ -15465,7 +15867,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
           isOpen && react_shim_default.createElement(
             "div",
             { className: "px-4 pb-4 border-t", style: { borderColor: COLORS.border } },
-            (r.imagesUrls && r.imagesUrls.length ? r.imagesUrls : r.imageUrl ? [r.imageUrl] : []).map((u, i) => react_shim_default.createElement("img", { key: "img" + i, src: u, alt: "Photo du r\xE9sum\xE9 " + (i + 1), onClick: () => setImageZoomRes(u), className: "w-full rounded-lg mt-3", style: { maxHeight: 420, objectFit: "contain", backgroundColor: COLORS.bg } })),
+            ((l) => l.map((u, i) => react_shim_default.createElement(ImageAgrandissable, { key: "img" + i, urls: l, index: i, alt: "Photo du r\xE9sum\xE9 " + (i + 1), className: "w-full rounded-lg mt-3", style: { maxHeight: 420, objectFit: "contain", backgroundColor: COLORS.bg } })))(r.imagesUrls && r.imagesUrls.length ? r.imagesUrls : r.imageUrl ? [r.imageUrl] : []),
             r.pdfUrl && react_shim_default.createElement("button", { onClick: () => setPreviewUrl(r.pdfUrl), className: "mt-3 mb-1 text-xs font-mono px-3 py-1.5 rounded-full", style: { backgroundColor: "rgba(var(--accent-rgb),0.12)", color: COLORS.gold } }, react_shim_default.createElement(Icon, { name: "eye", size: 14 }), " Aper\xE7u PDF"),
             react_shim_default.createElement("p", { className: "text-sm whitespace-pre-wrap mt-2", style: { color: COLORS.text } }, r.contenu),
             r.resumeIA ? react_shim_default.createElement(
