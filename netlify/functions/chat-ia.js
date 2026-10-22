@@ -11,7 +11,7 @@
 // navigateur. Chacune doit être définie dans Netlify → Site configuration → Environment
 // variables, sous le nom exact indiqué dans envVar ci-dessous.
 //
-// Le client (index.html) envoie { provider: "groq" | "openrouter" | "huggingface" | "openai",
+// Le client (index.html) envoie { provider: "groq" | "openrouter" | "huggingface" | "openai" | "mistral",
 // model, messages, extraHeaders }, sans jamais connaître les clés — cette fonction choisit le
 // bon fournisseur, ajoute sa clé secrète en en-tête Authorization, et relaie la requête telle
 // quelle (les quatre exposent une API "chat completions" compatible OpenAI, donc pas de
@@ -37,6 +37,11 @@ const PROVIDERS = {
   openai: {
     url: "https://api.openai.com/v1/chat/completions",
     envVar: "OPENAI_API_KEY"
+  },
+  // Mistral : API compatible OpenAI (texte : mistral-small-latest, photos : pixtral-12b-2409).
+  mistral: {
+    url: "https://api.mistral.ai/v1/chat/completions",
+    envVar: "MISTRAL_API_KEY"
   }
 };
 
