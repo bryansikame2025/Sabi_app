@@ -1075,20 +1075,37 @@ button, [role="button"] { transition: transform .18s cubic-bezier(.2,.8,.3,1), o
   opacity: 1;
   pointer-events: auto;
 }
+#sabi-anticam {
+  position: fixed;
+  inset: 0;
+  z-index: 2147482999;
+  pointer-events: none;
+  display: none;
+  background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.55) 0, rgba(0,0,0,.55) 3px, rgba(0,0,0,0) 3px, rgba(0,0,0,0) 6px);
+  opacity: .22;
+  animation: sabiAnticam .0334s steps(1) infinite;
+}
+#sabi-anticam.on { display: block; }
+@keyframes sabiAnticam {
+  0% { background-position: 0 0; }
+  50% { background-position: 0 3px; }
+}
+@media (prefers-reduced-motion: reduce) { #sabi-anticam { animation: none; opacity: .1; } }
 #sabi-watermark {
   position: fixed;
   inset: 0;
-  z-index: 999998;
+  z-index: 2147483000;
   pointer-events: none;
   overflow: hidden;
-  opacity: 0.05;
+  opacity: 0.16;
 }
 #sabi-watermark span {
   position: absolute;
   white-space: nowrap;
-  color: #000;
-  font-size: 12px;
+  color: #8a8a8a;
+  font-size: 13px;
   font-weight: 700;
+  text-shadow: 0 0 2px rgba(255,255,255,.6), 0 0 2px rgba(0,0,0,.6);
   transform: rotate(-30deg);
 }
 
@@ -2129,7 +2146,9 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           "Photo de profil. Dans Profil, touche ta photo pour la choisir et la recadrer ; tu peux la retirer \xE0 tout moment.",
           "Membres. La liste affiche les photos, badges et points ; touche un membre pour voir son profil.",
           "Mode rapide. Dans le menu (trois traits), r\xE9duit les animations pour les t\xE9l\xE9phones modestes.",
-          "Ic\xF4ne de l'application. Dans le menu, choisis une autre couleur d'ic\xF4ne (version Android install\xE9e)."
+          "Ic\xF4ne de l'application. Dans le menu, choisis une autre couleur d'ic\xF4ne (version Android install\xE9e).",
+          "Th\xE8mes. Dans les param\xE8tres, choisis ton th\xE8me. \u00AB Lagon \u00BB est un th\xE8me clair et color\xE9 (turquoise et corail), sans aucune animation.",
+          "Filigrane. Sur les \xC9preuves et les R\xE9sum\xE9s de cours (aussi dans les PDF), ton pseudo appara\xEEt en filigrane sur tout l'\xE9cran (texte, photos et PDF), discret mais visible sur tous les th\xE8mes, pour d\xE9courager les fuites. Un voile de fines lignes en mouvement rapide est aussi ajout\xE9 : \xE0 l'\u0153il il est presque invisible, mais une cam\xE9ra qui filme ton \xE9cran voit des barres qui g\xEAnent la lecture (effet variable selon le t\xE9l\xE9phone, pas une garantie). Il n'appara\xEEt nulle part ailleurs et ton adresse e-mail n'est jamais affich\xE9e."
         ] }
       ]
     },
@@ -2212,6 +2231,38 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         "accent-2": "#2F2E45",
         "icon-bg": "#DDE3EC",
         "icon-fg": "#1D1B33"
+      }
+    },
+    lagon: {
+      label: "Lagon",
+      clair: true,
+      hero: "anneau",
+      apercu: ["#EFF8F6", "#FFFFFF", "#0B7F73"],
+      colors: { ...base, bg: "#EFF8F6", surface: "#F6FCFA", surface2: "#E1F1ED", border: "#CDE5DF", borderStrong: "#86BDB1", text: "#10231F", textMuted: "#3A5650", textFaint: "#5A7870", textGhost: "#CDE5DF", gold: "#0B7F73", goldInk: "#FFFFFF", forest: "#1F9D55", terra: "#E0573F", forestText: "#14793F", terraText: "#B8402B" },
+      fx: {
+        muted: "#4F6D66",
+        sheen: "transparent",
+        "glow-a": "rgba(11,127,115,.14)",
+        "glow-b": "rgba(255,138,76,.16)",
+        shadow: "6px 6px 15px rgba(134,176,167,.40), -6px -6px 14px rgba(255,255,255,.95)",
+        stage: "linear-gradient(180deg,#F7FDFB 0%,#E4F4F0 100%)",
+        "hero-bg": "linear-gradient(180deg,#FFFFFF,#F1FAF7)",
+        "hero-border": "rgba(255,255,255,.95)",
+        "ring-track": "#D7EBE6",
+        "ring-outer": "rgba(11,127,115,.34)",
+        "arc-a": "#2DB8A6",
+        "arc-b": "#FF8A4C",
+        orb: "radial-gradient(circle at 50% 30%,#FFFFFF,#EAF7F3)",
+        "orb-shadow": "0 8px 20px rgba(11,127,115,.20), inset 0 0 0 1px rgba(255,255,255,.95)",
+        "orb-text": "#0E2420",
+        "orb-muted": "#3A5650",
+        "badge-bg": "radial-gradient(circle at 30% 25%,#FFF1E6,#FFD3B5)",
+        "badge-text": "#B8481C",
+        "badge-shadow": "0 8px 18px -6px rgba(255,138,76,.55)",
+        "level-bg": "#E3F2EE",
+        "accent-2": "#E0573F",
+        "icon-bg": "#D5EBE6",
+        "icon-fg": "#0B6F65"
       }
     },
     dune: {
@@ -2559,7 +2610,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       "icon-fg": "#FF8A3D"
     }
   );
-  var ORDRE_THEMES = ["sombre", "clair", "verre", "boreale", "ocean", "etoiles", "crepuscule", "lucioles", "braises", "aurore", "dune", "savane", "ardoise", "neon"];
+  var ORDRE_THEMES = ["sombre", "clair", "lagon", "verre", "boreale", "ocean", "etoiles", "crepuscule", "lucioles", "braises", "aurore", "dune", "savane", "ardoise", "neon"];
 
   // src/theme.js
   var COLORS = {
@@ -5620,6 +5671,14 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     return { uri: data.uri, mimeType: data.mimeType || mimeType };
   }
   async function partieGeminiPourFichier(url, mimeTypePdf) {
+    if (mimeTypePdf !== "application/pdf") {
+      try {
+        const img0 = await imageUrlVersBase64(url);
+        return { inline_data: { mime_type: img0.mimeType, data: img0.base64 } };
+      } catch (e0) {
+        console.error("Photo en direct impossible, essai via upload :", e0 && e0.message);
+      }
+    }
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error("Impossible de r\xE9cup\xE9rer le fichier (HTTP " + res.status + ").");
@@ -5696,9 +5755,8 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           base64Repli = await pdfUrlVersBase64(pdfUrl);
           mimeTypeRepli = "application/pdf";
         } else if (mode === "photo") {
-          const img = await imageUrlVersBase64([].concat(imageUrl)[0]);
-          base64Repli = img.base64;
-          mimeTypeRepli = img.mimeType;
+          base64Repli = await Promise.all([].concat(imageUrl).map((u) => imageUrlVersBase64(u)));
+          mimeTypeRepli = "image/jpeg";
         }
         return await genererViaRepliChat(mode, prompt, base64Repli, mimeTypeRepli, "sujet.pdf", "Sabi - Corrige IA");
       } catch (errRepli) {
@@ -5782,12 +5840,10 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         ]
       }];
     } else {
+      const listeImgs = Array.isArray(base64) ? base64 : [{ base64, mimeType }];
       messages = [{
         role: "user",
-        content: [
-          { type: "text", text: prompt },
-          { type: "image_url", image_url: { url: "data:" + mimeType + ";base64," + base64 } }
-        ]
+        content: [{ type: "text", text: prompt }].concat(listeImgs.map((im) => ({ type: "image_url", image_url: { url: "data:" + im.mimeType + ";base64," + im.base64 } })))
       }];
     }
     try {
@@ -5830,9 +5886,8 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         let base64Repli = null, mimeRepli = null;
         if (mode === "pdf") base64Repli = await pdfUrlVersBase64(pdfUrl);
         else if (mode === "photo") {
-          const img = await imageUrlVersBase64([].concat(imageUrl)[0]);
-          base64Repli = img.base64;
-          mimeRepli = img.mimeType;
+          base64Repli = await Promise.all([].concat(imageUrl).map((u) => imageUrlVersBase64(u)));
+          mimeRepli = "image/jpeg";
         }
         return await genererViaRepliChat(mode, prompt, base64Repli, mimeRepli, "cours.pdf", "Sabi - Resume IA");
       } catch (errRepli) {
@@ -5864,7 +5919,25 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
   var HUGGINGFACE_MODEL = "meta-llama/Llama-3.3-70B-Instruct:novita";
   var OPENAI_MODEL = "gpt-4o-mini";
   var CHAT_IA_URL = NETLIFY_BASE_URL + "/.netlify/functions/chat-ia";
+  var MISTRAL_MODEL = "mistral-small-latest";
+  var MISTRAL_MODEL_VISION = "pixtral-12b-2409";
   async function appellerChatIA(provider, model, messages, extraHeaders, timeoutMs) {
+    try {
+      return await appellerChatIABrut(provider, model, messages, extraHeaders, timeoutMs);
+    } catch (errPrincipale) {
+      if (provider === "mistral") throw errPrincipale;
+      const contientPdf = messages.some((m) => Array.isArray(m.content) && m.content.some((c) => c && c.type === "file"));
+      if (contientPdf) throw errPrincipale;
+      const contientImage = messages.some((m) => Array.isArray(m.content) && m.content.some((c) => c && c.type === "image_url"));
+      try {
+        return await appellerChatIABrut("mistral", contientImage ? MISTRAL_MODEL_VISION : MISTRAL_MODEL, messages, void 0, timeoutMs);
+      } catch (errMistral) {
+        console.error("Mistral (renfort) a \xE9chou\xE9 :", errMistral && errMistral.message);
+        throw errPrincipale;
+      }
+    }
+  }
+  async function appellerChatIABrut(provider, model, messages, extraHeaders, timeoutMs) {
     var _a, _b, _c, _d;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs || 45e3);
@@ -9195,8 +9268,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     return window.__pdfjsPromesse;
   }
   function filigraneTexte() {
-    const u = typeof auth !== "undefined" && auth.currentUser || null;
-    return (u && (u.email || u.uid) || "Sabi") + "  \xB7  " + (/* @__PURE__ */ new Date()).toLocaleDateString("fr-FR");
+    return (window.__sabiPseudo || "Sabi") + "  \xB7  " + (/* @__PURE__ */ new Date()).toLocaleDateString("fr-FR");
   }
   function dessinerFiligrane(ctx, w, h) {
     const texte = filigraneTexte();
@@ -9477,9 +9549,8 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           b64 = await pdfUrlVersBase64(pdfUrl);
           mime = "application/pdf";
         } else if (mode === "photo") {
-          const img = await imageUrlVersBase64([].concat(imageUrl)[0]);
-          b64 = img.base64;
-          mime = img.mimeType;
+          b64 = await Promise.all([].concat(imageUrl).map((u) => imageUrlVersBase64(u)));
+          mime = "image/jpeg";
         }
         return await genererViaRepliChat(mode, prompt, b64, mime, "sujet.pdf", "Sabi - Fiche de revision");
       } catch (errRepli) {
@@ -16545,6 +16616,10 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
     const [profil, setProfilState] = useState({ annee: "", filiere: "" });
     const [pseudo, setPseudo] = useState("");
     useEffect(() => {
+      window.__sabiPseudo = pseudo || "";
+      if (window.__sabiActualiserFiligrane) window.__sabiActualiserFiligrane();
+    }, [pseudo]);
+    useEffect(() => {
       if (chatMessages.length === 0) return;
       const dernier = chatMessages[chatMessages.length - 1];
       const estNouveau = dernierMsgIdRef.current !== null && dernier.id !== dernierMsgIdRef.current;
@@ -17757,6 +17832,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
   
   <div id="sabi-shield"></div>
   <div id="sabi-watermark"></div>
+  <div id="sabi-anticam"></div>
   <script>
     (function () {
       var shield = document.getElementById("sabi-shield");
@@ -17772,8 +17848,8 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
       document.addEventListener("dragstart", function (e) { e.preventDefault(); });
 
-      // Filigrane traçable : identité de l'étudiant connecté (email Firebase Auth),
-      // répétée en discret sur les onglets Épreuves et Résumés (contenu sensible aux
+      // Filigrane traçable : pseudo de l'étudiant connecté (jamais son email),
+      // répété en discret sur les onglets Épreuves et Résumés de cours (contenu sensible aux
       // fuites : sujets, corrigés, résumés de cours). Reste permanent mais léger — pas
       // de mode "saturé" : impossible de détecter une capture d'écran physique depuis
       // un site web, donc pas de sens à réserver l'effet à ce moment précis (voir
@@ -17781,37 +17857,29 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
       function poserFiligrane(texte) {
         var wm = document.getElementById("sabi-watermark");
         if (!wm) return;
-        texte = texte || window.__sabiFiligraneTexte || "Sabi";
+        texte = String(window.__sabiPseudo || "Sabi").replace(/[<>&"]/g, "");
         var onglet = window.__sabiTabActif;
         var actif = onglet === "epreuves" || onglet === "resumes";
-        wm.style.opacity = actif ? "0.05" : "0";
+        wm.style.opacity = actif ? "0.16" : "0";
+        var ac = document.getElementById("sabi-anticam");
+        var anticamOn = true;
+        try { anticamOn = localStorage.getItem("sabi_anticam") !== "0"; } catch (e) {}
+        if (ac) ac.className = actif && anticamOn ? "on" : "";
         if (!actif) { wm.innerHTML = ""; return; }
         var html = "";
-        for (var y = 0; y < 10; y++) {
-          for (var x = 0; x < 5; x++) {
-            html += '<span style="top:' + (y * 130) + 'px; left:' + (x * 240 - 80) + 'px;">' + texte + "</span>";
+        var lignes = Math.ceil((window.innerHeight || 800) / 110) + 2;
+        var cols = Math.ceil((window.innerWidth || 400) / 200) + 2;
+        for (var y = 0; y < lignes; y++) {
+          for (var x = 0; x < cols; x++) {
+            html += '<span style="top:' + (y * 110) + 'px; left:' + (x * 200 - 60 + (y % 2) * 90) + 'px;">' + texte + "</span>";
           }
         }
         wm.innerHTML = html;
       }
       poserFiligrane();
       window.__sabiActualiserFiligrane = poserFiligrane;
-      window.addEventListener("resize", function () { poserFiligrane(window.__sabiFiligraneTexte); });
+      window.addEventListener("resize", function () { poserFiligrane(); });
 
-      // Se raccroche à Firebase Auth (déjà initialisé plus haut dans la page)
-      // pour afficher l'email de l'étudiant connecté dans le filigrane.
-      function connecterAuFirebaseAuth() {
-        if (window.firebase && firebase.apps && firebase.apps.length && firebase.auth) {
-          firebase.auth().onAuthStateChanged(function (user) {
-            var texte = (user && (user.email || user.uid)) || "Sabi";
-            window.__sabiFiligraneTexte = texte;
-            poserFiligrane(texte);
-          });
-        } else {
-          setTimeout(connecterAuFirebaseAuth, 500);
-        }
-      }
-      connecterAuFirebaseAuth();
     })();
   </script>
 </body>
