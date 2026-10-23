@@ -1075,22 +1075,6 @@ button, [role="button"] { transition: transform .18s cubic-bezier(.2,.8,.3,1), o
   opacity: 1;
   pointer-events: auto;
 }
-#sabi-anticam {
-  position: fixed;
-  inset: 0;
-  z-index: 2147482999;
-  pointer-events: none;
-  display: none;
-  background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.55) 0, rgba(0,0,0,.55) 3px, rgba(0,0,0,0) 3px, rgba(0,0,0,0) 6px);
-  opacity: .22;
-  animation: sabiAnticam .0334s steps(1) infinite;
-}
-#sabi-anticam.on { display: block; }
-@keyframes sabiAnticam {
-  0% { background-position: 0 0; }
-  50% { background-position: 0 3px; }
-}
-@media (prefers-reduced-motion: reduce) { #sabi-anticam { animation: none; opacity: .1; } }
 #sabi-watermark {
   position: fixed;
   inset: 0;
@@ -2148,7 +2132,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           "Mode rapide. Dans le menu (trois traits), r\xE9duit les animations pour les t\xE9l\xE9phones modestes.",
           "Ic\xF4ne de l'application. Dans le menu, choisis une autre couleur d'ic\xF4ne (version Android install\xE9e).",
           "Th\xE8mes. Dans les param\xE8tres, choisis ton th\xE8me. \u00AB Lagon \u00BB est un th\xE8me clair et color\xE9 (turquoise et corail), sans aucune animation.",
-          "Filigrane. Sur les \xC9preuves et les R\xE9sum\xE9s de cours (aussi dans les PDF), ton pseudo appara\xEEt en filigrane sur tout l'\xE9cran (texte, photos et PDF), discret mais visible sur tous les th\xE8mes, pour d\xE9courager les fuites. Un voile de fines lignes en mouvement rapide est aussi ajout\xE9 : \xE0 l'\u0153il il est presque invisible, mais une cam\xE9ra qui filme ton \xE9cran voit des barres qui g\xEAnent la lecture (effet variable selon le t\xE9l\xE9phone, pas une garantie). Il n'appara\xEEt nulle part ailleurs et ton adresse e-mail n'est jamais affich\xE9e."
+          "Filigrane. Sur les \xC9preuves et les R\xE9sum\xE9s de cours (aussi dans les PDF), ton pseudo appara\xEEt en filigrane sur tout l'\xE9cran (texte, photos et PDF), discret mais visible sur tous les th\xE8mes, pour d\xE9courager les fuites. Il n'appara\xEEt nulle part ailleurs et ton adresse e-mail n'est jamais affich\xE9e."
         ] }
       ]
     },
@@ -17832,7 +17816,6 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
   
   <div id="sabi-shield"></div>
   <div id="sabi-watermark"></div>
-  <div id="sabi-anticam"></div>
   <script>
     (function () {
       var shield = document.getElementById("sabi-shield");
@@ -17861,10 +17844,6 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
         var onglet = window.__sabiTabActif;
         var actif = onglet === "epreuves" || onglet === "resumes";
         wm.style.opacity = actif ? "0.16" : "0";
-        var ac = document.getElementById("sabi-anticam");
-        var anticamOn = true;
-        try { anticamOn = localStorage.getItem("sabi_anticam") !== "0"; } catch (e) {}
-        if (ac) ac.className = actif && anticamOn ? "on" : "";
         if (!actif) { wm.innerHTML = ""; return; }
         var html = "";
         var lignes = Math.ceil((window.innerHeight || 800) / 110) + 2;
