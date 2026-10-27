@@ -1757,6 +1757,42 @@ html.sabi-lite .hm-shoot {
   @keyframes sabi-orbe{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
 .sabi-orbe-actif{animation:sabi-orbe 1s ease-in-out infinite}
 html.sabi-lite .sabi-orbe-actif{animation:none!important}
+/* ===== Finition "fluide" (inspirée des principes Apple) : retour instantané au toucher, sheets qui glissent, typographie ajustée ===== */
+:root { --sabi-ressort: cubic-bezier(.22, 1, .36, 1); }
+button, [role="button"], a.btn, label[class*="cursor-pointer"] {
+  touch-action: manipulation;
+  transition: transform 260ms var(--sabi-ressort), opacity 160ms ease, background-color 160ms ease, box-shadow 200ms ease;
+}
+button:not(:disabled):active, [role="button"]:active, label[class*="cursor-pointer"]:active {
+  transform: scale(0.965);
+  transition-duration: 70ms;
+}
+.rounded-lg.border:active { transform: scale(0.99); }
+.sabi-nav-item:active, .sabi-nav-chip:active { transform: scale(0.92); }
+h1, h2, h3 { letter-spacing: -0.015em; line-height: 1.15; text-wrap: balance; font-optical-sizing: auto; }
+h1 { letter-spacing: -0.025em; }
+p, li { text-wrap: pretty; }
+.text-\[10px\], .text-\[11px\] { letter-spacing: 0.01em; }
+body { text-rendering: optimizeLegibility; }
+@keyframes sabi-sheet-in { from { opacity: 0; transform: translateY(28px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes sabi-fond-in { from { opacity: 0; } to { opacity: 1; } }
+.fixed.inset-0 { animation: sabi-fond-in 180ms ease-out; }
+.fixed.inset-0 > .rounded-t-3xl, .fixed.inset-0 > div[class*="max-w-"], .fixed.inset-0 > div > div[class*="max-w-"] { animation: sabi-sheet-in 380ms var(--sabi-ressort); }
+.sabi-header { box-shadow: 0 1px 0 rgba(255,255,255,.06), 0 8px 24px -16px rgba(0,0,0,.35); }
+@media (prefers-reduced-motion: reduce) {
+  button, [role="button"], label[class*="cursor-pointer"] { transition: opacity 120ms ease, background-color 120ms ease; }
+  button:not(:disabled):active, [role="button"]:active, .rounded-lg.border:active, .sabi-nav-item:active { transform: none; opacity: .8; }
+  .fixed.inset-0, .fixed.inset-0 > * { animation: sabi-fond-in 120ms ease-out !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .sabi-header, .sabi-nav, .sabi-glass, .sabi-glass-card { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+}
+@media (prefers-contrast: more) {
+  .rounded-lg.border { border-color: currentColor; }
+}
+html.sabi-lite button { transition: none; }
+html.sabi-lite .fixed.inset-0, html.sabi-lite .fixed.inset-0 > * { animation: none !important; }
+
 </style>
 </head>
 <body>
@@ -2131,7 +2167,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
           "Membres. La liste affiche les photos, badges et points ; touche un membre pour voir son profil.",
           "Mode rapide. Dans le menu (trois traits), r\xE9duit les animations pour les t\xE9l\xE9phones modestes.",
           "Ic\xF4ne de l'application. Dans le menu, choisis une autre couleur d'ic\xF4ne (version Android install\xE9e).",
-          "Th\xE8mes. Dans les param\xE8tres, choisis ton th\xE8me. \u00AB Lagon \u00BB est un th\xE8me clair et color\xE9 (turquoise et corail), sans aucune animation.",
+          "Th\xE8mes. Dans les param\xE8tres, choisis ton th\xE8me. \u00AB Lagon \u00BB est un th\xE8me clair et color\xE9 (turquoise et corail), sans aucune animation. Trois th\xE8mes inspir\xE9s du style Apple sont aussi propos\xE9s, tous sans animation : \u00AB Cristal \u00BB (clair, bleu), \u00AB Minuit \u00BB (noir profond, bleu) et \u00AB Graphite \u00BB (gris fonc\u00E9, orange).",
           "Filigrane. Sur les \xC9preuves et les R\xE9sum\xE9s de cours (aussi dans les PDF), ton pseudo appara\xEEt en filigrane sur tout l'\xE9cran (texte, photos et PDF), discret mais visible sur tous les th\xE8mes, pour d\xE9courager les fuites. Il n'appara\xEEt nulle part ailleurs et ton adresse e-mail n'est jamais affich\xE9e."
         ] }
       ]
@@ -2185,6 +2221,102 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     "row-border-3": "var(--hm-border)"
   };
   var THEMES_PLUS = {
+    cristal: {
+      label: "Cristal",
+      clair: true,
+      hero: "anneau",
+      apercu: ["#F2F2F7", "#FFFFFF", "#007AFF"],
+      colors: { ...base, bg: "#F2F2F7", surface: "#FFFFFF", surface2: "#E9E9EF", border: "#E0E0E6", borderStrong: "#B8B8C2", text: "#1C1C1E", textMuted: "#3A3A3C", textFaint: "#636366", textGhost: "#D8D8DE", gold: "#007AFF", goldInk: "#FFFFFF", forest: "#34C759", terra: "#FF3B30", forestText: "#1E8E3E", terraText: "#D70015" },
+      fx: {
+        muted: "#636366",
+        sheen: "transparent",
+        "glow-a": "rgba(0,122,255,.10)",
+        "glow-b": "rgba(0,122,255,.05)",
+        shadow: "0 1px 2px rgba(0,0,0,.06), 0 8px 24px -12px rgba(0,0,0,.18)",
+        stage: "linear-gradient(180deg,#F8F8FB 0%,#EDEDF3 100%)",
+        "hero-bg": "linear-gradient(180deg,#FFFFFF,#F7F7FA)",
+        "hero-border": "#E0E0E6",
+        "ring-track": "#E3E3E9",
+        "ring-outer": "rgba(0,122,255,.35)",
+        "arc-a": "#007AFF",
+        "arc-b": "#5AC8FA",
+        orb: "radial-gradient(circle at 50% 30%,#FFFFFF,#F2F2F7)",
+        "orb-shadow": "0 6px 18px rgba(0,0,0,.18)",
+        "orb-text": "#1C1C1E",
+        "orb-muted": "#3A3A3C",
+        "badge-bg": "#007AFF",
+        "badge-text": "#FFFFFF",
+        "badge-shadow": "0 6px 14px -6px rgba(0,122,255,.6)",
+        "level-bg": "#E9E9EF",
+        "accent-2": "#5AC8FA",
+        "icon-bg": "#E3E3E9",
+        "icon-fg": "#007AFF"
+      }
+    },
+    minuit: {
+      label: "Minuit",
+      clair: false,
+      hero: "anneau",
+      apercu: ["#000000", "#1C1C1E", "#0A84FF"],
+      colors: { ...base, bg: "#000000", surface: "#1C1C1E", surface2: "#2C2C2E", border: "#38383A", borderStrong: "#636366", text: "#F5F5F7", textMuted: "#D1D1D6", textFaint: "#98989D", textGhost: "#2C2C2E", gold: "#0A84FF", goldInk: "#FFFFFF", forest: "#30D158", terra: "#FF453A", forestText: "#32D74B", terraText: "#FF6961" },
+      fx: {
+        muted: "#98989D",
+        sheen: "transparent",
+        "glow-a": "rgba(10,132,255,.10)",
+        "glow-b": "rgba(10,132,255,.05)",
+        shadow: "0 1px 0 rgba(255,255,255,.04) inset, 0 10px 28px -14px rgba(0,0,0,.8)",
+        stage: "linear-gradient(180deg,#000000 0%,#0B0B0D 100%)",
+        "hero-bg": "linear-gradient(180deg,#1C1C1E,#141416)",
+        "hero-border": "#38383A",
+        "ring-track": "#2C2C2E",
+        "ring-outer": "rgba(10,132,255,.35)",
+        "arc-a": "#0A84FF",
+        "arc-b": "#64D2FF",
+        orb: "radial-gradient(circle at 50% 30%,#2C2C2E,#1C1C1E)",
+        "orb-shadow": "0 6px 18px rgba(0,0,0,.18)",
+        "orb-text": "#F5F5F7",
+        "orb-muted": "#D1D1D6",
+        "badge-bg": "#0A84FF",
+        "badge-text": "#FFFFFF",
+        "badge-shadow": "0 6px 14px -6px rgba(10,132,255,.6)",
+        "level-bg": "#2C2C2E",
+        "accent-2": "#64D2FF",
+        "icon-bg": "#2C2C2E",
+        "icon-fg": "#0A84FF"
+      }
+    },
+    graphite: {
+      label: "Graphite",
+      clair: false,
+      hero: "anneau",
+      apercu: ["#1C1C1E", "#2C2C2E", "#FF9F0A"],
+      colors: { ...base, bg: "#1C1C1E", surface: "#2C2C2E", surface2: "#3A3A3C", border: "#48484A", borderStrong: "#8E8E93", text: "#F5F5F7", textMuted: "#D1D1D6", textFaint: "#A1A1A6", textGhost: "#3A3A3C", gold: "#FF9F0A", goldInk: "#1C1C1E", forest: "#30D158", terra: "#FF453A", forestText: "#32D74B", terraText: "#FF6961" },
+      fx: {
+        muted: "#A1A1A6",
+        sheen: "transparent",
+        "glow-a": "rgba(255,159,10,.10)",
+        "glow-b": "rgba(255,159,10,.05)",
+        shadow: "0 10px 26px -14px rgba(0,0,0,.65)",
+        stage: "linear-gradient(180deg,#1C1C1E 0%,#232325 100%)",
+        "hero-bg": "linear-gradient(180deg,#2C2C2E,#252527)",
+        "hero-border": "#48484A",
+        "ring-track": "#3A3A3C",
+        "ring-outer": "rgba(255,159,10,.35)",
+        "arc-a": "#FF9F0A",
+        "arc-b": "#FFD60A",
+        orb: "radial-gradient(circle at 50% 30%,#3A3A3C,#2C2C2E)",
+        "orb-shadow": "0 6px 18px rgba(0,0,0,.18)",
+        "orb-text": "#F5F5F7",
+        "orb-muted": "#D1D1D6",
+        "badge-bg": "#FF9F0A",
+        "badge-text": "#1C1C1E",
+        "badge-shadow": "0 6px 14px -6px rgba(255,159,10,.6)",
+        "level-bg": "#3A3A3C",
+        "accent-2": "#FFD60A",
+        "icon-bg": "#3A3A3C",
+        "icon-fg": "#FF9F0A"
+      }
+    },
     aurore: {
       label: "Aurore",
       clair: true,
@@ -2594,7 +2726,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       "icon-fg": "#FF8A3D"
     }
   );
-  var ORDRE_THEMES = ["sombre", "clair", "lagon", "verre", "boreale", "ocean", "etoiles", "crepuscule", "lucioles", "braises", "aurore", "dune", "savane", "ardoise", "neon"];
+  var ORDRE_THEMES = ["sombre", "clair", "cristal", "minuit", "graphite", "lagon", "verre", "boreale", "ocean", "etoiles", "crepuscule", "lucioles", "braises", "aurore", "dune", "savane", "ardoise", "neon"];
 
   // src/theme.js
   var COLORS = {
@@ -4861,6 +4993,8 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
 
   // src/services/netlify.js
   var NETLIFY_BASE_URL = "https://sabi-iut-fv.netlify.app";
+  // Adresse du relais IA (Cloudflare Worker). Vide = les IA passent par Netlify.
+  var IA_BASE_URL = "https://shy-math-819c.bryansikame2025.workers.dev";
   async function envoyerNotification({ cibleUid, diffusion, titre, corps }) {
     try {
       await fetch(NETLIFY_BASE_URL + "/.netlify/functions/envoyer-notification", {
@@ -5578,7 +5712,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
   var DUREE_EPINGLE_MS = 12 * 60 * 60 * 1e3;
 
   // src/services/ia.js
-  var GEMINI_URL = NETLIFY_BASE_URL + "/.netlify/functions/gemini";
+  var GEMINI_URL = (IA_BASE_URL || NETLIFY_BASE_URL) + "/.netlify/functions/gemini";
   var LIMITE_FICHIER_IA = 4 * 1024 * 1024;
   var LIMITE_FICHIER_IA_MAX = 20 * 1024 * 1024;
   function verifierTailleAvantEnvoiIA(blob, typeLabel) {
@@ -5627,7 +5761,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     });
     return { base64, mimeType: blob.type || "image/jpeg" };
   }
-  var GEMINI_FICHIER_URL = NETLIFY_BASE_URL + "/api/gemini-fichier";
+  var GEMINI_FICHIER_URL = (IA_BASE_URL || NETLIFY_BASE_URL) + "/api/gemini-fichier";
   async function uploaderFichierVersGeminiFileAPI(blob, mimeType) {
     var _a;
     const controller = new AbortController();
@@ -5763,7 +5897,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       }, 9e4);
     } catch (err) {
       if (err.name === "AbortError") throw new Error("L'IA a mis trop de temps \xE0 r\xE9pondre. R\xE9essaie.");
-      throw new Error("Impossible de contacter l'IA, v\xE9rifie ta connexion.");
+      throw new Error(navigator.onLine === false ? "Impossible de contacter l'IA, v\xE9rifie ta connexion." : "Le service IA est momentan\xE9ment indisponible (ce n'est pas ta connexion). R\xE9essaie plus tard.");
     }
     if (!response.ok) {
       const errData = await response.json().catch(() => null);
@@ -5890,6 +6024,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
     if (b.includes("trop de temps") || b.includes("timeout") || b.includes("abort")) {
       return "L'IA a mis trop de temps \xE0 r\xE9pondre. R\xE9essaie, ou r\xE9essaie avec une meilleure connexion.";
     }
+    if (b.includes("momentan\xE9ment indisponible")) return brut;
     if (b.includes("connexion") || b.includes("r\xE9seau") || b.includes("network")) {
       return "Impossible de contacter l'IA, v\xE9rifie ta connexion internet puis r\xE9essaie.";
     }
@@ -5902,7 +6037,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
   var OPENROUTER_MODEL = "openai/gpt-4o-mini";
   var HUGGINGFACE_MODEL = "meta-llama/Llama-3.3-70B-Instruct:novita";
   var OPENAI_MODEL = "gpt-4o-mini";
-  var CHAT_IA_URL = NETLIFY_BASE_URL + "/.netlify/functions/chat-ia";
+  var CHAT_IA_URL = (IA_BASE_URL || NETLIFY_BASE_URL) + "/.netlify/functions/chat-ia";
   var MISTRAL_MODEL = "mistral-small-latest";
   var MISTRAL_MODEL_VISION = "pixtral-12b-2409";
   async function appellerChatIA(provider, model, messages, extraHeaders, timeoutMs) {
@@ -6081,7 +6216,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       });
     } catch (err) {
       if (err.name === "AbortError") throw new Error("L'IA a mis trop de temps \xE0 analyser l'image (60s). R\xE9essaie.");
-      throw new Error("Impossible de contacter l'IA, v\xE9rifie ta connexion.");
+      throw new Error(navigator.onLine === false ? "Impossible de contacter l'IA, v\xE9rifie ta connexion." : "Le service IA est momentan\xE9ment indisponible (ce n'est pas ta connexion). R\xE9essaie plus tard.");
     } finally {
       clearTimeout(timeoutId);
     }
@@ -9629,6 +9764,23 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
       )
     ), document.body);
   }
+  function BarreProgressionIA({ sujet, className }) {
+    const [sec, setSec] = useState(0);
+    useEffect(() => {
+      const t0 = Date.now();
+      const id = setInterval(() => setSec(Math.floor((Date.now() - t0) / 1e3)), 500);
+      return () => clearInterval(id);
+    }, []);
+    const pct = Math.min(95, Math.round(95 * (1 - Math.exp(-sec / 40))));
+    const etape = sec < 6 ? "Lecture du " + (sujet || "document") + "\u2026" : sec < 25 ? "Analyse des exercices\u2026" : sec < 70 ? "R\xE9daction en cours\u2026" : "Derniers d\xE9tails, encore un peu de patience\u2026";
+    return react_shim_default.createElement(
+      "div",
+      { className: className || "", role: "progressbar", "aria-valuenow": pct, "aria-valuemin": 0, "aria-valuemax": 100 },
+      react_shim_default.createElement("div", { className: "flex justify-between text-[11px] mb-1", style: { color: COLORS.textFaint } }, react_shim_default.createElement("span", null, etape), react_shim_default.createElement("span", { className: "font-mono" }, pct + " % \xB7 " + sec + " s")),
+      react_shim_default.createElement("div", { className: "w-full h-1.5 rounded-full overflow-hidden", style: { backgroundColor: COLORS.border } }, react_shim_default.createElement("div", { style: { width: pct + "%", height: "100%", backgroundColor: COLORS.gold, borderRadius: 999, transition: "width .5s ease" } })),
+      react_shim_default.createElement("p", { className: "text-[10px] mt-1", style: { color: COLORS.textFaint } }, "Un sujet complet peut prendre 1 \xE0 2 minutes, reste sur la page.")
+    );
+  }
   function BoutonRevision({ ep }) {
     const cleCache = "sabi_revision_" + ep.id;
     const [revision, setRevision] = useState(null);
@@ -9683,6 +9835,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
         className: "w-full flex items-center justify-center gap-1.5 text-xs font-mono py-2 rounded-lg disabled:opacity-60",
         style: { border: "1px solid rgba(139,92,246,0.45)", color: "#c4b5fd" }
       }, react_shim_default.createElement(Icon, { name: "sparkles", size: 13 }), charge ? "Pr\xE9paration de ta fiche..." : "Fiche & flashcards"),
+      charge && react_shim_default.createElement(BarreProgressionIA, { sujet: "sujet", className: "mt-2" }),
       erreur && react_shim_default.createElement("p", { className: "text-[11px] mt-1.5", style: { color: COLORS.terraText } }, erreur),
       ouvert && revision && react_shim_default.createElement(RevisionModal, { ep, revision, onClose: () => setOuvert(false) })
     );
@@ -10623,7 +10776,7 @@ html.sabi-lite .sabi-orbe-actif{animation:none!important}
               ),
               react_shim_default.createElement(BoutonRevision, { ep }),
               react_shim_default.createElement(BoutonHorsLigne, { ep }),
-              iaLoading === ep.id && react_shim_default.createElement("p", { className: "text-[11px] px-4 pb-3 flex items-center gap-1.5", style: { color: COLORS.textFaint } }, react_shim_default.createElement(Icon, { name: "clock", size: 11 }), "\xC7a peut prendre 1 \xE0 2 minutes pour un sujet complet \xE0 plusieurs exercices, reste sur la page."),
+              iaLoading === ep.id && react_shim_default.createElement(BarreProgressionIA, { sujet: "sujet", className: "px-4 pb-3" }),
               iaErreur && iaErreur.id === ep.id && react_shim_default.createElement("p", { className: "text-[11px] px-4 pb-3", style: { color: COLORS.terraText } }, iaErreur.message),
               isOpen && react_shim_default.createElement(
                 "div",
@@ -15941,7 +16094,7 @@ Propose 5 t\xE2ches concr\xE8tes et courtes (5-8 mots) \xE0 faire aujourd'hui po
               className: "mt-3 flex items-center justify-center gap-1.5 text-xs font-mono py-2 px-3 rounded-lg disabled:opacity-50",
               style: { backgroundColor: COLORS.gold, color: COLORS.bg }
             }, iaLoading === r.id ? "G\xE9n\xE9ration\u2026" : react_shim_default.createElement(react_shim_default.Fragment, null, react_shim_default.createElement(Icon, { name: "sparkles", size: 13 }), " G\xE9n\xE9rer un r\xE9sum\xE9 IA")),
-            iaLoading === r.id && react_shim_default.createElement("p", { className: "text-[11px] mt-2 flex items-center gap-1.5", style: { color: COLORS.textFaint } }, react_shim_default.createElement(Icon, { name: "clock", size: 11 }), "\xC7a peut prendre 1 \xE0 2 minutes pour un cours complet, reste sur la page."),
+            iaLoading === r.id && react_shim_default.createElement(BarreProgressionIA, { sujet: "cours", className: "mt-2" }),
             iaErreur && iaErreur.id === r.id && react_shim_default.createElement("p", { className: "text-[11px] mt-2", style: { color: COLORS.textMuted } }, iaErreur.message),
             react_shim_default.createElement(
               "div",
